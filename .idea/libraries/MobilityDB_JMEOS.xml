@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="MobilityDB-JMEOS">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/MobilityDB-JMEOS.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
