@@ -1,15 +1,12 @@
 package org.mobiltydb.UDT;
 
 import org.apache.spark.sql.catalyst.InternalRow;
-import org.apache.spark.sql.catalyst.util.ArrayData;
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow;
 import org.apache.spark.sql.types.*;
-import org.mobiltydb.UDT.classes.TGeomPointInst;
-
-import java.sql.Timestamp;
+import org.mobiltydb.UDT.classes.TimestampWithValue;
 
 
-public class TGeomPointInstUDT extends UserDefinedType<TGeomPointInst> {
+public class TimestampWithValueUDT extends UserDefinedType<TimestampWithValue> {
 
     @Override
     public StructType sqlType() {
@@ -21,17 +18,17 @@ public class TGeomPointInstUDT extends UserDefinedType<TGeomPointInst> {
     }
 
     @Override
-    public TGeomPointInst deserialize(Object datum) {
+    public TimestampWithValue deserialize(Object datum) {
         if (datum instanceof InternalRow) {
             InternalRow row = (InternalRow) datum;
             Double value = row.getDouble(1);
             java.sql.Timestamp timestamp = (java.sql.Timestamp) row.get(0, DataTypes.TimestampType);
-            return new TGeomPointInst(timestamp, value);
+            return new TimestampWithValue(timestamp, value);
         }
         return null;
     }
     @Override
-    public Object serialize(TGeomPointInst point) {
+    public Object serialize(TimestampWithValue point) {
         if (point == null) {
             return null;
         }
@@ -40,7 +37,7 @@ public class TGeomPointInstUDT extends UserDefinedType<TGeomPointInst> {
     }
 
     @Override
-    public Class<TGeomPointInst> userClass() {
-        return TGeomPointInst.class;
+    public Class<TimestampWithValue> userClass() {
+        return TimestampWithValue.class;
     }
 }
