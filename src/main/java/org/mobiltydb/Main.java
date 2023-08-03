@@ -5,6 +5,9 @@ import org.apache.spark.sql.types.DataTypes;
 import org.mobiltydb.UDF.PowerUDF;
 import org.mobiltydb.UDT.classes.TimestampWithValue;
 
+import static jmeos.functions.functions.meos_finalize;
+import static jmeos.functions.functions.meos_initialize;
+
 public class Main {
     public static void main(String[] args) {
         SparkSession spark = SparkSession
@@ -13,6 +16,7 @@ public class Main {
                 .appName("Java Spark SQL basic example")
                 .getOrCreate();
 
+        meos_initialize("UTC");
         // Create an array of TGeomPointInst instances
         TimestampWithValue[] pointsArray = new TimestampWithValue[]{
                 new TimestampWithValue(java.sql.Timestamp.valueOf("2023-07-20 12:00:00"), 10.5),
@@ -43,6 +47,8 @@ public class Main {
         // Perform some basic operations on the DataFrame
         Dataset<Row> filteredPoints = pointsDF.filter("value > 15.0");
         filteredPoints.show();
+
+        meos_finalize();
 
         // Stop the Spark session
         spark.stop();
