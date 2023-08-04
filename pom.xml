@@ -32,10 +32,5 @@
             <artifactId>meos</artifactId>
             <version>1.0</version>
         </dependency>
-        <dependency>
-            <groupId>com.github.jnr</groupId>
-            <artifactId>jnr-ffi</artifactId>
-            <version>2.2.11</version>
-        </dependency>
     </dependencies>
 </project>
