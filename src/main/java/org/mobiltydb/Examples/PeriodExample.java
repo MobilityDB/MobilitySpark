@@ -1,6 +1,7 @@
 package org.mobiltydb.Examples;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.*;
+import org.mobiltydb.UDF.Period.StringToPeriodUDF;
 import org.mobiltydb.UDT.PeriodUDT;
 
 import java.sql.SQLException;
@@ -9,6 +10,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import jmeos.types.time.Period;
+import utils.UDFRegistrator;
+import utils.UDTRegistrator;
+
 import static jmeos.functions.functions.meos_initialize;
 import static jmeos.functions.functions.meos_finalize;
 import static org.apache.spark.sql.functions.col;
@@ -27,7 +31,9 @@ public class PeriodExample {
                 .config("spark.master", "local")
                 .getOrCreate();
 
-        UDTRegistration.register(Period.class.getCanonicalName(), PeriodUDT.class.getCanonicalName());
+        UDTRegistrator.registerUDTs(spark);
+        UDFRegistrator.registerUDFs(spark);
+
         // Create some example Period objects
         OffsetDateTime now = OffsetDateTime.now();
         Period period1 = new Period(now, now.plusHours(1));
@@ -58,11 +64,14 @@ public class PeriodExample {
         df.printSchema();
 
         // This will throw error because the attributes of period are not exposed to the DataFrame schema!!!
-        Dataset<Row> result2 = df
-                .withColumn("startDate", col("period.lower"))
-                .withColumn("endDate", col("period.upper"))
-                .withColumn("lowerInclusive", col("period.lowerInclusive"))
-                .withColumn("upperInclusive", col("period.upperInclusive"));
+//        Dataset<Row> result2 = df
+//                .withColumn("startDate", col("period.lower"))
+//                .withColumn("endDate", col("period.upper"))
+//                .withColumn("lowerInclusive", col("period.lowerInclusive"))
+//                .withColumn("upperInclusive", col("period.upperInclusive"));
+
+        spark.sql("SELECT stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)') as period")
+                .show(false);
 
         meos_finalize();
     }
