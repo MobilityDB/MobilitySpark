@@ -11,9 +11,14 @@ import java.util.List;
 import jmeos.types.time.Period;
 import static jmeos.functions.functions.meos_initialize;
 import static jmeos.functions.functions.meos_finalize;
+import static org.apache.spark.sql.functions.col;
 
+
+/**
+ * This example implements simple use cases utilizing the PeriodUDT Spark version of the Period class.
+**/
 public class PeriodExample {
-    public static void main(String[] args) throws SQLException {
+    public static void main(String[] args) throws SQLException, AnalysisException {
         meos_initialize("UTC");
 
         SparkSession spark = SparkSession
@@ -50,8 +55,14 @@ public class PeriodExample {
         // Show the result
         result.show(false);
 
-        Row first = result.first();
-        System.out.println(first);
+        df.printSchema();
+
+        // This will throw error because the attributes of period are not exposed to the DataFrame schema!!!
+        Dataset<Row> result2 = df
+                .withColumn("startDate", col("period.lower"))
+                .withColumn("endDate", col("period.upper"))
+                .withColumn("lowerInclusive", col("period.lowerInclusive"))
+                .withColumn("upperInclusive", col("period.upperInclusive"));
 
         meos_finalize();
     }
