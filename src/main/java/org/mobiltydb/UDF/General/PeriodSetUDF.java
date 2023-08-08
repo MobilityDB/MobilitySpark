@@ -1,15 +1,17 @@
 package org.mobiltydb.UDF.General;
 
+import jmeos.types.time.Period;
 import jmeos.types.time.PeriodSet;
 import org.apache.spark.sql.api.java.UDF1;
 
 
 import java.sql.SQLException;
 
-public class PeriodSetUDF implements UDF1<String, PeriodSet> {
+public class PeriodSetUDF {
 
-    @Override
-    public PeriodSet call(String value) throws SQLException {
-        return new PeriodSet(value);
-    }
+    /***
+     * Initialize PeriodSet from String.
+     */
+    public static UDF1<String, PeriodSet> periodset_in = PeriodSet::new;
+
 }

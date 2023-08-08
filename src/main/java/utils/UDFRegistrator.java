@@ -2,6 +2,7 @@ package utils;
 
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
+import org.mobiltydb.UDF.General.PeriodSetUDF;
 import org.mobiltydb.UDF.Period.*;
 import org.mobiltydb.UDT.*;
 
@@ -19,6 +20,7 @@ public class UDFRegistrator {
         //spark.udf().register("periodToPeriodSet", PeriodUDFs.toPeriodSet, new PeriodSetUDT());
         spark.udf().register("isAdjacentPeriod", PeriodUDFs.isAdjacentPeriod, DataTypes.BooleanType);
         //spark.udf().register("isAdjacentPeriodSet", PeriodUDFs.isAdjacentPeriodSet, DataTypes.BooleanType);
-
+        
+        PeriodSetUDFRegistrator.registerUDFs(spark);
     }
 }

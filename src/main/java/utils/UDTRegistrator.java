@@ -1,5 +1,6 @@
 package utils;
 
+import jmeos.types.time.PeriodSet;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.UDTRegistration;
 import org.mobiltydb.UDT.*;
