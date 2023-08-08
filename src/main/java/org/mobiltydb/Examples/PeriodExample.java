@@ -1,4 +1,5 @@
 package org.mobiltydb.Examples;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.*;
 import org.mobiltydb.UDF.Period.StringToPeriodUDF;
@@ -15,7 +16,7 @@ import utils.UDTRegistrator;
 
 import static jmeos.functions.functions.meos_initialize;
 import static jmeos.functions.functions.meos_finalize;
-import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.*;
 
 
 /**
@@ -73,7 +74,27 @@ public class PeriodExample {
         spark.sql("SELECT stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)') as period")
                 .show(false);
 
+        spark.sql("SELECT periodFromHexwkb('012100000040021FFE3402000000B15A26350200') as period")
+                .show(false);
+
+        df.withColumn("width", expr("periodWidth(period)")).show();
+        //Same but using callUDF method
+        df.withColumn("width", call_udf("periodWidth", col("period"))).show();
+
+        spark.sql("SELECT periodExpand(stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)'), " +
+                "stringToPeriod('(2019-09-08 02:00:00+02, 2019-09-10 02:00:00+02)')) as period").show(false);
+
+        //Add example here once we have PeriodSet UDT.
+
+        //
+
+        df.withColumn(
+                "isAdjacent",
+                expr("isAdjacentPeriod(period, stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)'))"))
+                .show(false);
+
+
+
         meos_finalize();
     }
 }
-
