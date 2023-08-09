@@ -1,8 +1,7 @@
 package org.mobiltydb.Examples;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.*;
-import org.mobiltydb.UDF.Period.StringToPeriodUDF;
+import org.mobiltydb.UDF.Period.PeriodUDFRegistrator;
 import org.mobiltydb.UDT.PeriodUDT;
 
 import java.sql.SQLException;
@@ -11,7 +10,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import jmeos.types.time.Period;
-import utils.UDFRegistrator;
 import utils.UDTRegistrator;
 
 import static jmeos.functions.functions.meos_initialize;
@@ -21,6 +19,7 @@ import static org.apache.spark.sql.functions.*;
 
 /**
  * This example implements simple use cases utilizing the PeriodUDT Spark version of the Period class.
+ * This is only an example of usage but is not a proper test.
 **/
 public class PeriodExample {
     public static void main(String[] args) throws SQLException, AnalysisException {
@@ -33,8 +32,8 @@ public class PeriodExample {
                 .getOrCreate();
 
         UDTRegistrator.registerUDTs(spark);
-        UDFRegistrator.registerUDFs(spark);
-
+        //UDFRegistrator.registerUDFs(spark);
+        PeriodUDFRegistrator.registerAllUDFs(spark);
         // Create some example Period objects
         OffsetDateTime now = OffsetDateTime.now();
         Period period1 = new Period(now, now.plusHours(1));
@@ -89,8 +88,8 @@ public class PeriodExample {
         //
 
         df.withColumn(
-                "isAdjacent",
-                expr("isAdjacentPeriod(period, stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)'))"))
+                "periodIsAdjacent",
+                expr("periodIsAdjacentPeriod(period, stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)'))"))
                 .show(false);
 
 
