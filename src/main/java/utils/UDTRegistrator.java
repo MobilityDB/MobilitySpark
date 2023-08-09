@@ -13,5 +13,6 @@ public class UDTRegistrator {
     public static void registerUDTs(SparkSession spark){
         // Note: Use full canonical names to register jmeos classes. Otherwise, it won't detect registration.
         UDTRegistration.register(jmeos.types.time.Period.class.getCanonicalName(), PeriodUDT.class.getCanonicalName());
+        UDTRegistration.register(jmeos.types.time.PeriodSet.class.getCanonicalName(), PeriodSetUDT.class.getCanonicalName());
     }
 }
