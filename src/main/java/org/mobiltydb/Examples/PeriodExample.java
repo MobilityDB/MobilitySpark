@@ -83,9 +83,9 @@ public class PeriodExample {
         spark.sql("SELECT periodExpand(stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)'), " +
                 "stringToPeriod('(2019-09-08 02:00:00+02, 2019-09-10 02:00:00+02)')) as period").show(false);
 
-        df.withColumn(
-                        "periodIsAdjacent",
-                        expr("periodIsAdjacentPeriod(period, stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)'))"))
+        df//.withColumn(
+                        //"periodIsAdjacent",
+                        //       expr("periodIsAdjacentPeriod(period, stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)'))"))
                 .withColumn("as_period_set", expr("periodToPeriodSet(period)"))
                 .show(false);
 

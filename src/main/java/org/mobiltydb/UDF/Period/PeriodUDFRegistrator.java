@@ -1,7 +1,9 @@
 package org.mobiltydb.UDF.Period;
 
+import jmeos.types.time.PeriodSet;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
+import org.mobiltydb.UDF.General.PeriodSetUDF;
 import org.mobiltydb.UDT.PeriodSetUDT;
 import org.mobiltydb.UDT.PeriodUDT;
 
