@@ -20,7 +20,7 @@ public class UDFRegistrator {
         //spark.udf().register("periodToPeriodSet", PeriodUDFs.toPeriodSet, new PeriodSetUDT());
         spark.udf().register("isAdjacentPeriod", PeriodUDFs.isAdjacentPeriod, DataTypes.BooleanType);
         //spark.udf().register("isAdjacentPeriodSet", PeriodUDFs.isAdjacentPeriodSet, DataTypes.BooleanType);
-        
+
         PeriodSetUDFRegistrator.registerUDFs(spark);
     }
 }

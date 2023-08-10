@@ -4,9 +4,7 @@ import jmeos.types.time.Period;
 import jmeos.types.time.PeriodSet;
 import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow;
-import org.apache.spark.sql.catalyst.util.ArrayData;
 import org.apache.spark.sql.types.*;
-import org.apache.spark.unsafe.types.UTF8String;
 
 import java.sql.SQLException;
 import java.util.Arrays;
