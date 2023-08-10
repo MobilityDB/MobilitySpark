@@ -11,7 +11,7 @@ import org.mobiltydb.UDT.PeriodUDT;
 public class PeriodUDFRegistrator {
     /**
      * Registers the UDFs for the Period class to enable usage within SparkSQL.
-     * @param spark
+     * @param spark: SparkSession
      */
     public static void registerAllUDFs(SparkSession spark) {
         // Register each UDF using spark.udf().register()
