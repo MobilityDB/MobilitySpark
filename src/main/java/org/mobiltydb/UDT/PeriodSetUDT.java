@@ -6,37 +6,43 @@ import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow;
 import org.apache.spark.sql.catalyst.util.ArrayData;
 import org.apache.spark.sql.types.*;
-import org.apache.spark.unsafe.types.UTF8String;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 
 public class PeriodSetUDT extends UserDefinedType<PeriodSet> {
+    private final PeriodUDT periodUDT = new PeriodUDT();
 
     @Override
-    public StructType sqlType() {
+    public DataType sqlType() {
         return new StructType().add(
-                "value", new ArrayType(new PeriodUDT(),false)
+                "value", new ArrayType(periodUDT.sqlType(),false)
         );
     }
 
     @Override
     public PeriodSet deserialize(Object datum) {
-        if (datum instanceof InternalRow row) {
-            Period[] periods = new Period[row.numFields()];
-            for (int i = 0; i < periods.length; i++) {
-                periods[i] = (Period) row.get(i, new PeriodUDT());
-            }
-
-            try {
-                return new PeriodSet(periods);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
+        if (!(datum instanceof InternalRow row)) {
+            throw new IllegalArgumentException("Expected InternalRow, but got: " + datum.getClass().getSimpleName());
         }
-        return null;
+        ArrayData arrayData = row.getArray(0);
+        List<Period> periods = new ArrayList<>();
+
+        for (int i = 0; i < arrayData.numElements(); i++) {
+            InternalRow internalRow = arrayData.getStruct(i, 2);
+            Period period = periodUDT.deserialize(internalRow);
+            periods.add(period);
+        }
+
+        try {
+            return new PeriodSet(periods.toArray(new Period[0]));
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @Override
@@ -49,10 +55,13 @@ public class PeriodSetUDT extends UserDefinedType<PeriodSet> {
 
         Object[] values = new Object[periods.size()];
         for(int i = 0; i < periods.size(); i++) {
-            values[i] = periods.get(i);
+            values[i] = periodUDT.serialize(periods.get(i));
         }
 
-        return new GenericInternalRow(values);
+        ArrayData arrayData = ArrayData.toArrayData(values);
+
+        // Wrap the array data in a row.
+        return new GenericInternalRow(new Object[] { arrayData });
     }
 
     @Override
