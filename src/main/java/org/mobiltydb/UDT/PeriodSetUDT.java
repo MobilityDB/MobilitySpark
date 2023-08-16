@@ -13,50 +13,13 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class PeriodSetUDT extends UserDefinedType<PeriodSet> {
-
-    @Override
-    public StructType sqlType() {
-        return new StructType().add(
-                "value", new ArrayType(new PeriodUDT(),false)
-        );
-    }
-
-    @Override
-    public PeriodSet deserialize(Object datum) {
-        if (datum instanceof InternalRow row) {
-            Period[] periods = new Period[row.numFields()];
-            for (int i = 0; i < periods.length; i++) {
-                periods[i] = (Period) row.get(i, new PeriodUDT());
-            }
-
-            try {
-                return new PeriodSet(periods);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public Object serialize(PeriodSet periodSet) {
-        if (periodSet == null) {
-            return null;
-        }
-
-        List<Period> periods = Arrays.stream(periodSet.periods()).toList();
-
-        Object[] values = new Object[periods.size()];
-        for(int i = 0; i < periods.size(); i++) {
-            values[i] = periods.get(i);
-        }
-
-        return new GenericInternalRow(values);
-    }
-
+public class PeriodSetUDT extends MeosDatatype<PeriodSet> {
     @Override
     public Class<PeriodSet> userClass() {
         return PeriodSet.class;
+    }
+    @Override
+    protected PeriodSet fromString(String s) throws SQLException{
+        return new PeriodSet(s);
     }
 }
