@@ -60,10 +60,9 @@ public class PeriodExample {
 
 
         System.out.println("Example 1: Show all Periods.");
+        df.printSchema();
         // Show the result
         result.show(false);
-
-        df.printSchema();
 
         // This will throw error because the attributes of period are not exposed to the DataFrame schema!!!
 //        Dataset<Row> result2 = df
@@ -76,18 +75,26 @@ public class PeriodExample {
         spark.sql("SELECT stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)') as period")
                 .show(false);
 
+        Period hex = Period.from_hexwkb("012100000040021FFE3402000000B15A26350200");
+        System.out.println(hex.toString());
+        System.out.println(hex.getValue());
+
+        Period p2 = new Period("[2019-09-08 00:00:01Z, 2023-08-07 13:10:49Z)");
+        System.out.println(p2.toString());
+        System.out.println(p2.getValue());
+
         System.out.println("Example 3: Parse a hexwkb string to period and show the table.");
-        spark.sql("SELECT periodFromHexwkb('012100000040021FFE3402000000B15A26350200') as period")
-                .show(false);
+        //spark.sql("SELECT periodFromHexwkb('012100000040021FFE3402000000B15A26350200') as period")
+        //        .show(false);
 
         System.out.println("Example 4: Add a column displaying the width of the period.");
         df.withColumn("width", expr("periodWidth(period)"));
         //Same but using callUDF method
-        //df.withColumn("width", call_udf("periodWidth", col("period"))).show();
+        df.withColumn("width", call_udf("periodWidth", col("period"))).show();
 
         System.out.println("Example 5: Select the result of expanding two periods: [2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02) and (2019-09-08 02:00:00+02, 2019-09-10 02:00:00+02)");
         spark.sql("SELECT periodExpand(stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)'), " +
-                "stringToPeriod('(2019-09-08 02:00:00+02, 2019-09-10 02:00:00+02)')) as period").show(false);
+                "stringToPeriod('[2019-09-08 02:00:01+02, 2019-09-10 02:00:01+02)')) as period").show(false);
 
         Period period4 = new Period("[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)");
         Period period5 = new Period("[2023-08-06 14:10:49+02, 2023-08-08 15:10:49+02)");
