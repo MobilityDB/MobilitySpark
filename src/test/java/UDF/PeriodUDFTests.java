@@ -37,6 +37,7 @@ public class PeriodUDFTests extends SparkTestUtils {
     public void testFromHexwkb() throws SQLException {
         Dataset<Row> df = spark.sql("SELECT periodFromHexwkb('012100000040021FFE3402000000B15A26350200') as period");
         Row row = df.collectAsList().get(0);
+        System.out.println(row.toString());
         Period result = (Period) row.getAs("period");
         Assertions.assertEquals("(2019-09-08 02:00:00+02, 2019-09-10 02:00:00+02)", result.toString());
     }

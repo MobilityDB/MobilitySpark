@@ -7,6 +7,7 @@ import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.types.UDTRegistration;
 import org.mobiltydb.UDT.PeriodSetUDT;
 import org.mobiltydb.UDT.PeriodUDT;
+
 import utils.PeriodSetUDFRegistrator;
 import utils.UDTRegistrator;
 
@@ -30,6 +31,7 @@ public class PeriodSetExample {
                 .getOrCreate();
 
         UDTRegistrator.registerUDTs(spark);
+
         PeriodSetUDFRegistrator.registerUDFs(spark);
 
         // Create Period and PeriodSet objects

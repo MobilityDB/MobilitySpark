@@ -8,6 +8,7 @@ import java.time.ZoneOffset;
 import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow;
 import org.apache.spark.sql.types.*;
+import org.apache.spark.unsafe.types.UTF8String;
 
 /**
  * Custom User Defined Type (UDT) for the OffsetDateTime data type.
@@ -39,7 +40,7 @@ public class OffsetDateTimeUDT extends UserDefinedType<OffsetDateTime> {
     public Object serialize(OffsetDateTime offsetDateTime) {
         Object[] values = new Object[2];
         values[0] = offsetDateTime.toInstant().toEpochMilli();
-        values[1] = offsetDateTime.getOffset().toString();
+        values[1] = UTF8String.fromString(offsetDateTime.getOffset().toString());
         return new GenericInternalRow(values);
     }
 

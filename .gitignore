@@ -16,4 +16,5 @@ log/
 target/
 /libs/
 
+*.log
 libs/
