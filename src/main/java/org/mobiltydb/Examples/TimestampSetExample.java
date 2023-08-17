@@ -42,21 +42,18 @@ public class TimestampSetExample {
         TimestampSet tsSet3 = new TimestampSet(time2, time3);
 
         List<Row> data = Arrays.asList(
-                RowFactory.create(now, time1, tsSet1),
-                RowFactory.create(time1, time2, tsSet2),
-                RowFactory.create(time2, time3, tsSet3)
+                RowFactory.create(tsSet1),
+                RowFactory.create(tsSet2),
+                RowFactory.create(tsSet3)
         );
 
         StructType schema = new StructType()
-                .add("startTime", new OffsetDateTimeUDT())
-                .add("endTime", new OffsetDateTimeUDT())
                 .add("timestampSet", new TimestampSetUDT());
 
         // Create a DataFrame with columns of OffsetDateTime and TimestampSet
         Dataset<Row> df = spark.createDataFrame(data, schema);
 
-        System.out.println("Example 1: Create a dataframe with 2 columns of OffsetDatetime data type " +
-                "and 1 of TimestampSet data type.");
+        System.out.println("Example 1: Create a dataframe with 1 column of TimestampSet data type.");
 
         // Show the result
         df.show(false);

@@ -7,6 +7,7 @@ import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.types.UDTRegistration;
 import org.mobiltydb.UDT.PeriodSetUDT;
 import org.mobiltydb.UDT.PeriodUDT;
+import utils.UDTRegistrator;
 
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
@@ -25,8 +26,7 @@ public class PeriodSetExample {
                 .config("spark.master", "local")
                 .getOrCreate();
 
-        UDTRegistration.register(Period.class.getCanonicalName(), PeriodUDT.class.getCanonicalName());
-        UDTRegistration.register(PeriodSet.class.getCanonicalName(), PeriodSetUDT.class.getCanonicalName());
+        UDTRegistrator.registerUDTs(spark);
 
         // Create Period and PeriodSet objects
         OffsetDateTime now = OffsetDateTime.now();
