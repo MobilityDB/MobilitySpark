@@ -7,6 +7,8 @@ import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.types.UDTRegistration;
 import org.mobiltydb.UDT.PeriodSetUDT;
 import org.mobiltydb.UDT.PeriodUDT;
+
+import utils.PeriodSetUDFRegistrator;
 import utils.UDTRegistrator;
 
 import java.sql.SQLException;
@@ -15,6 +17,8 @@ import java.util.List;
 
 import static jmeos.functions.functions.meos_finalize;
 import static jmeos.functions.functions.meos_initialize;
+import static org.apache.spark.sql.functions.*;
+import static org.apache.spark.sql.functions.expr;
 
 public class PeriodSetExample {
     public static void main(String[] args) throws SQLException, AnalysisException {
@@ -27,6 +31,8 @@ public class PeriodSetExample {
                 .getOrCreate();
 
         UDTRegistrator.registerUDTs(spark);
+
+        PeriodSetUDFRegistrator.registerUDFs(spark);
 
         // Create Period and PeriodSet objects
         OffsetDateTime now = OffsetDateTime.now();
@@ -56,6 +62,13 @@ public class PeriodSetExample {
         result.show(false);
 
         df.printSchema();
+
+        Dataset<Row> resultUdf = spark.sql("SELECT periodset_in('{[2021-04-08 05:04:45+01, 2021-04-08 06:04:45+01], [2021-04-08 07:04:45+01, 2021-04-08 08:04:45+01], [2021-04-08 09:04:45+01, 2021-04-08 10:04:45+01]}') as value");
+        resultUdf.show(false);
+
+        // Convert row into PeriodSet class
+        Row periodSetValue = resultUdf.collectAsList().get(0);
+        PeriodSet periodSet1 = (PeriodSet) periodSetValue.get(0);
 
         meos_finalize();
         spark.stop();

@@ -23,6 +23,7 @@ public class SparkTestUtils {
         UDTRegistrator.registerUDTs(spark);
         //UDFRegistrator.registerUDFs(spark);
         PeriodUDFRegistrator.registerAllUDFs(spark);
+        PeriodSetUDFRegistrator.registerUDFs(spark);
     }
 
     @AfterAll
