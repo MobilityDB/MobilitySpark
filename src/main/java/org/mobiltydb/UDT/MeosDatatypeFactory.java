@@ -4,6 +4,8 @@ import jmeos.types.time.Period;
 import jmeos.types.time.PeriodSet;
 import jmeos.types.time.TimestampSet;
 
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * Factory class for handling Meos data types.
  * Provides methods to get the canonical names of both the UDTs and the associated data types.
@@ -13,10 +15,26 @@ public class MeosDatatypeFactory {
     /**
      * Enumeration representing the different Meos data types supported.
      */
-    public enum MeosTypes{
-        PERIOD,
-        PERIODSET,
-        TIMESTAMPSET
+    public enum MeosTypes {
+        PERIOD(Period.class, PeriodUDT.class),
+        PERIODSET(PeriodSet.class, PeriodSetUDT.class),
+        TIMESTAMPSET(TimestampSet.class, TimestampSetUDT.class);
+
+        private final Class<?> meosClass;
+        private final Class<?> sparkUdtClass;
+
+        MeosTypes(Class<?> meosClass, Class<?> sparkUdtClass) {
+            this.meosClass = meosClass;
+            this.sparkUdtClass = sparkUdtClass;
+        }
+
+        public Class<?> getMeosClass() {
+            return meosClass;
+        }
+
+        public Class<?> getSparkUdtClass() {
+            return sparkUdtClass;
+        }
     }
 
     /**
@@ -26,13 +44,8 @@ public class MeosDatatypeFactory {
      * @return The canonical name of the associated UDT.
      * @throws IllegalArgumentException If the provided type is not recognized.
      */
-    public static String loadMeosSparkDatatype(MeosTypes type){
-        switch (type){
-            case PERIOD: return PeriodUDT.class.getCanonicalName();
-            case PERIODSET: return PeriodSetUDT.class.getCanonicalName();
-            case TIMESTAMPSET: return TimestampSetUDT.class.getCanonicalName();
-            default: throw new IllegalArgumentException("Unknown type: " + type);
-        }
+    public static String getSparkMeosDatatypeClassname(MeosTypes type) {
+        return type.getSparkUdtClass().getCanonicalName();
     }
 
     /**
@@ -42,12 +55,16 @@ public class MeosDatatypeFactory {
      * @return The canonical name of the specified Meos type.
      * @throws IllegalArgumentException If the provided type is not recognized.
      */
-    public static String loadMeosDatatype(MeosTypes type){
-        switch (type){
-            case PERIOD: return Period.class.getCanonicalName();
-            case PERIODSET: return PeriodSet.class.getCanonicalName();
-            case TIMESTAMPSET: return TimestampSet.class.getCanonicalName();
-            default: throw new IllegalArgumentException("Unknown type: " + type);
+    public static String getMeosDatatypeClassname(MeosTypes type) {
+        return type.getMeosClass().getCanonicalName();
+    }
+
+    public static MeosDatatype<?> createMeosDatatype(MeosTypes type) {
+        try {
+            return (MeosDatatype<?>) type.getSparkUdtClass().getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            throw new IllegalArgumentException("Unable to instantiate type: " + type, e);
         }
     }
+
 }
