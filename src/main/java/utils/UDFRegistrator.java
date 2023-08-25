@@ -2,11 +2,8 @@ package utils;
 
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
-import org.mobiltydb.UDF.General.PeriodSetUDF;
 import org.mobiltydb.UDF.Period.*;
 import org.mobiltydb.UDT.*;
-
-import java.time.Period;
 
 /**
  * Unifies UDF registration into one single class.
@@ -21,7 +18,7 @@ public class UDFRegistrator {
         spark.udf().register("isAdjacentPeriod", PeriodUDFs.isAdjacentPeriod, DataTypes.BooleanType);
         //spark.udf().register("isAdjacentPeriodSet", PeriodUDFs.isAdjacentPeriodSet, DataTypes.BooleanType);
 
-        TemporalUDFRegistrator.registerUDFs(spark);
+        TemporalUDFRegistrar.registerUDFs(spark);
         PeriodSetUDFRegistrator.registerUDFs(spark);
     }
 }
