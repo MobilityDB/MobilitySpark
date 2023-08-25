@@ -1,5 +1,8 @@
 package org.mobiltydb.UDT;
 
+import jmeos.types.basic.tfloat.TFloat;
+import jmeos.types.basic.tpoint.tgeog.TGeogPoint;
+import jmeos.types.boxes.TBox;
 import jmeos.types.time.Period;
 import jmeos.types.time.PeriodSet;
 import jmeos.types.time.TimestampSet;
@@ -18,7 +21,10 @@ public class MeosDatatypeFactory {
     public enum MeosTypes {
         PERIOD(Period.class, PeriodUDT.class),
         PERIODSET(PeriodSet.class, PeriodSetUDT.class),
-        TIMESTAMPSET(TimestampSet.class, TimestampSetUDT.class);
+        TIMESTAMPSET(TimestampSet.class, TimestampSetUDT.class),
+        TFLOAT(TFloat.class, TFloatUDT.class),
+        TBOX(TBox.class, TBoxUDT.class),
+        TGEOGPOINT(TGeogPoint.class, TGeogPointUDT.class);
 
         private final Class<?> meosClass;
         private final Class<?> sparkUdtClass;
