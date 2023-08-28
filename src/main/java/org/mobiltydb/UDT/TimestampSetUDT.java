@@ -1,9 +1,11 @@
 package org.mobiltydb.UDT;
 
 import jmeos.types.time.TimestampSet;
+import utils.TypeName;
 
 import java.sql.SQLException;
 
+@TypeName(name="timestampset")
 public class TimestampSetUDT extends MeosDatatype<TimestampSet> {
 
     @Override
@@ -12,7 +14,7 @@ public class TimestampSetUDT extends MeosDatatype<TimestampSet> {
     }
 
     @Override
-    protected TimestampSet fromString(String s) throws SQLException{
+    public TimestampSet fromString(String s) throws SQLException{
         return new TimestampSet(s);
     }
 }

@@ -6,6 +6,7 @@ import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow;
 import org.apache.spark.sql.catalyst.util.ArrayData;
 import org.apache.spark.sql.types.*;
+import utils.TypeName;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
+@TypeName(name="periodset")
 public class PeriodSetUDT extends MeosDatatype<PeriodSet> {
 
     @Override
@@ -20,7 +22,7 @@ public class PeriodSetUDT extends MeosDatatype<PeriodSet> {
         return PeriodSet.class;
     }
     @Override
-    protected PeriodSet fromString(String s) throws SQLException{
+    public PeriodSet fromString(String s) throws SQLException{
         return new PeriodSet(s);
     }
 }

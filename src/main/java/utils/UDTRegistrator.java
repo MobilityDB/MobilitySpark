@@ -11,9 +11,9 @@ import org.mobiltydb.UDT.*;
  */
 public class UDTRegistrator {
     public static void registerUDTs(SparkSession spark){
-        for (MeosDatatypeFactory.MeosTypes type: MeosDatatypeFactory.MeosTypes.values()){
-            String externalClassCanonicalName = MeosDatatypeFactory.getMeosDatatypeClassname(type);
-            String udtClassCanonicalName = MeosDatatypeFactory.getSparkMeosDatatypeClassname(type);
+        for (MeosSparkDatatypes type: MeosSparkDatatypes.values()){
+            String externalClassCanonicalName = type.getMeosClass().getCanonicalName();
+            String udtClassCanonicalName = type.getSparkUdtClass().getCanonicalName();
             UDTRegistration.register(externalClassCanonicalName, udtClassCanonicalName);
         }
     }
