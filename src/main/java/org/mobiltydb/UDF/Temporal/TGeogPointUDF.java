@@ -11,6 +11,7 @@ import scala.collection.immutable.ArraySeq;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public class TGeogPointUDF {
@@ -21,26 +22,48 @@ public class TGeogPointUDF {
         }
     };
 
-    public static UDF3<Double, Double, Timestamp, TGeogPoint> tGeogPointIn = new UDF3<>() {
+    /**
+     * Initiate TGeogPoint from (Double, Double, Timestamp).
+     */
+    public static UDF3<Double, Double, Timestamp, TGeogPointInst> tGeogPointInstIn = new UDF3<>() {
         @Override
-        public TGeogPoint call(Double latitude, Double longitude, Timestamp timestamp) throws Exception {
+        public TGeogPointInst call(Double latitude, Double longitude, Timestamp timestamp) throws Exception {
             Point point = new Point(latitude, longitude);
             SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssX");
 
-            // TODO: Change +02 into dynamic variable
             String value = String.format("Point%s@%s", point.getValue(), outputFormat.format(timestamp));
-            return new TGeogPoint(value);
+            return new TGeogPointInst(value);
         }
     };
 
     /**
-     * Convert
+     * Convert ArraySeq from Dataframe to TGeogPointSeq.
      */
     public static UDF1<ArraySeq<TGeogPointInst>, TGeogPointSeq> tGeogPointSeqIn = new UDF1<>() {
         @Override
         public TGeogPointSeq call(ArraySeq<TGeogPointInst> points) throws Exception {
             List<TGeogPointInst> pointList = JavaConverters.seqAsJavaListConverter(points).asJava();
-            return new TGeogPointSeq(pointList.toString());
+            return new TGeogPointSeq(pointList.toArray(new TGeogPointInst[0]));
+        }
+    };
+
+    /**
+     * Return the number of instant in TGeogPointSeq.
+     */
+    public static UDF1<TGeogPointSeq, Integer> tGeogPointNumInstant = new UDF1<>() {
+        @Override
+        public Integer call(TGeogPointSeq tGeogPointSeq){
+            return tGeogPointSeq.numInstants();
+        }
+    };
+
+    /**
+     * Return start timestamp from TGeogPointSeq.
+     */
+    public static UDF1<TGeogPointSeq, OffsetDateTime> tGeogPointSeqStartTimestamp = new UDF1<>() {
+        @Override
+        public OffsetDateTime call(TGeogPointSeq tGeogPointSeq) {
+            return tGeogPointSeq.startTimestamp();
         }
     };
 }

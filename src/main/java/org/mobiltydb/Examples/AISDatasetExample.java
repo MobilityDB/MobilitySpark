@@ -11,7 +11,7 @@ import static org.apache.spark.sql.functions.callUDF;
 import static org.apache.spark.sql.functions.col;
 
 public class AISDatasetExample {
-    private static String CSV_PATH = "/home/satria/Documents/aisinput.csv";
+    private static String CSV_PATH = "src/main/java/org/mobiltydb/Examples/Data/aisinput.csv";
 
     public static void main(String[] args) {
         meos_initialize("UTC+2");
@@ -42,6 +42,20 @@ public class AISDatasetExample {
                 .agg(callUDF("tGeogPointSeqIn", functions.collect_list(col("point"))).as("trajectory"),
                         callUDF("tFloatSeqIn", functions.collect_list(col("sog"))).as("sog"));
         trajectories.show();
+
+        // TODO: Inspect why the number of points is not reduced for SparkMeos implementation.
+        Dataset<Row> originalCounts = ais.groupBy("mmsi")
+                .count()
+                .withColumnRenamed("count", "original #points");
+
+        Dataset<Row> instantsCounts = trajectories
+                .withColumn("SparkMEOS #points", callUDF("tGeogPointSeqNumInstant", trajectories.col("trajectory")));
+
+        Dataset<Row> startTimeStamp = trajectories
+                .withColumn("Start Timestamp", callUDF("tGeogPointSeqStartTimestamp", trajectories.col("trajectory")));
+
+        originalCounts.join(instantsCounts, "mmsi").join(startTimeStamp, "mmsi").
+                select("mmsi", "SparkMEOS #points", "original #points", "Start Timestamp").show();
 
         spark.stop();
         meos_finalize();

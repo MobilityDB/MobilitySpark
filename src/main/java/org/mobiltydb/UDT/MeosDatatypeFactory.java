@@ -1,13 +1,18 @@
 package org.mobiltydb.UDT;
 
 import jmeos.types.basic.tfloat.TFloat;
+import jmeos.types.basic.tfloat.TFloatInst;
+import jmeos.types.basic.tfloat.TFloatSeq;
 import jmeos.types.basic.tpoint.tgeog.TGeogPoint;
+import jmeos.types.basic.tpoint.tgeog.TGeogPointInst;
+import jmeos.types.basic.tpoint.tgeog.TGeogPointSeq;
 import jmeos.types.boxes.TBox;
 import jmeos.types.time.Period;
 import jmeos.types.time.PeriodSet;
 import jmeos.types.time.TimestampSet;
 
 import java.lang.reflect.InvocationTargetException;
+import java.time.OffsetDateTime;
 
 /**
  * Factory class for handling Meos data types.
@@ -23,8 +28,13 @@ public class MeosDatatypeFactory {
         PERIODSET(PeriodSet.class, PeriodSetUDT.class),
         TIMESTAMPSET(TimestampSet.class, TimestampSetUDT.class),
         TFLOAT(TFloat.class, TFloatUDT.class),
+        TFLOATINST(TFloatInst.class, TFloatInstUDT.class),
+        TFLOATSEQ(TFloatSeq.class, TFloatSeqUDT.class),
         TBOX(TBox.class, TBoxUDT.class),
-        TGEOGPOINT(TGeogPoint.class, TGeogPointUDT.class);
+        TGEOGPOINT(TGeogPoint.class, TGeogPointUDT.class),
+        TGEOGPOINTINST(TGeogPointInst.class, TGeogPointInstUDT.class),
+        TGEOGPOINTSEQ(TGeogPointSeq.class, TGeogPointSeqUDT.class),
+        OFFSETDATETIME(OffsetDateTime.class, OffsetDateTimeUDT.class);
 
         private final Class<?> meosClass;
         private final Class<?> sparkUdtClass;

@@ -14,9 +14,7 @@ public class UDFRegistrator {
         spark.udf().register("periodFromHexwkb", PeriodUDFs.fromHexwkbUDF, new PeriodUDT());
         spark.udf().register("periodWidth", PeriodUDFs.width, DataTypes.FloatType);
         spark.udf().register("periodExpand", PeriodUDFs.expand, new PeriodUDT());
-        //spark.udf().register("periodToPeriodSet", PeriodUDFs.toPeriodSet, new PeriodSetUDT());
         spark.udf().register("isAdjacentPeriod", PeriodUDFs.isAdjacentPeriod, DataTypes.BooleanType);
-        //spark.udf().register("isAdjacentPeriodSet", PeriodUDFs.isAdjacentPeriodSet, DataTypes.BooleanType);
 
         TemporalUDFRegistrar.registerUDFs(spark);
         PeriodSetUDFRegistrator.registerUDFs(spark);
