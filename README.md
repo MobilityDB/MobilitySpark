@@ -39,6 +39,19 @@ SparkMeos explores the advantages of MobilityDB datatypes and functions in the S
 
 ### Build the project
 
+First, make sure to have installed Maven in your machine. In case of MacOS, you can install via [Homebrew](https://formulae.brew.sh/formula/maven). The other step will be to install MobilityDB with MEOS in your machine, as the meos library files are required. To install MobilityDB with MEOS please follow the following instructions in your terminal:
+
+```bash
+git clone https://github.com/MobilityDB/MobilityDB
+mkdir MobilityDB/build
+cd MobilityDB/build
+**cmake -D MEOS=ON.. // This flag is important, to indicate the installer to build with the meos tools.**
+make
+sudo make install
+```
+
+Once done, we can proceed to build the project. Spark will be downloaded as a maven dependency automatically, and JMEOS is already packaged within the project.
+
 To build the project using Maven command-line tools, follow these steps:
 
 1. Open a terminal or command prompt.
@@ -80,6 +93,8 @@ java.base/java.nio=ALL-UNNAMED
 --add-opens
 java.base/java.lang=ALL-UNNAMED
 ```
+
+### AIS Dataset
 
 ## Understanding SparkMeos
 
@@ -207,6 +222,10 @@ The `spark.sql()` command shown queries Spark to execute a SQL statement. In thi
 
 As well as with the UDT’s, each UDF should be registered, this happens when calling `UDFRegistrator.registerUDFs(spark);`. 
 
+## Unit Test
+
+Currently, we have implemented small 
+
 ## Future Work
 
 Since this is only a POC to demonstrate that MobilityDB and MEOS can be ported into Spark, we want to highlight the next steps and future work to achieve a full implementation:
@@ -218,6 +237,8 @@ Since this is only a POC to demonstrate that MobilityDB and MEOS can be ported i
     - The currently implementation wraps some of the functions either into a UDF1 or UDF2 class, but wrapping all the existing functions will be an almost impossible task to do.
     - A proposal is to create a UDF generator script that, just like in JMEOS, creates all the UDFs based on the expected data and return type.
     - Since some of the functions can return many different data types, future implementations should take into account the use of function overloading and polymorphism to fit into Spark SQL this behavior. This is achievable since all UDTs use MeosDatatype<T> under the hood, and also each instance of T follows the hierarchy defined in JMEOS.
+- **************Proper UDT implementation**************
+    - Right now, we have abstraction called MeosDataType for implementing the UDT, and able to implement MEOS DataType as UDT in Spark. In the future we want to extend the abstraction of Meos DataType by implementing the base type like Temporal, Sequence, etc as an UDT interface to allow polymorphism.
 - **Creation of the JDBC Spark / Postgres Dialect with the UDTs.**
     - Initial work in this has been explored (please see the jdbc-controller branch), but a more robust and satisfactory implementation is needed.
     - We need to implement a Dialect that correctly maps each UDT to its MobilityDB equivalent. For example we need to map period to PeriodUDT and perform the necessary transformations.
