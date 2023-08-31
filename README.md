@@ -61,6 +61,27 @@ To build the project using Maven command-line tools, follow these steps:
 
 Note that you may need to have Maven installed on your system in order to run the command.
 
+### Set up Intellij IDEA (Optional)
+
+Additionally, if you are using Intellij IDEA you can use similar setup to run your spark project.
+
+```java
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Spark" type="Application" factoryName="Application">
+    <envs>
+      <env name="SPARK_LOCAL_IP" value="10.93.44.4" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="org.mobiltydb.Examples.AISDatasetExample" />
+    <module name="SparkMeos" />
+    <option name="PROGRAM_PARAMETERS" value="-c spark.driver.bindAddress=127.0.0.1" />
+    <option name="VM_PARAMETERS" value="--add-exports=java.base/sun.nio.ch=ALL-UNNAMED " />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
+```
+
 ### Running the examples
 
 ::: note 📝
@@ -95,6 +116,43 @@ java.base/java.lang=ALL-UNNAMED
 ```
 
 ### AIS Dataset
+
+We also implemented AIS Dataset example.
+
+```java
+// Read AIS Dataset
+        ais = ais.withColumn("point", callUDF("tGeogPointIn", col("latitude"), col("longitude"), col("t")))
+                        .withColumn("sog", callUDF("tFloatIn", col("sog"), col("t")));
+        ais = ais.drop("latitude", "longitude");
+        ais.show();
+```
+
+In the example, we did aggregation using spark and custom UDF from SparkMeos to assemble the dataset.
+
+```java
+// Assemble AIS Dataset
+        Dataset<Row> trajectories = ais.groupBy("mmsi")
+                .agg(callUDF("tGeogPointSeqIn", functions.collect_list(col("point"))).as("trajectory"),
+                        callUDF("tFloatSeqIn", functions.collect_list(col("sog"))).as("sog"));
+        trajectories.show();
+```
+
+Furthermore, we did simple analytics.
+
+```java
+Dataset<Row> originalCounts = ais.groupBy("mmsi")
+                .count()
+                .withColumnRenamed("count", "original #points");
+
+        Dataset<Row> instantsCounts = trajectories
+                .withColumn("SparkMEOS #points", callUDF("tGeogPointSeqNumInstant", trajectories.col("trajectory")));
+
+        Dataset<Row> startTimeStamp = trajectories
+                .withColumn("Start Timestamp", callUDF("tGeogPointSeqStartTimestamp", trajectories.col("trajectory")));
+
+        originalCounts.join(instantsCounts, "mmsi").join(startTimeStamp, "mmsi").
+                select("mmsi", "SparkMEOS #points", "original #points", "Start Timestamp").show();
+```
 
 ## Understanding SparkMeos
 
@@ -224,7 +282,7 @@ As well as with the UDT’s, each UDF should be registered, this happens when ca
 
 ## Unit Test
 
-Currently, we have implemented small 
+Currently, we have implemented small unittest for our project. However, the unittest only works for Intellij IDEA and will fail if we run them through maven. We are currently disabling the unittest in the build configuration.
 
 ## Future Work
 
