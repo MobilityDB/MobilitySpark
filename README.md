@@ -10,15 +10,15 @@ MobilitySpark explores the advantages of MobilityDB datatypes and functions in t
 
 ## Table of Contents
 
-- [Features](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#features)
-- [Requirement](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#requirements)
-- [Installation](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#installation)
-- [Usage](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#usage)
-- [Understanding SparkMeos](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#understanding-sparkmeos)
-    - [The Code Structure](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#the-code-structure)
-    - [UDTs](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#udts)
-    - [UDFs](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#udfs)
-- [Future Work](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#future-work)
+- [Features](https://github.com/MobilityDB/MobilitySpark#features)
+- [Requirement](https://github.com/MobilityDB/MobilitySpark#requirements)
+- [Installation](https://github.com/MobilityDB/MobilitySpark#installation)
+- [Usage](https://github.com/MobilityDB/MobilitySpark#usage)
+- [Understanding SparkMeos](https://github.com/MobilityDB#understanding-sparkmeos)
+    - [The Code Structure](https://github.com/MobilityDB#the-code-structure)
+    - [UDTs](https://github.com/MobilityDB/MobilitySpark#udts)
+    - [UDFs](https://github.com/MobilityDB/MobilitySpark#udfs)
+- [Future Work](https://github.com/MobilityDB/MobilitySpark#future-work)
 
 ## Features
 
