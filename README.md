@@ -10,15 +10,15 @@ MobilitySpark explores the advantages of MobilityDB datatypes and functions in t
 
 ## Table of Contents
 
-- [Features](https://www.notion.so/SparkMeos-67cc21ffc21b479b91c832dba75dbae8?pvs=21)
-- [Requirements](https://www.notion.so/SparkMeos-67cc21ffc21b479b91c832dba75dbae8?pvs=21)
-- [Installation](https://www.notion.so/SparkMeos-67cc21ffc21b479b91c832dba75dbae8?pvs=21)
-- [Usage](https://www.notion.so/SparkMeos-67cc21ffc21b479b91c832dba75dbae8?pvs=21)
-- [Understanding SparkMeos](https://www.notion.so/SparkMeos-67cc21ffc21b479b91c832dba75dbae8?pvs=21)
-    - [The Code Structure](https://www.notion.so/SparkMeos-67cc21ffc21b479b91c832dba75dbae8?pvs=21)
-    - [UDTs](https://www.notion.so/SparkMeos-67cc21ffc21b479b91c832dba75dbae8?pvs=21)
-    - [UDFs](https://www.notion.so/SparkMeos-67cc21ffc21b479b91c832dba75dbae8?pvs=21)
-- [Future Work](https://www.notion.so/SparkMeos-67cc21ffc21b479b91c832dba75dbae8?pvs=21)
+- [Features](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#features)
+- [Requirement](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#requirements)
+- [Installation](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#installation)
+- [Usage](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#usage)
+- [Understanding SparkMeos](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#understanding-sparkmeos)
+    - [The Code Structure](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#the-code-structure)
+    - [UDTs](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#udts)
+    - [UDFs](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#udfs)
+- [Future Work](https://github.com/MobilityDB/MobilitySpark/edit/main/README.md#future-work)
 
 ## Features
 
