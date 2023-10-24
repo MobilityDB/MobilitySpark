@@ -1,21 +1,30 @@
 # MobilitySpark
 
-A proof-of-concept implementation of MEOS for https://github.com/MobilityDB/MobilityDB on Spark, using the JMEOS library as middleware.
+An open-source large-scale geospatial trajectory data analytics platform based on [Spark](https://spark.apache.org/).
 
 ::: note 📝
 
-MobilitySpark explores the advantages of MobilityDB datatypes and functions in the Spark environment. However, it should be noted that the current implementation is not a full implementation and is still far from complete.
+MobilitySpark explores the advantages of [MobilityDB](https://github.com/MobilityDB/MobilityDB) datatypes and functions in the Spark environment. However, it should be noted that the current implementation is not a full implementation and is still far from complete.
 
 :::
+
+<img src="images/mobilitydb-logo.svg" width="200" alt="MobilityDB Logo" />
+
+The MobilityDB project is developed by the Computer & Decision Engineering Department of the [Université libre de Bruxelles](https://www.ulb.be/) (ULB) under the direction of [Prof. Esteban Zimányi](http://cs.ulb.ac.be/members/esteban/). ULB is an OGC Associate Member and member of the OGC Moving Feature Standard Working Group ([MF-SWG](https://www.ogc.org/projects/groups/movfeatswg)).
+
+<img src="images/OGC_Associate_Member_3DR.png" width="100" alt="OGC Associate Member Logo" />
+
+More information about MobilityDB, including publications, presentations, etc., can be found in the MobilityDB [website](https://mobilitydb.com).
+
 
 ## Table of Contents
 
 - [Features](https://github.com/MobilityDB/MobilitySpark#features)
 - [Requirement](https://github.com/MobilityDB/MobilitySpark#requirements)
-- [Installation](https://github.com/MobilityDB/MobilitySpark#installation)
+- [Installation](https://github.com/MobilityDB/MobilitySpark#build-the-project)
 - [Usage](https://github.com/MobilityDB/MobilitySpark#usage)
-- [Understanding SparkMeos](https://github.com/MobilityDB#understanding-sparkmeos)
-    - [The Code Structure](https://github.com/MobilityDB#the-code-structure)
+- [Understanding SparkMeos](https://github.com/MobilityDB/MobilitySpark#understanding-sparkmeos)
+    - [The Code Structure](https://github.com/MobilityDB/MobilitySpark#the-code-structure)
     - [UDTs](https://github.com/MobilityDB/MobilitySpark#udts)
     - [UDFs](https://github.com/MobilityDB/MobilitySpark#udfs)
 - [Future Work](https://github.com/MobilityDB/MobilitySpark#future-work)
