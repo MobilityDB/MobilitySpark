@@ -12,10 +12,10 @@ MobilitySpark explores the advantages of MobilityDB datatypes and functions in t
 
 - [Features](https://github.com/MobilityDB/MobilitySpark#features)
 - [Requirement](https://github.com/MobilityDB/MobilitySpark#requirements)
-- [Installation](https://github.com/MobilityDB/MobilitySpark#installation)
+- [Installation](https://github.com/MobilityDB/MobilitySpark#build-the-project)
 - [Usage](https://github.com/MobilityDB/MobilitySpark#usage)
-- [Understanding SparkMeos](https://github.com/MobilityDB#understanding-sparkmeos)
-    - [The Code Structure](https://github.com/MobilityDB#the-code-structure)
+- [Understanding SparkMeos](https://github.com/MobilityDB/MobilitySpark#understanding-sparkmeos)
+    - [The Code Structure](https://github.com/MobilityDB/MobilitySpark#the-code-structure)
     - [UDTs](https://github.com/MobilityDB/MobilitySpark#udts)
     - [UDFs](https://github.com/MobilityDB/MobilitySpark#udfs)
 - [Future Work](https://github.com/MobilityDB/MobilitySpark#future-work)
