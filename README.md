@@ -1,10 +1,10 @@
-# SparkMeos
+# MobilitySpark
 
-A proof-of-concept implementation of MEOS for https://github.com/MobilityDB/MobilityDB on Spark, using the JMEOS Java version as middleware.
+A proof-of-concept implementation of MEOS for https://github.com/MobilityDB/MobilityDB on Spark, using the JMEOS library as middleware.
 
 ::: note 📝
 
-SparkMeos explores the advantages of MobilityDB datatypes and functions in the Spark environment. However, it should be noted that the current implementation is not a full implementation and is still far from complete.
+MobilitySpark explores the advantages of MobilityDB datatypes and functions in the Spark environment. However, it should be noted that the current implementation is not a full implementation and is still far from complete.
 
 :::
 
@@ -86,7 +86,7 @@ Additionally, if you are using Intellij IDEA you can use similar setup to run yo
 
 ::: note 📝
 
-Please note that the examples provided in SparkMeos are for simple demonstration purposes only. They do not represent a full implementation of the MEOS functionality and should not be used as such. However, they do provide a good starting point for understanding how Spark interacts with MEOS.
+Please note that the examples provided in MobilitySpark are for simple demonstration purposes only. They do not represent a full implementation of the MEOS functionality and should not be used as such. However, they do provide a good starting point for understanding how Spark interacts with MEOS.
 
 :::
 
