@@ -1,6 +1,6 @@
 package org.mobiltydb.UDF.General;
 
-import jmeos.types.basic.tpoint.tgeom.TGeomPointInst;
+import types.basic.tpoint.tgeom.TGeomPointInst;
 import org.apache.spark.sql.api.java.UDF3;
 
 import java.sql.SQLException;

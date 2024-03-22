@@ -1,7 +1,7 @@
 package org.mobiltydb.UDT;
 
-import jmeos.types.time.Period;
-import jmeos.types.time.PeriodSet;
+import types.collections.time.Period;
+import types.collections.time.PeriodSet;
 import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow;
 import org.apache.spark.sql.catalyst.util.ArrayData;

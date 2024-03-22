@@ -1,6 +1,6 @@
 package UDF;
 
-import jmeos.types.time.Period;
+import types.collections.time.Period;
 import org.apache.spark.sql.Encoders;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;

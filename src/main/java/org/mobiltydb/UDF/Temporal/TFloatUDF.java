@@ -1,22 +1,23 @@
 package org.mobiltydb.UDF.Temporal;
 
-import jmeos.types.basic.tfloat.TFloat;
-import jmeos.types.basic.tfloat.TFloatInst;
-import jmeos.types.basic.tfloat.TFloatSeq;
+import types.basic.tfloat.TFloat;
+import types.basic.tfloat.TFloatInst;
+import types.basic.tfloat.TFloatSeq;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import scala.collection.JavaConverters;
-import scala.collection.immutable.ArraySeq;
+import scala.collection.Seq;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.List;
 
 public class TFloatUDF {
     public static UDF1<String, TFloat> stringToTFloat = new UDF1<>() {
         @Override
         public TFloat call(String s) throws Exception {
-            return new TFloat(s);
+            return new TFloatInst(s);
         }
     };
 
@@ -36,11 +37,11 @@ public class TFloatUDF {
     /**
      * Initialize TFloatSeq from TFloatInst rows.
      */
-    public static UDF1<ArraySeq<TFloatInst>, TFloatSeq> tFloatSeqIn = new UDF1<>() {
+    public static UDF1<Seq<TFloatInst>, TFloatSeq> tFloatSeqIn = new UDF1<>() {
         @Override
-        public TFloatSeq call(ArraySeq<TFloatInst> floats) throws Exception {
+        public TFloatSeq call(Seq<TFloatInst> floats) throws Exception {
             List<TFloatInst> floatList = JavaConverters.seqAsJavaListConverter(floats).asJava();
-            return new TFloatSeq(floatList.toArray(new TFloatInst[0]));
+            return new TFloatSeq(Arrays.toString(floatList.toArray(new TFloatInst[0])));
         }
     };
 }

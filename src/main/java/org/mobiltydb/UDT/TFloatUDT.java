@@ -1,6 +1,7 @@
 package org.mobiltydb.UDT;
 
-import jmeos.types.basic.tfloat.TFloat;
+import types.basic.tfloat.TFloat;
+import types.basic.tfloat.TFloatInst;
 
 import java.sql.SQLException;
 
@@ -16,6 +17,6 @@ public class TFloatUDT extends MeosDatatype<TFloat> {
 
     @Override
     protected TFloat fromString(String s) throws SQLException {
-        return new TFloat(s);
+        return new TFloatInst(s);
     }
 }

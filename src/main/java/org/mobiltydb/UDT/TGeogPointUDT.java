@@ -1,6 +1,7 @@
 package org.mobiltydb.UDT;
 
-import jmeos.types.basic.tpoint.tgeog.TGeogPoint;
+import types.basic.tpoint.tgeog.TGeogPoint;
+import types.basic.tpoint.tgeog.TGeogPointInst;
 
 import java.sql.SQLException;
 
@@ -15,6 +16,6 @@ public class TGeogPointUDT extends MeosDatatype<TGeogPoint> {    /**
 
     @Override
     protected TGeogPoint fromString(String s) throws SQLException {
-        return new TGeogPoint(s);
+        return new TGeogPointInst(s);
     }
 }

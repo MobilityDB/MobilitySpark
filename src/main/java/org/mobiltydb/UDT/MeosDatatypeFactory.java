@@ -1,15 +1,15 @@
 package org.mobiltydb.UDT;
 
-import jmeos.types.basic.tfloat.TFloat;
-import jmeos.types.basic.tfloat.TFloatInst;
-import jmeos.types.basic.tfloat.TFloatSeq;
-import jmeos.types.basic.tpoint.tgeog.TGeogPoint;
-import jmeos.types.basic.tpoint.tgeog.TGeogPointInst;
-import jmeos.types.basic.tpoint.tgeog.TGeogPointSeq;
-import jmeos.types.boxes.TBox;
-import jmeos.types.time.Period;
-import jmeos.types.time.PeriodSet;
-import jmeos.types.time.TimestampSet;
+import types.basic.tfloat.TFloat;
+import types.basic.tfloat.TFloatInst;
+import types.basic.tfloat.TFloatSeq;
+import types.basic.tpoint.tgeog.TGeogPoint;
+import types.basic.tpoint.tgeog.TGeogPointInst;
+import types.basic.tpoint.tgeog.TGeogPointSeq;
+import types.boxes.TBox;
+import types.collections.time.Period;
+import types.collections.time.PeriodSet;
+import types.collections.time.TimestampSet;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.OffsetDateTime;

@@ -1,7 +1,7 @@
 package org.mobiltydb.Examples;
 
-import jmeos.types.time.Period;
-import jmeos.types.time.PeriodSet;
+import types.collections.time.Period;
+import types.collections.time.PeriodSet;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.types.UDTRegistration;
@@ -13,10 +13,11 @@ import utils.UDTRegistrator;
 
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-import static jmeos.functions.functions.meos_finalize;
-import static jmeos.functions.functions.meos_initialize;
+import static functions.functions.meos_finalize;
+import static functions.functions.meos_initialize;
 import static org.apache.spark.sql.functions.*;
 import static org.apache.spark.sql.functions.expr;
 
@@ -38,9 +39,13 @@ public class PeriodSetExample {
         OffsetDateTime now = OffsetDateTime.now();
         Period period1 = new Period("[2021-04-08 05:04:45+01, 2021-04-08 06:04:45+01]");
         Period period2 = new Period("[2021-04-08 07:04:45+01, 2021-04-08 08:04:45+01]");
-        Period period3 = new Period("[2021-04-08 09:04:45+01, 2021-04-08 10:04:45+01]");;
+        Period period3 = new Period("[2021-04-08 09:04:45+01, 2021-04-08 10:04:45+01]");
 
-        PeriodSet periodSet = new PeriodSet(period1, period2, period3);
+        ArrayList<Period> periodSetList = new ArrayList<>();
+        periodSetList.add(period1);
+        periodSetList.add(period2);
+        periodSetList.add(period3);
+        PeriodSet periodSet = new PeriodSet(periodSetList);
 
         List<Row> data = List.of(
                 RowFactory.create(periodSet)

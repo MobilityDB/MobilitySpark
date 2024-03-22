@@ -5,8 +5,8 @@ import utils.UDFRegistrator;
 import utils.UDTRegistrator;
 
 
-import static jmeos.functions.functions.meos_finalize;
-import static jmeos.functions.functions.meos_initialize;
+import static functions.functions.meos_finalize;
+import static functions.functions.meos_initialize;
 import static org.apache.spark.sql.functions.callUDF;
 import static org.apache.spark.sql.functions.col;
 

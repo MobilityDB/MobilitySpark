@@ -12,7 +12,6 @@ public class TemporalUDFRegistrar {
         spark.udf().register("stringToTFloat", TFloatUDF.stringToTFloat, new TFloatUDT());
         spark.udf().register("stringToTBox", TBoxUDF.stringToTBox, new TBoxUDT());
         spark.udf().register("stringToTGeogPoint", TGeogPointUDF.stringTGeogPoint, new TGeogPointUDT());
-        spark.udf().register("tGeogPointIn", TGeogPointUDF.tGeogPointInstIn, new TGeogPointInstUDT());
         spark.udf().register("tFloatIn", TFloatUDF.tFloatInstIn, new TFloatInstUDT());
         spark.udf().register("tGeogPointSeqIn", TGeogPointUDF.tGeogPointSeqIn, new TGeogPointSeqUDT());
         spark.udf().register("tFloatSeqIn", TFloatUDF.tFloatSeqIn, new TFloatSeqUDT());

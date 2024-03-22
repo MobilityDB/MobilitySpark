@@ -3,7 +3,7 @@ package org.mobiltydb.UDT;
 import java.sql.SQLException;
 import org.apache.spark.sql.types.*;
 
-import jmeos.types.time.Period;
+import types.collections.time.Period;
 
 /**
  * Custom User Defined Type (UDT) for the Period data type.

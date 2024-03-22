@@ -6,7 +6,7 @@ import org.apache.spark.sql.types.*;
 import org.mobiltydb.UDT.TimestampSetUDT;
 import org.mobiltydb.UDT.OffsetDateTimeUDT;
 
-import jmeos.types.time.TimestampSet;
+import types.collections.time.TimestampSet;
 import utils.UDTRegistrator;
 
 import java.sql.SQLException;
@@ -14,8 +14,8 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static jmeos.functions.functions.meos_initialize;
-import static jmeos.functions.functions.meos_finalize;
+import static functions.functions.meos_initialize;
+import static functions.functions.meos_finalize;
 import static org.apache.spark.sql.functions.*;
 
 public class TimestampSetExample {
@@ -37,9 +37,9 @@ public class TimestampSetExample {
         OffsetDateTime time2 = now.plusHours(2);
         OffsetDateTime time3 = now.plusHours(3);
 
-        TimestampSet tsSet1 = new TimestampSet(now, time1);
-        TimestampSet tsSet2 = new TimestampSet(time1, time2);
-        TimestampSet tsSet3 = new TimestampSet(time2, time3);
+        TimestampSet tsSet1 = new TimestampSet();
+        TimestampSet tsSet2 = new TimestampSet();
+        TimestampSet tsSet3 = new TimestampSet();
 
         List<Row> data = Arrays.asList(
                 RowFactory.create(tsSet1),

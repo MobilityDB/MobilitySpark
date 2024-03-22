@@ -1,6 +1,6 @@
 package org.mobiltydb.UDT;
 
-import jmeos.types.time.TimestampSet;
+import types.collections.time.TimestampSet;
 
 import java.sql.SQLException;
 

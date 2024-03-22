@@ -9,11 +9,11 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import jmeos.types.time.Period;
+import types.collections.time.Period;
 import utils.UDTRegistrator;
 
-import static jmeos.functions.functions.meos_initialize;
-import static jmeos.functions.functions.meos_finalize;
+import static functions.functions.meos_initialize;
+import static functions.functions.meos_finalize;
 import static org.apache.spark.sql.functions.*;
 
 
@@ -36,9 +36,9 @@ public class PeriodExample {
         PeriodUDFRegistrator.registerAllUDFs(spark);
         // Create some example Period objects
         OffsetDateTime now = OffsetDateTime.now();
-        Period period1 = new Period(now, now.plusHours(1));
-        Period period2 = new Period(now.plusHours(1), now.plusHours(3));
-        Period period3 = new Period(now.plusHours(2), now.plusHours(3));
+        Period period1 = new Period("[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)");
+        Period period2 = new Period("[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)");
+        Period period3 = new Period("[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)");
 
         List<Row> data = Arrays.asList(
                 RowFactory.create(period1),
@@ -77,11 +77,11 @@ public class PeriodExample {
 
         Period hex = Period.from_hexwkb("012100000040021FFE3402000000B15A26350200");
         System.out.println(hex.toString());
-        System.out.println(hex.getValue());
+        System.out.println(hex);
 
         Period p2 = new Period("[2019-09-08 00:00:01Z, 2023-08-07 13:10:49Z)");
         System.out.println(p2.toString());
-        System.out.println(p2.getValue());
+        System.out.println(p2);
 
         System.out.println("Example 3: Parse a hexwkb string to period and show the table.");
         //spark.sql("SELECT periodFromHexwkb('012100000040021FFE3402000000B15A26350200') as period")

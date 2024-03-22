@@ -5,8 +5,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 import org.mobiltydb.UDF.Period.PeriodUDFRegistrator;
 
-import static jmeos.functions.functions.meos_finalize;
-import static jmeos.functions.functions.meos_initialize;
+import static functions.functions.meos_finalize;
+import static functions.functions.meos_initialize;
 
 public class SparkTestUtils {
 

@@ -1,7 +1,7 @@
 package org.mobiltydb.UDT;
 
-import jmeos.types.basic.tfloat.TFloat;
-import jmeos.types.boxes.TBox;
+import types.basic.tfloat.TFloat;
+import types.boxes.TBox;
 
 import java.sql.SQLException;
 

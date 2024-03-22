@@ -1,6 +1,6 @@
 package org.mobiltydb.UDF.Period;
 
-import jmeos.types.time.PeriodSet;
+import types.collections.time.PeriodSet;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.mobiltydb.UDF.General.PeriodSetUDF;
@@ -21,17 +21,10 @@ public class PeriodUDFRegistrator {
         spark.udf().register("periodExpand", PeriodUDFs.expand, new PeriodUDT());
         spark.udf().register("periodToPeriodSet", PeriodUDFs.toPeriodSet, new PeriodSetUDT());
         spark.udf().register("periodIsAdjacentPeriod", PeriodUDFs.isAdjacentPeriod, DataTypes.BooleanType);
-        spark.udf().register("periodIsAdjacentPeriodSet", PeriodUDFs.isAdjacentPeriodSet, DataTypes.BooleanType);
         spark.udf().register("periodIsContainedInPeriod", PeriodUDFs.isContainedInPeriod, DataTypes.BooleanType);
-        spark.udf().register("periodIsContainedInPeriodSet", PeriodUDFs.isContainedInPeriodSet, DataTypes.BooleanType);
         spark.udf().register("periodContainsPeriod", PeriodUDFs.containsPeriod, DataTypes.BooleanType);
-        spark.udf().register("periodContainsPeriodSet", PeriodUDFs.containsPeriodSet, DataTypes.BooleanType);
         spark.udf().register("periodOverlapsPeriod", PeriodUDFs.overlapsPeriod, DataTypes.BooleanType);
-        spark.udf().register("periodOverlapsPeriodSet", PeriodUDFs.overlapsPeriodSet, DataTypes.BooleanType);
-        spark.udf().register("periodOverlapsTimestampSet", PeriodUDFs.overlapsTimestampSet, DataTypes.BooleanType);
         spark.udf().register("periodIsAfterPeriod", PeriodUDFs.isAfterPeriod, DataTypes.BooleanType);
-        spark.udf().register("periodIsAfterPeriodSet", PeriodUDFs.isAfterPeriodSet, DataTypes.BooleanType);
-        spark.udf().register("periodIsAfterTimestampSet", PeriodUDFs.isAfterTimestampSet, DataTypes.BooleanType);
         spark.udf().register("periodIsBeforePeriod", PeriodUDFs.isBeforePeriod, DataTypes.BooleanType);
         spark.udf().register("periodIsOverOrAfterPeriod", PeriodUDFs.isOverOrAfterPeriod, DataTypes.BooleanType);
         spark.udf().register("periodIsOverOrBeforePeriod", PeriodUDFs.isOverOrBeforePeriod, DataTypes.BooleanType);
@@ -48,9 +41,6 @@ public class PeriodUDFRegistrator {
         spark.udf().register("periodEquals", PeriodUDFs.periodEquals, DataTypes.BooleanType);
         spark.udf().register("periodHashCode", PeriodUDFs.hashCode, DataTypes.IntegerType);
         spark.udf().register("periodDuration", PeriodUDFs.duration, new PeriodUDT());
-        spark.udf().register("periodShift", PeriodUDFs.shift, new PeriodUDT());
-        spark.udf().register("periodContains", PeriodUDFs.contains, DataTypes.BooleanType);
-        spark.udf().register("periodOverlap", PeriodUDFs.overlap, DataTypes.BooleanType);
     }
 
 }

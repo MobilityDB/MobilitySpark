@@ -1,7 +1,7 @@
 package UDF;
 
-import jmeos.types.time.Period;
-import jmeos.types.time.PeriodSet;
+import types.collections.time.Period;
+import types.collections.time.PeriodSet;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;

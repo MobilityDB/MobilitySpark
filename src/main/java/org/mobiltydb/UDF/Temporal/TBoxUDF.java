@@ -1,6 +1,6 @@
 package org.mobiltydb.UDF.Temporal;
 
-import jmeos.types.boxes.TBox;
+import types.boxes.TBox;
 import org.apache.spark.sql.api.java.UDF1;
 
 public class TBoxUDF {
