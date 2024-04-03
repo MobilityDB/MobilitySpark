@@ -11,6 +11,8 @@
 # Mac
 .DS_Store
 
+*.csv
+
 # Maven
 log/
 target/

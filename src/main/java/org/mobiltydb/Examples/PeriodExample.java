@@ -79,13 +79,13 @@ public class PeriodExample {
         System.out.println(hex.toString());
         System.out.println(hex);
 
-        Period p2 = new Period("[2019-09-08 00:00:01Z, 2023-08-07 13:10:49Z)");
+        Period p2 = new Period("[2019-09-08 00:00:01+00, 2023-08-07 13:10:49+00)");
         System.out.println(p2.toString());
         System.out.println(p2);
 
         System.out.println("Example 3: Parse a hexwkb string to period and show the table.");
-        //spark.sql("SELECT periodFromHexwkb('012100000040021FFE3402000000B15A26350200') as period")
-        //        .show(false);
+        spark.sql("SELECT periodFromHexwkb('012100000040021FFE3402000000B15A26350200') as period")
+                .show(false);
 
         System.out.println("Example 4: Add a column displaying the width of the period.");
         df.withColumn("width", expr("periodWidth(period)"));

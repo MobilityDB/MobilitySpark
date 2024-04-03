@@ -1,5 +1,6 @@
 package org.mobiltydb.UDT;
 
+import types.basic.tpoint.TPoint;
 import types.basic.tpoint.tgeog.TGeogPointInst;
 
 import java.sql.SQLException;
