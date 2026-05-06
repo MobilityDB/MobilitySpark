@@ -3,13 +3,15 @@
 .project
 .settings/
 
-# Intellij
+# IntelliJ IDEA
 .idea/
 *.iml
 *.iws
+*.ipr
 
-# Mac
+# macOS
 .DS_Store
+**/.DS_Store
 
 # Maven
 log/
