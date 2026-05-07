@@ -1,0 +1,6 @@
+vehId,licence,type,model
+1,B-AA 100,passenger,Sedan
+2,B-BB 200,passenger,SUV
+3,B-CC 300,truck,Lorry
+4,B-DD 400,truck,Truck
+5,B-EE 500,passenger,Van
