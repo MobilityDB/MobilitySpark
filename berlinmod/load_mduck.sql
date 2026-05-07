@@ -14,6 +14,10 @@
 -- Path to the CSV data files (relative to the working directory)
 SET VARIABLE DATADIR = 'berlinmod/data/';
 
+-- Match the Europe/Berlin timezone used when generating the expected output files
+LOAD icu;
+SET TimeZone = 'Europe/Berlin';
+
 -------------------------------------------------------------------------------
 -- Drop and recreate all tables
 -------------------------------------------------------------------------------
@@ -37,17 +41,28 @@ CREATE TABLE QueryInstants AS
          CAST(instant AS TIMESTAMPTZ) AS instant
   FROM read_csv(getvariable('DATADIR') || 'query_instants.csv', header = true);
 
--- Trips: cast the WKT string column to tgeompoint
+-- Trips: load raw text first, then convert to tgeompoint in a second pass.
+-- DuckDB 1.4.x parallel read_csv does not invoke the scalar-function wrapper
+-- that calls EnsureMeosInitializedOnThread(), so calling tgeompointFromHexWKB
+-- inline in the SELECT causes a SIGSEGV on worker threads.  Two-step loading
+-- keeps the CSV scan (multi-threaded) separate from the MEOS conversion
+-- (also multi-threaded but through the normal expression pipeline, which
+-- does invoke the wrapper).
+CREATE TEMP TABLE TripsRaw AS
+  SELECT tripId, vehId, trip
+  FROM read_csv(getvariable('DATADIR') || 'trips.csv', header = true);
+
 CREATE TABLE Trips AS
   SELECT tripId,
          vehId,
-         CAST(trip AS tgeompoint) AS trip
-  FROM read_csv(getvariable('DATADIR') || 'trips.csv', header = true);
+         tgeompointFromHexWKB(trip) AS trip
+  FROM TripsRaw;
 
--- QueryPoints: cast the WKT string column to DuckDB geometry
+-- QueryPoints: geometry for spatial ops + original WKT string for portable display
 CREATE TABLE QueryPoints AS
   SELECT pointId,
-         ST_GeomFromText(geom) AS geom
+         ST_GeomFromText(geom) AS geom,
+         geom AS geomWKT
   FROM read_csv(getvariable('DATADIR') || 'query_points.csv', header = true);
 
 -- QueryRegions: cast the WKT polygon string to DuckDB geometry
@@ -61,3 +76,12 @@ CREATE TABLE QueryPeriods AS
   SELECT periodId,
          CAST(period AS tstzspan) AS period
   FROM read_csv(getvariable('DATADIR') || 'query_periods.csv', header = true);
+
+-- portable schema — shadows trajectory() to return hex-WKB text instead of
+-- GEOMETRY, so DuckDB COPY serializes it as a string (byte-for-byte identical
+-- to MobilityDB and MobilitySpark).  main.trajectory() is schema-qualified to
+-- avoid macro recursion.  run_mduck.sh inlines this file per query, so
+-- SET search_path persists for each query's DuckDB session.
+CREATE SCHEMA IF NOT EXISTS portable;
+CREATE OR REPLACE MACRO portable.trajectory(t) AS ST_AsHexWKB(main.trajectory(t));
+SET search_path='portable,main';

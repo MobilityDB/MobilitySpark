@@ -17,4 +17,4 @@ JOIN   Vehicles v  ON  v.licence = l.licence
 JOIN   Trips    t  ON  t.vehId   = v.vehId
 JOIN   QueryPeriods p ON true
 WHERE  atTime(t.trip, p.period) IS NOT NULL
-ORDER  BY v.vehId, p.periodId;
+ORDER  BY v.vehId, p.periodId, t.tripId;

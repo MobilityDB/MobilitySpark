@@ -20,7 +20,7 @@ TMP=$(mktemp -d)
 
 trap 'rm -rf "$TMP"' EXIT
 
-_psql() { psql -d "$DBNAME" "$@"; }
+_psql() { PGOPTIONS='-c search_path=portable,public' psql -d "$DBNAME" "$@"; }
 
 # Substitute DATADIR placeholder in the loader template
 LOADER="${TMP}/load_mbdb.sql"
@@ -75,6 +75,15 @@ run_query q06 "${SCRIPT_DIR}/q06.sql"
 run_query q07 "${SCRIPT_DIR}/q07.sql"
 run_query q08 "${SCRIPT_DIR}/q08.sql"
 run_query qrt "${SCRIPT_DIR}/qrt.sql"
+run_query q09 "${SCRIPT_DIR}/q09.sql"
+run_query q10 "${SCRIPT_DIR}/q10.sql"
+run_query q11 "${SCRIPT_DIR}/q11.sql"
+run_query q12 "${SCRIPT_DIR}/q12.sql"
+run_query q13 "${SCRIPT_DIR}/q13.sql"
+run_query q14 "${SCRIPT_DIR}/q14.sql"
+run_query q15 "${SCRIPT_DIR}/q15.sql"
+run_query q16 "${SCRIPT_DIR}/q16.sql"
+run_query q17 "${SCRIPT_DIR}/q17.sql"
 
 echo ""
 echo "=== Comparing against expected output ==="
@@ -88,6 +97,15 @@ compare q06
 compare q07
 compare q08
 compare qrt
+compare q09
+compare q10
+compare q11
+compare q12
+compare q13
+compare q14
+compare q15
+compare q16
+compare q17
 
 echo ""
 if [ "$FAILURES" -eq 0 ]; then

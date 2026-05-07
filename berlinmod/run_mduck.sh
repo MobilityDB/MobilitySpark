@@ -69,7 +69,7 @@ compare() {
 cd "$REPO_ROOT"
 
 echo ""
-echo "=== Running Q1/Q2/Q3/Q4/Q5/Q6/Q7/Q8 + QRT ==="
+echo "=== Running Q01/Q02/Q03/Q04/Q05/Q06/Q07/Q08 + QRT ==="
 run_query q01 "${SCRIPT_DIR}/q01.sql"
 run_query q02 "${SCRIPT_DIR}/q02.sql"
 run_query q03 "${SCRIPT_DIR}/q03.sql"
@@ -79,6 +79,17 @@ run_query q06 "${SCRIPT_DIR}/q06.sql"
 run_query q07 "${SCRIPT_DIR}/q07.sql"
 run_query q08 "${SCRIPT_DIR}/q08.sql"
 run_query qrt "${SCRIPT_DIR}/qrt.sql"
+echo ""
+echo "=== Running Q09/Q10/Q11/Q12/Q13/Q14/Q15/Q16/Q17 ==="
+run_query q09 "${SCRIPT_DIR}/q09.sql"
+run_query q10 "${SCRIPT_DIR}/q10.sql"
+run_query q11 "${SCRIPT_DIR}/q11.sql"
+run_query q12 "${SCRIPT_DIR}/q12.sql"
+run_query q13 "${SCRIPT_DIR}/q13.sql"
+run_query q14 "${SCRIPT_DIR}/q14.sql"
+run_query q15 "${SCRIPT_DIR}/q15.sql"
+run_query q16 "${SCRIPT_DIR}/q16.sql"
+run_query q17 "${SCRIPT_DIR}/q17.sql"
 
 echo ""
 echo "=== Comparing against expected output ==="
@@ -92,6 +103,15 @@ compare q06
 compare q07
 compare q08
 compare qrt
+compare q09
+compare q10
+compare q11
+compare q12
+compare q13
+compare q14
+compare q15
+compare q16
+compare q17
 
 echo ""
 if [ "$FAILURES" -eq 0 ]; then
