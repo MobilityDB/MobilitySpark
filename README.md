@@ -194,12 +194,12 @@ Unit tests run without a Spark session (each UDF is a plain Java lambda):
 mvn test
 ```
 
-The test suite covers 50 unit tests across three test classes:
+The test suite covers 51 unit tests across three test classes:
 
 | Class | Tests | Coverage |
 |-------|-------|----------|
 | `GeoUDFsTest` | 23 | eIntersects, nearestApproachDistance, eDwithin |
-| `TemporalUDFsTest` | 16 | atTime, TemporalParquet tgeompoint/scalar round-trips |
+| `TemporalUDFsTest` | 17 | atTime, TemporalParquet tgeompoint/tgeogpoint/scalar round-trips |
 | `SpanUDFsTest` | 11 | TemporalParquet span/spanset round-trips |
 
 ---

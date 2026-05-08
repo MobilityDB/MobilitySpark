@@ -28,6 +28,9 @@ package org.mobilitydb.spark.udfs;
 import org.junit.jupiter.api.*;
 import org.mobilitydb.spark.temporal.TemporalUDFs;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.HexFormat;
 
 import static functions.functions.*;
@@ -47,12 +50,29 @@ class TemporalUDFsTest {
     private static String TRIP_HEX;
 
     @BeforeAll
-    static void initMeos() {
+    static void initMeos() throws Exception {
         meos_initialize();
         meos_initialize_timezone("UTC");
+        registerSpatialRefSys();
         TRIP_HEX = temporal_as_hexwkb(
             tgeompoint_in("[POINT(0.0 0.0)@2020-01-01 00:00:00+00, POINT(0.1 0.0)@2020-01-01 01:00:00+00]"),
             (byte) 0);
+    }
+
+    // Mirrors MobilitySparkSession.registerSpatialRefSys() so that geodetic MEOS
+    // functions (which look up SRID 4326) work in bare unit tests without a full session.
+    private static void registerSpatialRefSys() throws Exception {
+        try (InputStream in = TemporalUDFsTest.class.getResourceAsStream("/spatial_ref_sys.csv")) {
+            if (in == null) return;
+            File tmp = File.createTempFile("meos_srs", ".csv");
+            tmp.deleteOnExit();
+            try (FileOutputStream out = new FileOutputStream(tmp)) {
+                byte[] buf = new byte[65536];
+                int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            }
+            meos_set_spatial_ref_sys_csv(tmp.getAbsolutePath());
+        }
     }
 
     @Test @Order(1)
@@ -153,6 +173,16 @@ class TemporalUDFsTest {
     }
 
     @Test @Order(15)
+    void tgeogpointFromBinary_round_trips() throws Exception {
+        String hex = temporal_as_hexwkb(
+            tgeogpoint_in("[POINT(0.0 0.0)@2020-01-01 00:00:00+00, POINT(0.1 0.0)@2020-01-01 01:00:00+00]"),
+            (byte) 0);
+        byte[] bytes = HexFormat.of().parseHex(hex.toLowerCase());
+        String result = TemporalUDFs.tgeogpointFromBinary.call(bytes);
+        assertEquals(hex, result, "tgeogpointFromBinary must round-trip through MEOS-WKB");
+    }
+
+    @Test @Order(16)
     void fromBinary_null_returns_null() throws Exception {
         assertNull(TemporalUDFs.tgeompointFromBinary.call(null));
         assertNull(TemporalUDFs.tgeogpointFromBinary.call(null));
@@ -162,7 +192,7 @@ class TemporalUDFsTest {
         assertNull(TemporalUDFs.ttextFromBinary.call(null));
     }
 
-    @Test @Order(16)
+    @Test @Order(17)
     void asHexWKB_matches_mbdb_expected() throws Exception {
         // Known hex-WKB for [POINT(0 0)@2020-01-01 00:00:00+00, POINT(100 0)@2020-01-01 00:10:00+00]
         // Generated from MobilityDB: SELECT asHexWKB(trip) FROM Trips WHERE tripId = 1;
