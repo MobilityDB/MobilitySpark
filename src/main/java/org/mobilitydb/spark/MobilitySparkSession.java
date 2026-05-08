@@ -27,6 +27,7 @@ package org.mobilitydb.spark;
 
 import org.apache.spark.sql.SparkSession;
 import org.mobilitydb.spark.geo.GeoUDFs;
+import org.mobilitydb.spark.temporal.SpanUDFs;
 import org.mobilitydb.spark.temporal.TemporalUDFs;
 
 import java.io.File;
@@ -62,6 +63,7 @@ public final class MobilitySparkSession implements AutoCloseable {
         meos_initialize_timezone("UTC");
         registerSpatialRefSys();
         TemporalUDFs.registerAll(spark);
+        SpanUDFs.registerAll(spark);
         GeoUDFs.registerAll(spark);
         return new MobilitySparkSession();
     }
