@@ -25,30 +25,87 @@ ULB is an OGC Associate Member and member of the OGC Moving Feature Standard Wor
 - **Java 21** (OpenJDK or Temurin)
 - **Apache Maven 3.8+**
 - **Apache Spark 3.5** (provided at runtime; not needed to compile or run unit tests)
-- **JMEOS 1.3** — bundled in `libs/JMEOS-1.3.jar`
-  (from [MobilityDB/JMEOS PR #9](https://github.com/MobilityDB/JMEOS/pull/9))
+- **JMEOS 1.4** — bundled in `libs/JMEOS-1.4.jar` (patched from
+  [MobilityDB/JMEOS PR #9](https://github.com/MobilityDB/JMEOS/pull/9) with
+  cross-platform native library loading)
 
-> **Platform note:** The bundled JMEOS 1.3 jar includes a pre-built `libmeos.so`
-> for **Linux x86-64** only. macOS and Windows are not yet supported.
+> **Platform support:**
+> - **Linux x86-64** — fully supported; `libmeos.so` is bundled in the jar.
+> - **macOS (Apple Silicon / Intel)** — supported; requires MEOS installed via
+>   Homebrew (see §2.3) or built from source. CI-tested on `macos-latest`.
+> - **Windows x86-64** — CI bootstrap in progress (non-blocking); manual MEOS
+>   build via MSYS2 required (see §2.4).
 
 ---
 
 ## 2. Building MobilitySpark
 
-### Clone the repository
+### 2.1 Clone the repository
 
 ```sh
 git clone https://github.com/MobilityDB/MobilitySpark.git
 cd MobilitySpark
 ```
 
-### Compile
+### 2.2 Linux — no extra steps needed
+
+`libmeos.so` for Linux x86-64 is bundled in `libs/JMEOS-1.4.jar`. Install the
+runtime dependencies and compile:
+
+```sh
+# Ubuntu / Debian
+sudo apt-get install -y libjson-c5 libgeos-c1t64 libproj25 libgsl27
+mvn compile
+```
+
+### 2.3 macOS — install MEOS via Homebrew
+
+```sh
+# Install MEOS build dependencies
+brew install json-c geos proj gsl cmake ninja
+
+# Clone MobilityDB and build the standalone MEOS library
+git clone https://github.com/MobilityDB/MobilityDB.git
+cmake -S MobilityDB -B meos-build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH="$(brew --prefix)" \
+  -DMEOS=ON -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF
+cmake --build meos-build -j
+sudo cmake --install meos-build      # installs libmeos.dylib to /usr/local/lib/
+
+# Tell JMEOS where to find the library, then build
+export DYLD_LIBRARY_PATH=/usr/local/lib
+mvn compile
+mvn test
+```
+
+### 2.4 Windows — install MEOS via MSYS2
+
+```sh
+# In an MSYS2 UCRT64 shell
+pacman -S mingw-w64-ucrt-x86_64-{gcc,cmake,ninja,json-c,geos,proj,gsl}
+
+# Clone MobilityDB and build MEOS
+git clone https://github.com/MobilityDB/MobilityDB.git
+cmake -S MobilityDB -B meos-build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DMEOS=ON -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF
+cmake --build meos-build -j
+cmake --install meos-build --prefix "$PWD/meos-install"
+
+# Add libmeos.dll to PATH, then build with Maven (PowerShell)
+$env:PATH = "$PWD\meos-install\bin;" + $env:PATH
+mvn compile
+mvn test
+```
+
+### 2.5 Compile (all platforms)
 
 ```sh
 mvn compile
 ```
 
-### Package (fat jar for `spark-submit`)
+### 2.6 Package (fat jar for `spark-submit`)
 
 ```sh
 mvn package -DskipTests

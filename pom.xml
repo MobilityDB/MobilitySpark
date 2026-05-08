@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spark.version>3.5.1</spark.version>
         <scala.binary.version>2.13</scala.binary.version>
-        <jmeos.jar>${project.basedir}/libs/JMEOS-1.3.jar</jmeos.jar>
+        <jmeos.jar>${project.basedir}/libs/JMEOS-1.4.jar</jmeos.jar>
     </properties>
 
     <dependencies>
@@ -32,11 +32,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- JMEOS 1.3 — local jar (bundles libmeos.so); not yet on Maven Central -->
+        <!-- JMEOS 1.4 — patched for multi-platform (Linux/macOS/Windows); not yet on Maven Central -->
         <dependency>
             <groupId>org.jmeos</groupId>
             <artifactId>jmeos</artifactId>
-            <version>1.3</version>
+            <version>1.4</version>
             <scope>system</scope>
             <systemPath>${jmeos.jar}</systemPath>
         </dependency>
