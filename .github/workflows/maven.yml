@@ -121,9 +121,7 @@ jobs:
   windows:
     name: Build and test — Windows (Java 21 / Spark 3.5)
     runs-on: windows-latest
-    # Non-blocking until the MobilityDB meos-windows-bootstrap fix merges to
-    # master (adds MEOS_TZDATA_DIR cmake support).  We inject SYSTEMTZDIR via
-    # CMAKE_C_FLAGS in the interim so the build does not regress.
+    # Non-blocking until end-to-end Windows CI has been validated green.
     continue-on-error: true
     defaults:
       run:
@@ -155,17 +153,20 @@ jobs:
           cache: maven
 
       - name: Checkout MobilityDB source (for MEOS build)
+        # Use the meos-windows-bootstrap branch which adds -DMEOS_TZDATA_DIR
+        # cmake support (MobilityDB issue #513).  Revert to ref: master once
+        # that branch merges upstream.
         uses: actions/checkout@v4
         with:
-          repository: MobilityDB/MobilityDB
-          ref: master
+          repository: estebanzimanyi/MobilityDB
+          ref: meos-windows-bootstrap
           path: MobilityDB-src
 
       - name: Resolve native timezone data path
         run: |
           # cygpath -m converts the MSYS2 POSIX prefix to a Windows-native path
           # (e.g. C:/msys64/ucrt64/share/zoneinfo) that fopen() inside the DLL
-          # can open.  Injected via CMAKE_C_FLAGS until MobilityDB #513 merges.
+          # can open at runtime.
           TZDATA_WIN=$(cygpath -m "$MSYSTEM_PREFIX/share/zoneinfo")
           echo "MEOS_TZDATA_WIN=$TZDATA_WIN" >> "$GITHUB_ENV"
 
@@ -176,7 +177,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DMEOS=ON \
             -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF \
-            "-DCMAKE_C_FLAGS=-DSYSTEMTZDIR=\"$MEOS_TZDATA_WIN\""
+            -DMEOS_TZDATA_DIR="$MEOS_TZDATA_WIN"
           cmake --build meos-build -j
           cmake --install meos-build --prefix "$PWD/meos-install"
           echo "PATH=$PWD/meos-install/bin:$PWD/meos-build:$PATH" >> "$GITHUB_ENV"
