@@ -140,19 +140,28 @@ jobs:
           ALL_JARS=$(echo "$JNR_JAR:$JFFI_JAR:$JFFI_NATIVE_JAR" | tr -s ':')
           echo "JNR-FFI jars: $ALL_JARS"
           java -cp "$ALL_JARS" -XshowSettings:all -version 2>&1 | grep -i "os\|arch" || true
-          python3 -c "
-          import ctypes, sys
-          try:
-              lib = ctypes.CDLL('/usr/local/lib/libmeos.dylib')
-              print('ctypes RTLD_DEFAULT: SUCCESS')
-          except Exception as e:
-              print('ctypes RTLD_DEFAULT: FAILED:', e)
-          try:
-              lib2 = ctypes.CDLL('/usr/local/lib/libmeos.dylib', mode=ctypes.RTLD_LOCAL)
-              print('ctypes RTLD_LOCAL: SUCCESS')
-          except Exception as e:
-              print('ctypes RTLD_LOCAL: FAILED:', e)
-          "
+          # JNR-FFI uses RTLD_NOW|RTLD_GLOBAL (flags=10); ctypes defaults to RTLD_GLOBAL
+          # (RTLD_LAZY). Test each mode to isolate whether RTLD_NOW is the failure.
+          python3 - <<'PYEOF'
+import ctypes, os
+RTLD_NOW    = 2
+RTLD_LOCAL  = 4
+RTLD_GLOBAL = 8
+lib = '/usr/local/lib/libmeos.dylib'
+for label, mode in [
+    ('RTLD_LAZY|RTLD_GLOBAL (ctypes default)', ctypes.RTLD_GLOBAL),
+    ('RTLD_LAZY|RTLD_LOCAL',                   ctypes.RTLD_LOCAL),
+    ('RTLD_NOW|RTLD_GLOBAL  (JNR-FFI mode)',   RTLD_NOW | RTLD_GLOBAL),
+    ('RTLD_NOW|RTLD_LOCAL',                    RTLD_NOW | RTLD_LOCAL),
+]:
+    try:
+        ctypes.CDLL(lib, mode=mode)
+        print(f'  OK:   {label}')
+    except OSError as e:
+        print(f'  FAIL: {label}: {e}')
+PYEOF
+          echo "=== undefined symbols in libmeos.dylib ==="
+          nm -u /usr/local/lib/libmeos.dylib | grep ' U ' | head -20
 
       - name: Unit tests
         # forkCount=0: run tests in the Maven JVM itself rather than a forked
