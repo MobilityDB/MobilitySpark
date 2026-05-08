@@ -136,6 +136,14 @@
                         --add-opens=java.base/sun.security.action=ALL-UNNAMED
                         --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
                     </argLine>
+                    <!-- Disable JNR-FFI's ASM bytecode generator globally.
+                         JMEOS-1.4 declares 1683 interface methods; on ARM64 (macOS)
+                         the generated <clinit>()V exceeds the JVM 64 KB limit, causing
+                         MethodTooLargeException.  Reflection mode avoids bytecode
+                         generation entirely and works on all platforms. -->
+                    <systemPropertyVariables>
+                        <jnr.ffi.asm.enabled>false</jnr.ffi.asm.enabled>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>

@@ -120,21 +120,18 @@ jobs:
           echo "DYLD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
       - name: Diagnose libmeos.dylib load
+        if: failure()
         run: |
           echo "=== libmeos.dylib load commands ==="
           otool -L /usr/local/lib/libmeos.dylib
-          echo ""
           echo "=== RPATH entries ==="
           otool -l /usr/local/lib/libmeos.dylib | grep -A2 LC_RPATH || echo "(no RPATH)"
-          echo ""
           echo "=== Verify each dependency exists ==="
           otool -L /usr/local/lib/libmeos.dylib | awk 'NR>1{print $1}' | while read dep; do
             if [ -f "$dep" ]; then echo "OK: $dep"; else echo "MISSING: $dep"; fi
           done
-          echo ""
           echo "=== ctypes load test ==="
-          python3 -c 'import ctypes; ctypes.CDLL("/usr/local/lib/libmeos.dylib"); print("SUCCESS: libmeos.dylib loaded via ctypes")' || echo "FAILED (see error above)"
-          echo ""
+          python3 -c 'import ctypes; ctypes.CDLL("/usr/local/lib/libmeos.dylib"); print("SUCCESS")' || true
           echo "=== Symbol export check ==="
           nm /usr/local/lib/libmeos.dylib | grep -E 'tfloat_avg_value|geog_from_binary' || echo "SYMBOLS NOT FOUND"
 
@@ -142,10 +139,7 @@ jobs:
         run: mvn -B compile
 
       - name: Unit tests
-        # Disable JNR-FFI's ASM bytecode generator: JMEOS-1.4 has 1683 interface
-        # methods; the generated <clinit>()V exceeds JVM's 64KB limit on ARM64.
-        # Reflection mode avoids bytecode generation entirely.
-        run: mvn -B test -DargLine="-Djnr.ffi.asm.enabled=false"
+        run: mvn -B test
 
       - name: Package (fat jar)
         run: mvn -B package -DskipTests
