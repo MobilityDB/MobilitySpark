@@ -42,8 +42,9 @@
         </dependency>
 
         <!-- jnr-ffi: JMEOS uses this for native FFI.
-             2.2.17 fixes MethodTooLargeException on ARM64 (macOS) with Java 21
-             when the MEOS functions interface exceeds the JVM 64 KB method limit. -->
+             2.2.17 is the latest release; MethodTooLargeException on macOS/Windows
+             (JVM 64 KB <clinit>()V limit for 1683-method interface) is an upstream
+             JMEOS issue — not fixed by jnr-ffi version alone. -->
         <dependency>
             <groupId>com.github.jnr</groupId>
             <artifactId>jnr-ffi</artifactId>

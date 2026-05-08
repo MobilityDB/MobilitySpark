@@ -157,16 +157,12 @@ jobs:
           nm -u /usr/local/lib/libmeos.dylib | head -20
 
       - name: Unit tests
-        # jnr.ffi.asm.enabled=false: JNR-FFI normally generates a JDK dynamic
-        # proxy via ASM bytecode; the generated <clinit>()V for the ~1683-method
-        # JMEOS functions interface exceeds the JVM 64 KB method limit on
-        # macOS ARM64 (Apple Silicon) with Java 21, causing MethodTooLargeException.
-        # Disabling ASM switches JNR-FFI to reflection mode and avoids the limit.
-        # MAVEN_OPTS reaches the Maven JVM itself (not a forked child), which is
-        # where the proxy is generated when forkCount=0.
-        env:
-          MAVEN_OPTS: "-Djnr.ffi.asm.enabled=false"
-        run: mvn -B test -Dsurefire.forkCount=0
+        # MethodTooLargeException persists in both JNR-FFI ASM mode and JDK
+        # reflection (java.lang.reflect.Proxy) mode: both hit the JVM 64 KB
+        # <clinit>()V limit for the 1683-method JMEOS functions interface.
+        # This job is non-blocking (continue-on-error: true); fix requires
+        # JMEOS to split its functions interface (upstream issue).
+        run: mvn -B test
 
       - name: Package (fat jar)
         run: mvn -B package -DskipTests
