@@ -32,6 +32,7 @@ import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
 
 import java.sql.Timestamp;
+import java.util.HexFormat;
 
 /**
  * Spark SQL UDFs for generic temporal operations (type-agnostic).
@@ -189,13 +190,70 @@ public final class TemporalUDFs {
             return functions.temporal_as_hexwkb(ptr, (byte) 0);
         };
 
+    // ------------------------------------------------------------------
+    // TemporalParquet readers: xFromBinary(BINARY) → STRING
+    //
+    // Each converts a Parquet BYTE_ARRAY column (written by MobilityDuck's
+    // asBinary()) to the internal hex-WKB string used throughout MobilitySpark.
+    //
+    // Implementation is type-agnostic: temporal_from_hexwkb handles all
+    // MEOS temporal types uniformly via the WKB type-code embedded in the
+    // byte stream.  The type-specific names exist for SQL discoverability
+    // and to match MobilityDuck's tintFromBinary / tfloatFromBinary /
+    // tboolFromBinary / ttextFromBinary surface.
+    //
+    // MEOS: temporal_from_hexwkb(const char *) → Temporal *
+    //       temporal_as_hexwkb(const Temporal *, uint8_t variant) → char *
+    // ------------------------------------------------------------------
+    private static String fromBinaryImpl(byte[] bytes) throws Exception {
+        if (bytes == null) return null;
+        String hex = HexFormat.of().formatHex(bytes).toUpperCase();
+        Pointer ptr = functions.temporal_from_hexwkb(hex);
+        if (ptr == null) return null;
+        return functions.temporal_as_hexwkb(ptr, (byte) 0);
+    }
+
+    public static final UDF1<byte[], String> tintFromBinary =
+        (bytes) -> fromBinaryImpl(bytes);
+
+    public static final UDF1<byte[], String> tfloatFromBinary =
+        (bytes) -> fromBinaryImpl(bytes);
+
+    public static final UDF1<byte[], String> tboolFromBinary =
+        (bytes) -> fromBinaryImpl(bytes);
+
+    public static final UDF1<byte[], String> ttextFromBinary =
+        (bytes) -> fromBinaryImpl(bytes);
+
+    // ------------------------------------------------------------------
+    // asBinary(trip STRING) → BINARY
+    //
+    // Converts an internal hex-WKB string back to raw bytes for writing to
+    // a Parquet BYTE_ARRAY column — the inverse of xFromBinary().  No MEOS
+    // call is needed: the internal format is already hex-encoded MEOS-WKB,
+    // so hex-decoding is sufficient.
+    //
+    // Use this to write any temporal type (tgeompoint, tint, tfloat, …)
+    // back to Parquet after processing in Spark SQL.
+    // ------------------------------------------------------------------
+    public static final UDF1<String, byte[]> asBinary =
+        (hexWkb) -> {
+            if (hexWkb == null) return null;
+            return HexFormat.of().parseHex(hexWkb.toLowerCase());
+        };
+
     public static void registerAll(org.apache.spark.sql.SparkSession spark) {
-        spark.udf().register("atTime",          atTime,          DataTypes.StringType);
-        spark.udf().register("startTimestamp",   startTimestamp,  DataTypes.TimestampType);
-        spark.udf().register("endTimestamp",     endTimestamp,    DataTypes.TimestampType);
-        spark.udf().register("numInstants",      numInstants,     DataTypes.IntegerType);
-        spark.udf().register("speed",            speed,           DataTypes.StringType);
-        spark.udf().register("atGeometry",       atGeometry,      DataTypes.StringType);
-        spark.udf().register("asHexWKB",         asHexWKB,        DataTypes.StringType);
+        spark.udf().register("atTime",           atTime,           DataTypes.StringType);
+        spark.udf().register("startTimestamp",    startTimestamp,   DataTypes.TimestampType);
+        spark.udf().register("endTimestamp",      endTimestamp,     DataTypes.TimestampType);
+        spark.udf().register("numInstants",       numInstants,      DataTypes.IntegerType);
+        spark.udf().register("speed",             speed,            DataTypes.StringType);
+        spark.udf().register("atGeometry",        atGeometry,       DataTypes.StringType);
+        spark.udf().register("asHexWKB",          asHexWKB,         DataTypes.StringType);
+        spark.udf().register("tintFromBinary",    tintFromBinary,   DataTypes.StringType);
+        spark.udf().register("tfloatFromBinary",  tfloatFromBinary, DataTypes.StringType);
+        spark.udf().register("tboolFromBinary",   tboolFromBinary,  DataTypes.StringType);
+        spark.udf().register("ttextFromBinary",   ttextFromBinary,  DataTypes.StringType);
+        spark.udf().register("asBinary",          asBinary,         DataTypes.BinaryType);
     }
 }

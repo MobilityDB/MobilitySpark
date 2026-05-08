@@ -28,6 +28,7 @@ package org.mobilitydb.spark.udfs;
 import org.junit.jupiter.api.*;
 import org.mobilitydb.spark.temporal.TemporalUDFs;
 
+import java.util.HexFormat;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -97,7 +98,62 @@ class TemporalUDFsTest {
         assertNull(TemporalUDFs.asHexWKB.call(null));
     }
 
+    // TemporalParquet round-trip tests -----------------------------------
+
     @Test @Order(8)
+    void tintFromBinary_round_trips() throws Exception {
+        String hex = temporal_as_hexwkb(tint_in("[1@2020-01-01 00:00:00+00, 2@2020-01-02 00:00:00+00]"), (byte) 0);
+        byte[] bytes = HexFormat.of().parseHex(hex.toLowerCase());
+        String result = TemporalUDFs.tintFromBinary.call(bytes);
+        assertEquals(hex, result, "tintFromBinary must round-trip through MEOS-WKB");
+    }
+
+    @Test @Order(9)
+    void tfloatFromBinary_round_trips() throws Exception {
+        String hex = temporal_as_hexwkb(tfloat_in("[1.5@2020-01-01 00:00:00+00, 2.5@2020-01-02 00:00:00+00]"), (byte) 0);
+        byte[] bytes = HexFormat.of().parseHex(hex.toLowerCase());
+        String result = TemporalUDFs.tfloatFromBinary.call(bytes);
+        assertEquals(hex, result, "tfloatFromBinary must round-trip through MEOS-WKB");
+    }
+
+    @Test @Order(10)
+    void tboolFromBinary_round_trips() throws Exception {
+        String hex = temporal_as_hexwkb(tbool_in("[true@2020-01-01 00:00:00+00, false@2020-01-02 00:00:00+00]"), (byte) 0);
+        byte[] bytes = HexFormat.of().parseHex(hex.toLowerCase());
+        String result = TemporalUDFs.tboolFromBinary.call(bytes);
+        assertEquals(hex, result, "tboolFromBinary must round-trip through MEOS-WKB");
+    }
+
+    @Test @Order(11)
+    void ttextFromBinary_round_trips() throws Exception {
+        String hex = temporal_as_hexwkb(ttext_in("[hello@2020-01-01 00:00:00+00, world@2020-01-02 00:00:00+00]"), (byte) 0);
+        byte[] bytes = HexFormat.of().parseHex(hex.toLowerCase());
+        String result = TemporalUDFs.ttextFromBinary.call(bytes);
+        assertEquals(hex, result, "ttextFromBinary must round-trip through MEOS-WKB");
+    }
+
+    @Test @Order(12)
+    void asBinary_round_trips_with_tgeompoint() throws Exception {
+        byte[] bytes = TemporalUDFs.asBinary.call(TRIP_HEX);
+        assertNotNull(bytes, "asBinary must return non-null for valid hex-WKB");
+        String back = HexFormat.of().formatHex(bytes).toUpperCase();
+        assertEquals(TRIP_HEX, back, "asBinary then hex-encode must recover the original hex-WKB");
+    }
+
+    @Test @Order(13)
+    void asBinary_null_returns_null() throws Exception {
+        assertNull(TemporalUDFs.asBinary.call(null));
+    }
+
+    @Test @Order(14)
+    void fromBinary_null_returns_null() throws Exception {
+        assertNull(TemporalUDFs.tintFromBinary.call(null));
+        assertNull(TemporalUDFs.tfloatFromBinary.call(null));
+        assertNull(TemporalUDFs.tboolFromBinary.call(null));
+        assertNull(TemporalUDFs.ttextFromBinary.call(null));
+    }
+
+    @Test @Order(15)
     void asHexWKB_matches_mbdb_expected() throws Exception {
         // Known hex-WKB for [POINT(0 0)@2020-01-01 00:00:00+00, POINT(100 0)@2020-01-01 00:10:00+00]
         // Generated from MobilityDB: SELECT asHexWKB(trip) FROM Trips WHERE tripId = 1;
