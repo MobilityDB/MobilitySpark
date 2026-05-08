@@ -110,6 +110,30 @@ jobs:
           # so the dynamic linker finds them without DYLD_LIBRARY_PATH.
           echo "DYLD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
+      - name: Diagnose libmeos.dylib load
+        run: |
+          echo "=== libmeos.dylib load commands ==="
+          otool -L /usr/local/lib/libmeos.dylib
+          echo ""
+          echo "=== RPATH entries ==="
+          otool -l /usr/local/lib/libmeos.dylib | grep -A2 LC_RPATH || echo "(no RPATH)"
+          echo ""
+          echo "=== Verify each dependency exists ==="
+          otool -L /usr/local/lib/libmeos.dylib | awk 'NR>1{print $1}' | while read dep; do
+            if [ -f "$dep" ]; then echo "OK: $dep"; else echo "MISSING: $dep"; fi
+          done
+          echo ""
+          echo "=== ctypes load test ==="
+          python3 -c "
+import ctypes, sys
+try:
+    ctypes.CDLL('/usr/local/lib/libmeos.dylib')
+    print('SUCCESS: libmeos.dylib loaded via ctypes')
+except OSError as e:
+    print('FAILED:', e)
+    sys.exit(1)
+" || true
+
       - name: Compile
         run: mvn -B compile
 
