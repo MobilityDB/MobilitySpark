@@ -233,12 +233,19 @@ jobs:
             -DMEOS_TZDATA_DIR="$MEOS_TZDATA_WIN"
           cmake --build meos-build -j
           cmake --install meos-build --prefix "$PWD/meos-install"
-          echo "PATH=$PWD/meos-install/bin:$PWD/meos-build:$PATH" >> "$GITHUB_ENV"
+          # Save the DLL directory as a separate env var rather than stomping
+          # PATH: the MSYS2 PATH is POSIX-style and would overwrite the Windows
+          # PATH (losing Maven) in subsequent PowerShell steps.
+          echo "MEOS_DLL_DIR=$(cygpath -w "$PWD/meos-install/bin")" >> "$GITHUB_ENV"
 
       - name: Compile
         shell: pwsh
-        run: mvn -B compile
+        run: |
+          $env:PATH = "$env:MEOS_DLL_DIR;$env:PATH"
+          mvn -B compile
 
       - name: Unit tests
         shell: pwsh
-        run: mvn -B test
+        run: |
+          $env:PATH = "$env:MEOS_DLL_DIR;$env:PATH"
+          mvn -B test
