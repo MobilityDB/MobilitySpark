@@ -24,10 +24,12 @@ ULB is an OGC Associate Member and member of the OGC Moving Feature Standard Wor
 
 - **Java 21** (OpenJDK or Temurin)
 - **Apache Maven 3.8+**
-- **Apache Spark 3.5** (provided at runtime; not needed to compile)
+- **Apache Spark 3.5** (provided at runtime; not needed to compile or run unit tests)
 - **JMEOS 1.3** — bundled in `libs/JMEOS-1.3.jar`
-  (from [MobilityDB/JMEOS PR #9](https://github.com/MobilityDB/JMEOS/pull/9);
-  includes `libmeos.so` for Linux)
+  (from [MobilityDB/JMEOS PR #9](https://github.com/MobilityDB/JMEOS/pull/9))
+
+> **Platform note:** The bundled JMEOS 1.3 jar includes a pre-built `libmeos.so`
+> for **Linux x86-64** only. macOS and Windows are not yet supported.
 
 ---
 
@@ -64,21 +66,69 @@ The fat jar is written to `target/mobilityspark-0.1.0-SNAPSHOT-spark.jar`.
 SparkSession spark = SparkSession.builder().master("local[*]").getOrCreate();
 try (MobilitySparkSession ms = MobilitySparkSession.create(spark)) {
     // All UDFs are now available in Spark SQL
-    spark.sql("SELECT atTime(trip, TIMESTAMP '2020-01-01 00:30:00') FROM trips").show();
+    spark.sql("SELECT atTime(trip, '2020-01-01 00:30:00+00') FROM trips").show();
 }
 ```
 
+`MobilitySparkSession.create()` initialises MEOS, registers all UDFs, and loads the
+spatial reference system table for geodetic operations.
+
 ### 3.2. Available UDFs
+
+All temporal values are stored as **hex-WKB strings** (portable binary format, identical
+across MobilityDB, MobilityDuck, and MobilitySpark). Geometry values use **hex-EWKB strings**.
+
+#### Temporal axis UDFs
 
 | UDF | Signature | Description |
 |-----|-----------|-------------|
-| `atTime` | `(STRING, TIMESTAMP) → STRING` | Restrict tgeompoint to a timestamp |
+| `atTime` | `(STRING, STRING) → STRING` | Restrict to a timestamp or tstzspan literal |
+| `startTimestamp` | `(STRING) → TIMESTAMP` | First timestamp of the temporal value |
+| `endTimestamp` | `(STRING) → TIMESTAMP` | Last timestamp of the temporal value |
+| `numInstants` | `(STRING) → INT` | Number of instants |
+| `speed` | `(STRING) → STRING` | Instantaneous speed (returns tfloat hex-WKB) |
+| `atGeometry` | `(STRING, STRING) → STRING` | Restrict tgeompoint to a geometry (WKT) |
+| `asHexWKB` | `(STRING) → STRING` | Parse and re-serialise to canonical hex-WKB |
+
+#### Geo UDFs (eXistential — ever-true semantics)
+
+| UDF | Signature | Description |
+|-----|-----------|-------------|
 | `eIntersects` | `(STRING, STRING) → BOOLEAN` | Ever intersects a geometry |
 | `nearestApproachDistance` | `(STRING, STRING) → DOUBLE` | Min distance at any common instant |
 | `eDwithin` | `(STRING, STRING, DOUBLE) → BOOLEAN` | Ever within given distance |
 
-All tgeompoint values are stored as **hex-WKB strings** (output of `temporal_as_hexwkb`).
-Geometry values are **hex-EWKB strings** (output of `geo_as_hexewkb`).
+#### TemporalParquet UDFs
+
+These UDFs support reading from and writing to Parquet files whose temporal columns were
+written by MobilityDuck's `asBinary()` (Parquet `BYTE_ARRAY`).
+
+**Read (Parquet BINARY → hex-WKB string):**
+
+| UDF | Input type | Description |
+|-----|------------|-------------|
+| `tgeompointFromBinary` | `BINARY` | tgeompoint (2D/3D Cartesian) |
+| `tgeogpointFromBinary` | `BINARY` | tgeogpoint (geodetic) |
+| `tintFromBinary` | `BINARY` | tint |
+| `tfloatFromBinary` | `BINARY` | tfloat |
+| `tboolFromBinary` | `BINARY` | tbool |
+| `ttextFromBinary` | `BINARY` | ttext |
+| `tstzspanFromBinary` | `BINARY` | tstzspan |
+| `intspanFromBinary` | `BINARY` | intspan |
+| `floatspanFromBinary` | `BINARY` | floatspan |
+| `bigintspanFromBinary` | `BINARY` | bigintspan |
+| `datespanFromBinary` | `BINARY` | datespan |
+| `tstzspansetFromBinary` | `BINARY` | tstzspanset |
+| `intspansetFromBinary` | `BINARY` | intspanset |
+| `floatspansetFromBinary` | `BINARY` | floatspanset |
+| `bigintspansetFromBinary` | `BINARY` | bigintspanset |
+| `datespansetFromBinary` | `BINARY` | datespanset |
+
+**Write (hex-WKB string → Parquet BINARY):**
+
+| UDF | Signature | Description |
+|-----|-----------|-------------|
+| `asBinary` | `(STRING) → BINARY` | Any hex-WKB → raw bytes for Parquet BYTE_ARRAY |
 
 ### 3.3. Portable SQL (BerlinMOD benchmark)
 
@@ -87,18 +137,38 @@ same file runs unchanged on MobilityDB (PostgreSQL), MobilityDuck (DuckDB), and 
 (Spark SQL). This is the portability contract defined in
 [Discussion #861](https://github.com/MobilityDB/MobilityDB/discussions/861).
 
-Run the demo:
+Run all 17 BerlinMOD queries plus the round-trip test:
 
 ```sh
-spark-submit --class org.mobilitydb.spark.demo.BerlinMODDemo \
-    target/mobilityspark-0.1.0-SNAPSHOT-spark.jar
+./berlinmod/run_mspark.sh
 ```
 
-### 3.4. Sample queries
+This script builds the fat jar if needed, then submits `BerlinMODDemo` against the
+pre-generated data in `berlinmod/data/` and verifies results against `berlinmod/expected/`.
+`spark-submit` must be on `PATH` (or pass its path as the first argument).
+
+### 3.4. TemporalParquet: edge-to-cloud pipeline
+
+MobilitySpark can read Parquet files produced by MobilityDuck at the edge:
+
+```sql
+-- 1. Edge (MobilityDuck): write tgeompoint trajectories to Parquet
+COPY (SELECT vesselId, asBinary(trip) AS trip FROM Trips) TO 'trips.parquet';
+
+-- 2. Cloud (MobilitySpark): read and query
+CREATE OR REPLACE TEMPORARY VIEW Trips AS
+  SELECT vesselId, tgeompointFromBinary(trip) AS trip
+  FROM parquet.`trips.parquet`;
+
+SELECT vesselId, startTimestamp(trip), endTimestamp(trip), numInstants(trip)
+FROM Trips;
+```
+
+### 3.5. Sample queries
 
 Restrict a trip to a query instant:
 ```sql
-SELECT atTime(trip, TIMESTAMP '2020-01-01 00:30:00+00') AS pos FROM Trips;
+SELECT atTime(trip, '2020-01-01 00:30:00+00') AS pos FROM Trips;
 ```
 
 Find vehicles that ever passed a query point:
@@ -124,6 +194,14 @@ Unit tests run without a Spark session (each UDF is a plain Java lambda):
 mvn test
 ```
 
+The test suite covers 51 unit tests across three test classes:
+
+| Class | Tests | Coverage |
+|-------|-------|----------|
+| `GeoUDFsTest` | 23 | eIntersects, nearestApproachDistance, eDwithin |
+| `TemporalUDFsTest` | 17 | atTime, TemporalParquet tgeompoint/tgeogpoint/scalar round-trips |
+| `SpanUDFsTest` | 11 | TemporalParquet span/spanset round-trips |
+
 ---
 
 ## 5. Examples
@@ -133,7 +211,7 @@ Numbered examples mirror the MEOS C examples (`meos/examples/01_hello_world.c`, 
 | Class | Description |
 |-------|-------------|
 | `N01HelloWorld` | Round-trip a tgeompoint through hex-WKB |
-| `N03BerlinMOD` | BerlinMOD Q1/Q3/Q4/Q5/Q6 portable SQL |
+| `N03BerlinMOD` | BerlinMOD Q1–Q17 portable SQL |
 
 Run with:
 ```sh
@@ -147,15 +225,35 @@ spark-submit --class org.mobilitydb.spark.examples.N01HelloWorld \
 
 ```
 src/main/java/org/mobilitydb/spark/
-  MobilitySparkSession.java   — entry point: init MEOS + register all UDFs
-  temporal/TemporalUDFs.java  — atTime and other time-axis UDFs
-  geo/GeoUDFs.java            — eIntersects, nearestApproachDistance, eDwithin
-  examples/N01HelloWorld.java — hello-world example
-  examples/N03BerlinMOD.java  — BerlinMOD portable SQL demo
-  demo/BerlinMODDemo.java     — Q1/Q3/Q4/Q5/Q6 implementation
-  udfs/TemporalUDFs.java      — convenience facade (registerAll)
+  MobilitySparkSession.java        — entry point: init MEOS + register all UDFs
+  temporal/
+    TemporalUDFs.java              — time-axis UDFs + TemporalParquet scalar UDFs
+    SpanUDFs.java                  — TemporalParquet span/spanset UDFs
+  geo/
+    GeoUDFs.java                   — eIntersects, nearestApproachDistance, eDwithin
+  examples/
+    N01HelloWorld.java             — hello-world example
+    N03BerlinMOD.java              — BerlinMOD portable SQL demo
+  demo/
+    BerlinMODDemo.java             — Q1–Q17 + QRT implementation
+  udfs/
+    TemporalUDFs.java              — convenience facade (registerAll)
 
-berlinmod/                    — portable SQL files (RFC #861)
-libs/JMEOS-1.3.jar            — JMEOS 1.3 (includes libmeos.so)
-tools/scripts/                — license header checker
+src/test/java/org/mobilitydb/spark/
+  udfs/TemporalUDFsTest.java       — 17 unit tests
+  udfs/SpanUDFsTest.java           — 11 unit tests
+  geo/GeoUDFsTest.java             — 23 unit tests
+  demo/BerlinMODIntegrationTest.java
+  examples/AISDataIntegrationTest.java
+
+berlinmod/
+  q01.sql … q17.sql, qrt.sql      — portable SQL (RFC #861)
+  data/                            — pre-generated BerlinMOD dataset (scale 0.005)
+  expected/                        — expected query results for comparison
+  run_mspark.sh                    — end-to-end runner (build + spark-submit + compare)
+  run_mbdb.sh                      — MobilityDB runner
+  run_mduck.sh                     — MobilityDuck runner
+
+libs/JMEOS-1.3.jar                 — JMEOS 1.3 (Linux x86-64, includes libmeos.so)
+tools/scripts/                     — license header checker (CI)
 ```

@@ -199,8 +199,8 @@ public final class TemporalUDFs {
     // Implementation is type-agnostic: temporal_from_hexwkb handles all
     // MEOS temporal types uniformly via the WKB type-code embedded in the
     // byte stream.  The type-specific names exist for SQL discoverability
-    // and to match MobilityDuck's tintFromBinary / tfloatFromBinary /
-    // tboolFromBinary / ttextFromBinary surface.
+    // and to match MobilityDuck's tgeompointFromBinary / tintFromBinary /
+    // tfloatFromBinary / tboolFromBinary / ttextFromBinary surface.
     //
     // MEOS: temporal_from_hexwkb(const char *) → Temporal *
     //       temporal_as_hexwkb(const Temporal *, uint8_t variant) → char *
@@ -212,6 +212,12 @@ public final class TemporalUDFs {
         if (ptr == null) return null;
         return functions.temporal_as_hexwkb(ptr, (byte) 0);
     }
+
+    public static final UDF1<byte[], String> tgeompointFromBinary =
+        (bytes) -> fromBinaryImpl(bytes);
+
+    public static final UDF1<byte[], String> tgeogpointFromBinary =
+        (bytes) -> fromBinaryImpl(bytes);
 
     public static final UDF1<byte[], String> tintFromBinary =
         (bytes) -> fromBinaryImpl(bytes);
@@ -250,6 +256,8 @@ public final class TemporalUDFs {
         spark.udf().register("speed",             speed,            DataTypes.StringType);
         spark.udf().register("atGeometry",        atGeometry,       DataTypes.StringType);
         spark.udf().register("asHexWKB",          asHexWKB,         DataTypes.StringType);
+        spark.udf().register("tgeompointFromBinary", tgeompointFromBinary, DataTypes.StringType);
+        spark.udf().register("tgeogpointFromBinary", tgeogpointFromBinary, DataTypes.StringType);
         spark.udf().register("tintFromBinary",    tintFromBinary,   DataTypes.StringType);
         spark.udf().register("tfloatFromBinary",  tfloatFromBinary, DataTypes.StringType);
         spark.udf().register("tboolFromBinary",   tboolFromBinary,  DataTypes.StringType);
