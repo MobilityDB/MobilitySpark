@@ -124,15 +124,7 @@ jobs:
           done
           echo ""
           echo "=== ctypes load test ==="
-          python3 -c "
-import ctypes, sys
-try:
-    ctypes.CDLL('/usr/local/lib/libmeos.dylib')
-    print('SUCCESS: libmeos.dylib loaded via ctypes')
-except OSError as e:
-    print('FAILED:', e)
-    sys.exit(1)
-" || true
+          python3 -c 'import ctypes; ctypes.CDLL("/usr/local/lib/libmeos.dylib"); print("SUCCESS: libmeos.dylib loaded via ctypes")' || echo "FAILED (see error above)"
 
       - name: Compile
         run: mvn -B compile
