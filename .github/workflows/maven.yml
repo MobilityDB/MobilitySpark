@@ -112,35 +112,47 @@ jobs:
             -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF
           cmake --build meos-build -j
           sudo cmake --install meos-build
-          # libmeos.dylib is installed to /usr/local/lib/. Its Homebrew dependencies
-          # (libgeos, libproj, libgsl, libjson-c) use absolute /opt/homebrew/opt/*/
-          # install names so the dynamic linker finds them without DYLD_LIBRARY_PATH.
-          #
+          # Ad-hoc codesign so that the JVM's hardened-runtime library validation
+          # accepts the unsigned CMake-built dylib.
+          sudo codesign --force --sign - /usr/local/lib/libmeos.dylib
           # JarLibraryLoader reads LD_LIBRARY_PATH first in CI mode (GITHUB_WORKFLOW
-          # set), then falls back to DYLD_LIBRARY_PATH. On macOS, the JVM runs with
-          # the hardened runtime which strips DYLD_* env vars, so only LD_LIBRARY_PATH
-          # is visible inside the JVM process. Set both for belt-and-suspenders.
+          # set), then falls back to DYLD_LIBRARY_PATH. Set both env vars so the
+          # correct /usr/local/lib path reaches JNR-FFI regardless of which one
+          # the JVM process sees after the hardened runtime strips DYLD_* vars.
           echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
           echo "DYLD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
-      - name: Diagnose libmeos.dylib load
-        if: failure()
-        run: |
-          echo "=== libmeos.dylib load commands ==="
-          otool -L /usr/local/lib/libmeos.dylib
-          echo "=== RPATH entries ==="
-          otool -l /usr/local/lib/libmeos.dylib | grep -A2 LC_RPATH || echo "(no RPATH)"
-          echo "=== Verify each dependency exists ==="
-          otool -L /usr/local/lib/libmeos.dylib | awk 'NR>1{print $1}' | while read dep; do
-            if [ -f "$dep" ]; then echo "OK: $dep"; else echo "MISSING: $dep"; fi
-          done
-          echo "=== ctypes load test ==="
-          python3 -c 'import ctypes; ctypes.CDLL("/usr/local/lib/libmeos.dylib"); print("SUCCESS")' || true
-          echo "=== Symbol export check ==="
-          nm /usr/local/lib/libmeos.dylib | grep -E 'tfloat_avg_value|geog_from_binary' || echo "SYMBOLS NOT FOUND"
-
       - name: Compile
         run: mvn -B compile
+
+      - name: JVM and library load diagnostic
+        run: |
+          echo "=== JVM entitlements ==="
+          codesign -d --entitlements :- "$JAVA_HOME/bin/java" 2>/dev/null || echo "(no entitlements or codesign unavailable)"
+          echo ""
+          echo "=== libmeos.dylib signature ==="
+          codesign -dv /usr/local/lib/libmeos.dylib 2>&1 || echo "(not signed)"
+          echo ""
+          echo "=== System.load test ==="
+          JNR_JAR=$(find "$HOME/.m2" -name "jnr-ffi-*.jar" 2>/dev/null | grep -v sources | head -1)
+          JFFI_JAR=$(find "$HOME/.m2" -name "jffi-*.jar" 2>/dev/null | grep -v native | grep -v sources | head -1)
+          JFFI_NATIVE_JAR=$(find "$HOME/.m2" -name "jffi-*-native.jar" 2>/dev/null | head -1)
+          ALL_JARS=$(echo "$JNR_JAR:$JFFI_JAR:$JFFI_NATIVE_JAR" | tr -s ':')
+          echo "JNR-FFI jars: $ALL_JARS"
+          java -cp "$ALL_JARS" -XshowSettings:all -version 2>&1 | grep -i "os\|arch" || true
+          python3 -c "
+          import ctypes, sys
+          try:
+              lib = ctypes.CDLL('/usr/local/lib/libmeos.dylib')
+              print('ctypes RTLD_DEFAULT: SUCCESS')
+          except Exception as e:
+              print('ctypes RTLD_DEFAULT: FAILED:', e)
+          try:
+              lib2 = ctypes.CDLL('/usr/local/lib/libmeos.dylib', mode=ctypes.RTLD_LOCAL)
+              print('ctypes RTLD_LOCAL: SUCCESS')
+          except Exception as e:
+              print('ctypes RTLD_LOCAL: FAILED:', e)
+          "
 
       - name: Unit tests
         run: mvn -B test
