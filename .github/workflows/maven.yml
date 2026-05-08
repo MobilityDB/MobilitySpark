@@ -115,8 +115,12 @@ jobs:
           # libmeos.dylib is installed to /usr/local/lib/. Its Homebrew dependencies
           # (libgeos, libproj, libgsl, libjson-c) use absolute /opt/homebrew/opt/*/
           # install names so the dynamic linker finds them without DYLD_LIBRARY_PATH.
-          # JarLibraryLoader passes DYLD_LIBRARY_PATH as a single dir to JNR-FFI's
-          # .search() so it must not be colon-separated.
+          #
+          # JarLibraryLoader reads LD_LIBRARY_PATH first in CI mode (GITHUB_WORKFLOW
+          # set), then falls back to DYLD_LIBRARY_PATH. On macOS, the JVM runs with
+          # the hardened runtime which strips DYLD_* env vars, so only LD_LIBRARY_PATH
+          # is visible inside the JVM process. Set both for belt-and-suspenders.
+          echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
           echo "DYLD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
       - name: Diagnose libmeos.dylib load
