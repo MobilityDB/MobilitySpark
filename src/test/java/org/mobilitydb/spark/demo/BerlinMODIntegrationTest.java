@@ -63,7 +63,6 @@ class BerlinMODIntegrationTest {
 
     @AfterAll
     static void tearDown() {
-        if (ms != null) ms.close();
         if (spark != null) spark.stop();
     }
 

@@ -54,11 +54,6 @@ class TemporalUDFsTest {
             (byte) 0);
     }
 
-    @AfterAll
-    static void finalizeMeos() {
-        meos_finalize();
-    }
-
     @Test @Order(1)
     void atTime_instant_inside_interval_returns_nonnull() throws Exception {
         String result = TemporalUDFs.atTime.call(TRIP_HEX, "2020-01-01 00:30:00+00");
