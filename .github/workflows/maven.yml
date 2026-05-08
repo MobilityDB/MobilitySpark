@@ -101,9 +101,12 @@ jobs:
             -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF
           cmake --build meos-build -j
           sudo cmake --install meos-build
-          # libmeos.dylib is installed to /usr/local/lib/
-          # Our patched JarLibraryLoader checks DYLD_LIBRARY_PATH in the CI branch.
-          echo "DYLD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
+          # libmeos.dylib is installed to /usr/local/lib/.
+          # Homebrew dependencies (libgeos, libproj, libgsl, libjson-c) live under
+          # $(brew --prefix)/lib — /opt/homebrew/lib on Apple Silicon, /usr/local/lib
+          # on Intel.  Both paths are needed so the dynamic linker can find them.
+          BREW_LIB="$(brew --prefix)/lib"
+          echo "DYLD_LIBRARY_PATH=/usr/local/lib:$BREW_LIB" >> "$GITHUB_ENV"
 
       - name: Compile
         run: mvn -B compile
