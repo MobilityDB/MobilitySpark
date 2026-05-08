@@ -237,6 +237,13 @@ jobs:
           # PATH: the MSYS2 PATH is POSIX-style and would overwrite the Windows
           # PATH (losing Maven) in subsequent PowerShell steps.
           echo "MEOS_DLL_DIR=$(cygpath -w "$PWD/meos-install/bin")" >> "$GITHUB_ENV"
+          # JarLibraryLoader (JMEOS) in CI mode reads LD_LIBRARY_PATH and passes
+          # it to jnr.ffi.LibraryLoader.search() to locate libmeos.dll; PATH is
+          # not checked.  Use the Windows-native path so JNR-FFI's File lookup works.
+          echo "LD_LIBRARY_PATH=$(cygpath -w "$PWD/meos-install/bin")" >> "$GITHUB_ENV"
+          # MSYS2 runtime DLLs (libgeos, libproj, libjson-c, libgsl) are needed
+          # when the JVM loads libmeos.dll's transitive dependencies at runtime.
+          echo "UCRT64_BIN=$(cygpath -w "$MSYSTEM_PREFIX/bin")" >> "$GITHUB_ENV"
 
       - name: Compile
         shell: pwsh
@@ -247,5 +254,5 @@ jobs:
       - name: Unit tests
         shell: pwsh
         run: |
-          $env:PATH = "$env:MEOS_DLL_DIR;$env:PATH"
+          $env:PATH = "$env:MEOS_DLL_DIR;$env:UCRT64_BIN;$env:PATH"
           mvn -B test
