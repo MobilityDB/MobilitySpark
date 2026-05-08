@@ -29,6 +29,12 @@ import org.apache.spark.sql.SparkSession;
 import org.mobilitydb.spark.geo.GeoUDFs;
 import org.mobilitydb.spark.temporal.TemporalUDFs;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static functions.functions.*;
 
 /**
@@ -47,14 +53,39 @@ import static functions.functions.*;
  */
 public final class MobilitySparkSession implements AutoCloseable {
 
+    private static final AtomicBoolean SRS_CSV_REGISTERED = new AtomicBoolean(false);
+
     private MobilitySparkSession() {}
 
     public static MobilitySparkSession create(SparkSession spark) {
         meos_initialize();
         meos_initialize_timezone("UTC");
+        registerSpatialRefSys();
         TemporalUDFs.registerAll(spark);
         GeoUDFs.registerAll(spark);
         return new MobilitySparkSession();
+    }
+
+    /**
+     * Extracts the bundled spatial_ref_sys.csv to a temp file and registers
+     * it with MEOS so that geodetic coordinate operations (e.g. length on
+     * tgeogpoint) can look up SRID definitions without a PostGIS installation.
+     * Only runs once per JVM; subsequent calls are no-ops.
+     */
+    private static void registerSpatialRefSys() {
+        if (!SRS_CSV_REGISTERED.compareAndSet(false, true)) return;
+        try (InputStream in = MobilitySparkSession.class
+                .getResourceAsStream("/spatial_ref_sys.csv")) {
+            if (in == null) return;
+            File tmp = File.createTempFile("meos_spatial_ref_sys", ".csv");
+            tmp.deleteOnExit();
+            try (OutputStream out = new FileOutputStream(tmp)) {
+                byte[] buf = new byte[65536];
+                int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            }
+            meos_set_spatial_ref_sys_csv(tmp.getAbsolutePath());
+        } catch (Exception ignored) {}
     }
 
     @Override
