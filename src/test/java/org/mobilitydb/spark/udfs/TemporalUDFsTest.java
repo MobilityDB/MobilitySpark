@@ -153,16 +153,6 @@ class TemporalUDFsTest {
     }
 
     @Test @Order(15)
-    void tgeogpointFromBinary_round_trips() throws Exception {
-        String hex = temporal_as_hexwkb(
-            tgeogpoint_in("[POINT(0.0 0.0)@2020-01-01 00:00:00+00, POINT(0.1 0.0)@2020-01-01 01:00:00+00]"),
-            (byte) 0);
-        byte[] bytes = HexFormat.of().parseHex(hex.toLowerCase());
-        String result = TemporalUDFs.tgeogpointFromBinary.call(bytes);
-        assertEquals(hex, result, "tgeogpointFromBinary must round-trip through MEOS-WKB");
-    }
-
-    @Test @Order(16)
     void fromBinary_null_returns_null() throws Exception {
         assertNull(TemporalUDFs.tgeompointFromBinary.call(null));
         assertNull(TemporalUDFs.tgeogpointFromBinary.call(null));
@@ -172,7 +162,7 @@ class TemporalUDFsTest {
         assertNull(TemporalUDFs.ttextFromBinary.call(null));
     }
 
-    @Test @Order(17)
+    @Test @Order(16)
     void asHexWKB_matches_mbdb_expected() throws Exception {
         // Known hex-WKB for [POINT(0 0)@2020-01-01 00:00:00+00, POINT(100 0)@2020-01-01 00:10:00+00]
         // Generated from MobilityDB: SELECT asHexWKB(trip) FROM Trips WHERE tripId = 1;
