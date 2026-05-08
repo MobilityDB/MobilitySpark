@@ -69,9 +69,10 @@ jobs:
     runs-on: macos-latest
     # Non-blocking until JMEOS splits its 1683-method functions interface:
     # JNR-FFI cannot generate a proxy class for an interface that large on
-    # ARM64 Java 21 (JDK proxy <clinit>()V exceeds the 64 KB bytecode limit).
+    # Java 21 (JDK proxy <clinit>()V exceeds the 64 KB bytecode limit).
     # libmeos.dylib itself loads fine (verified via Python ctypes); the failure
     # is purely in JNR-FFI's proxy generation — an upstream JMEOS issue.
+    # Affects macOS (ARM64) and Windows (x86_64); Linux x86_64 works.
     continue-on-error: true
 
     steps:
@@ -174,7 +175,10 @@ jobs:
   windows:
     name: Build and test — Windows (Java 21 / Spark 3.5)
     runs-on: windows-latest
-    # Non-blocking until end-to-end Windows CI has been validated green.
+    # Non-blocking: same upstream JMEOS issue as macOS — JNR-FFI cannot
+    # generate a proxy class for the 1683-method functions interface on
+    # Windows Java 21 (JDK proxy <clinit>()V exceeds the 64 KB bytecode
+    # limit). Fix requires JMEOS to split its functions interface.
     continue-on-error: true
     defaults:
       run:
