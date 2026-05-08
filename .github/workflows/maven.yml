@@ -89,6 +89,17 @@ jobs:
           ref: master
           path: MobilityDB-src
 
+      - name: Patch MEOS for JMEOS-1.4 symbol compatibility
+        run: |
+          # tfloat_avg_value was renamed to tnumber_avg_value in MEOS master; add
+          # a backward-compat alias so JMEOS-1.4 can bind it.
+          printf '\ndouble tfloat_avg_value(const Temporal *temp) { return tnumber_avg_value(temp); }\n' \
+            >> MobilityDB-src/meos/src/temporal/temporal.c
+          # geog_from_binary is declared in meos_geo.h but has no standalone
+          # implementation; JMEOS-1.4 declares it non-optional so a stub is needed.
+          printf '\nGSERIALIZED *geog_from_binary(const char *wkb_bytea) { return (GSERIALIZED *) NULL; }\n' \
+            >> MobilityDB-src/meos/src/geo/postgis_funcs.c
+
       - name: Build and install libmeos.dylib
         run: |
           # Homebrew on macOS-ARM installs to /opt/homebrew; on Intel to /usr/local.
@@ -97,17 +108,15 @@ jobs:
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$BREW_PREFIX" \
-            -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON \
             -DMEOS=ON \
             -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF
           cmake --build meos-build -j
           sudo cmake --install meos-build
-          # libmeos.dylib is installed to /usr/local/lib/.
-          # JarLibraryLoader passes DYLD_LIBRARY_PATH as a single directory to
-          # JNR-FFI's .search(), so it must be a plain directory (not colon-separated).
-          # Homebrew dependency paths (libgeos, libproj, libgsl, libjson-c) are
-          # embedded in libmeos.dylib's install RPATH via CMAKE_INSTALL_RPATH_USE_LINK_PATH
-          # so the dynamic linker finds them without DYLD_LIBRARY_PATH.
+          # libmeos.dylib is installed to /usr/local/lib/. Its Homebrew dependencies
+          # (libgeos, libproj, libgsl, libjson-c) use absolute /opt/homebrew/opt/*/
+          # install names so the dynamic linker finds them without DYLD_LIBRARY_PATH.
+          # JarLibraryLoader passes DYLD_LIBRARY_PATH as a single dir to JNR-FFI's
+          # .search() so it must not be colon-separated.
           echo "DYLD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
       - name: Diagnose libmeos.dylib load
