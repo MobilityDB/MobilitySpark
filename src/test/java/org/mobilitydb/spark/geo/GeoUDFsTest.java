@@ -62,11 +62,6 @@ class GeoUDFsTest {
             (byte) 0);
     }
 
-    @AfterAll
-    static void finalizeMeos() {
-        meos_finalize();
-    }
-
     @Test @Order(1)
     void eIntersects_point_on_path_returns_true() throws Exception {
         assertTrue(GeoUDFs.eIntersects.call(TRIP_HEX, POINT_ON_PATH));
