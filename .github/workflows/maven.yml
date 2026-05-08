@@ -149,13 +149,15 @@ jobs:
           nm -u /usr/local/lib/libmeos.dylib | head -20
 
       - name: Unit tests
-        # forkCount=0: run tests in the Maven JVM itself rather than a forked
-        # child.  This avoids a known issue where JFFI's native library extraction
-        # fails in the forked JVM on macOS ARM64 (Apple Silicon) runners, causing
-        # all JNR-FFI/JMEOS calls to fail with UnsatisfiedLinkError → createErrorProxy
-        # → MethodTooLargeException.  MEOS global state is isolated per test class
-        # by the @BeforeAll/@AfterAll lifecycle (meos_initialize is idempotent;
-        # meos_finalize is intentionally omitted — see feedback memory).
+        # jnr.ffi.asm.enabled=false: JNR-FFI normally generates a JDK dynamic
+        # proxy via ASM bytecode; the generated <clinit>()V for the ~1683-method
+        # JMEOS functions interface exceeds the JVM 64 KB method limit on
+        # macOS ARM64 (Apple Silicon) with Java 21, causing MethodTooLargeException.
+        # Disabling ASM switches JNR-FFI to reflection mode and avoids the limit.
+        # MAVEN_OPTS reaches the Maven JVM itself (not a forked child), which is
+        # where the proxy is generated when forkCount=0.
+        env:
+          MAVEN_OPTS: "-Djnr.ffi.asm.enabled=false"
         run: mvn -B test -Dsurefire.forkCount=0
 
       - name: Package (fat jar)
