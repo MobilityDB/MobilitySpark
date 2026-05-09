@@ -23,4 +23,4 @@ JOIN   Temp     t2 ON t1.vehId < t2.vehId
                   AND t1.pointId   = t2.pointId
                   AND t1.instantId = t2.instantId
 JOIN   Vehicles v2 ON t2.vehId = v2.vehId
-ORDER  BY t1.pointId, t1.instantId, v1.licence, v2.licence;
+ORDER  BY t1.pointId, t1.instantId, licence1, licence2;

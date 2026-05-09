@@ -152,7 +152,9 @@ public final class BerlinMODBench {
                         qTimes.add(elapsed);
                         System.out.printf("%d ", elapsed);
                     } catch (Exception e) {
-                        System.out.printf("[err:%s] ", e.getClass().getSimpleName());
+                        String msg = e.getMessage();
+                        if (msg != null) msg = msg.split("\n")[0].substring(0, Math.min(120, msg.split("\n")[0].length()));
+                        System.out.printf("[err:%s: %s] ", e.getClass().getSimpleName(), msg);
                     }
                 }
                 System.out.println("ms");
