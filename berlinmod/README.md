@@ -155,9 +155,11 @@ createdb berlinmod_portability
 Or manually:
 
 ```bash
+ulimit -c 0   # suppress multi-GB core dumps on native-library crashes
 spark-submit \
   --class org.mobilitydb.spark.demo.BerlinMODDemo \
-  --master "local[*]" \
+  --master "local[2]" \
+  --conf "spark.driver.extraJavaOptions=-Djava.library.path=/usr/local/lib" \
   target/mobilityspark-*-spark.jar \
   berlinmod/data \
   berlinmod/expected

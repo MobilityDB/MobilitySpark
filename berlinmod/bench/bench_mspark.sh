@@ -67,13 +67,18 @@ if [[ -z "$JAR" ]]; then
 fi
 echo "=== Using JAR: $JAR ==="
 
+LIBMEOS_DIR="${LIBMEOS_DIR:-/usr/local/lib}"
+
 mkdir -p "$(dirname "$OUTPUT")"
+
+# Suppress core dumps: a JVM crash produces a 3-5 GB core file that can OOM WSL2.
+ulimit -c 0
 
 echo "=== Running BerlinMODBench (${RUNS} runs/query) on MobilitySpark ==="
 "$SPARK_SUBMIT" \
   --class org.mobilitydb.spark.demo.BerlinMODBench \
-  --master "local[*]" \
-  --driver-java-options "-Dlog4j.logger.org.apache=WARN" \
+  --master "local[2]" \
+  --conf "spark.driver.extraJavaOptions=-Djava.library.path=${LIBMEOS_DIR} -Dlog4j.logger.org.apache=WARN" \
   "$JAR" \
   "$DATADIR" \
   "$OUTPUT" \

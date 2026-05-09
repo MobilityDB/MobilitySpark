@@ -54,10 +54,16 @@ if ! command -v "$SPARK_SUBMIT" >/dev/null 2>&1; then
   exit 1
 fi
 
+LIBMEOS_DIR="${LIBMEOS_DIR:-/usr/local/lib}"
+
+# Suppress core dumps: a JVM crash produces a 3-5 GB core file that can OOM WSL2.
+ulimit -c 0
+
 echo "=== Running BerlinMOD Q1/Q2/Q3/Q4/Q5/Q6/Q7/Q8 + QRT on MobilitySpark ==="
 "$SPARK_SUBMIT" \
   --class org.mobilitydb.spark.demo.BerlinMODDemo \
-  --master "local[*]" \
+  --master "local[2]" \
+  --conf "spark.driver.extraJavaOptions=-Djava.library.path=${LIBMEOS_DIR}" \
   "$JAR" \
   "$DATA_DIR" \
   "$EXPECTED_DIR"
