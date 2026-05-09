@@ -12,6 +12,7 @@
 #   --spark-submit PATH  Path to spark-submit binary (default: spark-submit from PATH)
 #   --data   DIR         Directory containing the shared CSV files
 #   --runs   N           Timed runs per query  (default: 3)
+#   --quick              Run each query once (--runs 1); useful for crash-safety checks
 #   --output FILE        Path to write results JSON (default: results/mspark.json)
 #   --jar    PATH        Pre-built fat JAR (skip mvn build)
 #
@@ -36,6 +37,7 @@ while [[ $# -gt 0 ]]; do
     --spark-submit) SPARK_SUBMIT="$2"; shift 2 ;;
     --data)         DATADIR="$2";      shift 2 ;;
     --runs)         RUNS="$2";         shift 2 ;;
+    --quick)        RUNS=1;            shift   ;;
     --output)       OUTPUT="$2";       shift 2 ;;
     --jar)          JAR="$2";          shift 2 ;;
     *) echo "Unknown option: $1"; exit 1 ;;
