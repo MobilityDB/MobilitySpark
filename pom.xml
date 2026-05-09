@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spark.version>3.5.1</spark.version>
         <scala.binary.version>2.13</scala.binary.version>
-        <jmeos.jar>${project.basedir}/libs/JMEOS-1.4.jar</jmeos.jar>
+        <jmeos.jar>${project.basedir}/libs/JMEOS-1.5.jar</jmeos.jar>
     </properties>
 
     <dependencies>
@@ -32,19 +32,18 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- JMEOS 1.4 — patched for multi-platform (Linux/macOS/Windows); not yet on Maven Central -->
+        <!-- JMEOS 1.5 — interface split (4×≤400-method sub-interfaces) fixes JVM 64 KB
+             MethodTooLargeException on macOS/Windows. Multi-platform JarLibraryLoader
+             for Linux/macOS/Windows. Not yet on Maven Central. -->
         <dependency>
             <groupId>org.jmeos</groupId>
             <artifactId>jmeos</artifactId>
-            <version>1.4</version>
+            <version>1.5</version>
             <scope>system</scope>
             <systemPath>${jmeos.jar}</systemPath>
         </dependency>
 
-        <!-- jnr-ffi: JMEOS uses this for native FFI.
-             2.2.17 is the latest release; MethodTooLargeException on macOS/Windows
-             (JVM 64 KB <clinit>()V limit for 1683-method interface) is an upstream
-             JMEOS issue — not fixed by jnr-ffi version alone. -->
+        <!-- jnr-ffi: JMEOS uses this for native FFI. 2.2.17 is the latest release. -->
         <dependency>
             <groupId>com.github.jnr</groupId>
             <artifactId>jnr-ffi</artifactId>
