@@ -96,6 +96,10 @@
                          meos_finalize() has been called. -->
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
+                    <!-- Pin libmeos.so to the system-installed version so the
+                         correct (thread-safe) build is used, not any stale
+                         copy bundled inside JMEOS-1.5.jar. -->
+                    <argLine>-Djava.library.path=/usr/local/lib</argLine>
                 </configuration>
             </plugin>
         </plugins>
