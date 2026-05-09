@@ -13,6 +13,8 @@
 #   --data   DIR         Directory containing the shared CSV files
 #   --runs   N           Timed runs per query  (default: 3)
 #   --quick              Run each query once (--runs 1); useful for crash-safety checks
+#   --queries RANGE      Page-range query selector: "3", "2-5", "q02-q05", "qrt", "q04,qrt"
+#                        Default: all queries in canonical order
 #   --output FILE        Path to write results JSON (default: results/mspark.json)
 #   --jar    PATH        Pre-built fat JAR (skip mvn build)
 #
@@ -30,6 +32,7 @@ SPARK_SUBMIT="${SPARK_SUBMIT:-spark-submit}"
 DATADIR="${BERLINMOD_DIR}/data"
 RUNS=3
 OUTPUT="${SCRIPT_DIR}/results/mspark.json"
+QUERIES=""
 JAR=""
 
 while [[ $# -gt 0 ]]; do
@@ -38,6 +41,7 @@ while [[ $# -gt 0 ]]; do
     --data)         DATADIR="$2";      shift 2 ;;
     --runs)         RUNS="$2";         shift 2 ;;
     --quick)        RUNS=1;            shift   ;;
+    --queries)      QUERIES="$2";      shift 2 ;;
     --output)       OUTPUT="$2";       shift 2 ;;
     --jar)          JAR="$2";          shift 2 ;;
     *) echo "Unknown option: $1"; exit 1 ;;
@@ -76,7 +80,8 @@ mkdir -p "$(dirname "$OUTPUT")"
 # Suppress core dumps: a JVM crash produces a 3-5 GB core file that can OOM WSL2.
 ulimit -c 0
 
-echo "=== Running BerlinMODBench (${RUNS} runs/query) on MobilitySpark ==="
+QUERIES_MSG="${QUERIES:-all}"
+echo "=== Running BerlinMODBench (${RUNS} runs/query, queries=${QUERIES_MSG}) on MobilitySpark ==="
 "$SPARK_SUBMIT" \
   --class org.mobilitydb.spark.demo.BerlinMODBench \
   --master "local[2]" \
@@ -84,6 +89,7 @@ echo "=== Running BerlinMODBench (${RUNS} runs/query) on MobilitySpark ==="
   "$JAR" \
   "$DATADIR" \
   "$OUTPUT" \
-  "$RUNS"
+  "$RUNS" \
+  ${QUERIES:+"$QUERIES"}
 
 echo "=== Results written to ${OUTPUT} ==="

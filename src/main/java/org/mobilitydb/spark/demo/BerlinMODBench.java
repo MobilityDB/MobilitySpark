@@ -74,12 +74,18 @@ public final class BerlinMODBench {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
-            System.err.println("Usage: BerlinMODBench <data_dir> <output.json> [runs]");
+            System.err.println("Usage: BerlinMODBench <data_dir> <output.json> [runs] [queries]");
+            System.err.println("  queries — page-range syntax: '3', '2-5', 'q02', 'q02-q05', 'qrt'");
             System.exit(1);
         }
-        String dataDir   = args[0];
+        String dataDir    = args[0];
         String outputPath = args[1];
-        int    runs      = args.length >= 3 ? Integer.parseInt(args[2]) : 3;
+        int    runs       = args.length >= 3 ? Integer.parseInt(args[2]) : 3;
+        String queryRange = args.length >= 4 ? args[3] : null;
+
+        // Resolve which queries to run from the page-range argument.
+        // Accepted forms: "3", "2-5", "q02", "q02-q05", "qrt", "q04,qrt,q07"
+        List<String> queryList = resolveQueryRange(queryRange);
 
         // SQL files live next to the berlinmod/data/ directory
         String sqlDir = Paths.get(dataDir).getParent() != null
@@ -128,7 +134,7 @@ public final class BerlinMODBench {
 
             // Time each query — flush results after every query so a crash
             // still leaves a valid JSON file with the timings collected so far.
-            for (String q : QUERY_ORDER) {
+            for (String q : queryList) {
                 Path sqlFile = Paths.get(sqlDir, q + ".sql");
                 if (!Files.exists(sqlFile)) {
                     System.out.printf("  [skip] %s — SQL file not found%n", q);
@@ -255,5 +261,67 @@ public final class BerlinMODBench {
 
     private static String escapeJson(String s) {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    /**
+     * Resolve a page-range style query selector to a list of query IDs.
+     *
+     * Accepted forms (case-insensitive):
+     *   null / "" / "all"       → all 18 queries in canonical order
+     *   "3"                     → ["q03"]
+     *   "2-5"                   → ["q02","q03","q04","q05"]
+     *   "q02"                   → ["q02"]
+     *   "q02-q05"               → ["q02","q03","q04","q05"]
+     *   "qrt"                   → ["qrt"]
+     *   "q04,qrt,q07"           → ["q04","qrt","q07"]
+     */
+    private static List<String> resolveQueryRange(String spec) {
+        List<String> all = java.util.Arrays.asList(QUERY_ORDER);
+        if (spec == null || spec.isBlank() || spec.equalsIgnoreCase("all")) {
+            return all;
+        }
+
+        List<String> result = new ArrayList<>();
+        for (String token : spec.split(",")) {
+            token = token.strip();
+            if (token.contains("-")) {
+                String[] parts = token.split("-", 2);
+                int from = parseQueryIndex(parts[0].strip(), all);
+                int to   = parseQueryIndex(parts[1].strip(), all);
+                if (from < 0 || to < 0) {
+                    throw new IllegalArgumentException("Unknown query in range: " + token);
+                }
+                int lo = Math.min(from, to), hi = Math.max(from, to);
+                result.addAll(all.subList(lo, hi + 1));
+            } else {
+                int idx = parseQueryIndex(token, all);
+                if (idx < 0) {
+                    throw new IllegalArgumentException("Unknown query: " + token);
+                }
+                result.add(all.get(idx));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Parse a query token to its 0-based index in the canonical order.
+     * Accepts "q03", "qrt", or bare numbers like "3" (1-based, so "1"→q01).
+     * Returns -1 if not found.
+     */
+    private static int parseQueryIndex(String token, List<String> all) {
+        String lower = token.toLowerCase(java.util.Locale.ROOT);
+        // Direct match: "q02", "qrt"
+        int idx = all.indexOf(lower);
+        if (idx >= 0) return idx;
+        // Bare number: "3" → "q03"
+        try {
+            int n = Integer.parseInt(lower);
+            String padded = String.format("q%02d", n);
+            idx = all.indexOf(padded);
+            return idx;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 }
