@@ -126,7 +126,8 @@ public final class BerlinMODBench {
                 version = "MobilitySpark on Spark " + spark.version();
             }
 
-            // Time each query
+            // Time each query — flush results after every query so a crash
+            // still leaves a valid JSON file with the timings collected so far.
             for (String q : QUERY_ORDER) {
                 Path sqlFile = Paths.get(sqlDir, q + ".sql");
                 if (!Files.exists(sqlFile)) {
@@ -151,13 +152,13 @@ public final class BerlinMODBench {
                 System.out.println("ms");
                 if (!qTimes.isEmpty()) {
                     timings.put(q, qTimes);
+                    writeJson(outputPath, version, dataDir, runs, timings);
                 }
             }
         } finally {
             spark.stop();
         }
 
-        writeJson(outputPath, version, dataDir, runs, timings);
         System.out.println("=== Results written to " + outputPath + " ===");
     }
 
@@ -235,7 +236,13 @@ public final class BerlinMODBench {
         }
         sb.append("\n  }\n}\n");
 
-        Files.writeString(Paths.get(outputPath), sb.toString());
+        // Atomic write: write to a .tmp file then rename so a crash mid-write
+        // never leaves a truncated JSON (the previous file stays intact).
+        Path dest = Paths.get(outputPath);
+        Path tmp  = dest.resolveSibling(dest.getFileName() + ".tmp");
+        Files.writeString(tmp, sb.toString());
+        Files.move(tmp, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                               java.nio.file.StandardCopyOption.ATOMIC_MOVE);
     }
 
     private static long countLines(Path path) {
