@@ -30,6 +30,7 @@ import jnr.ffi.Pointer;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
+import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 
 import java.sql.Timestamp;
@@ -81,28 +82,39 @@ public final class TemporalUDFs {
             MeosThread.ensureReady();
             Pointer tptr = functions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer result;
-            if (timeArg instanceof java.sql.Timestamp) {
-                // Spark TIMESTAMP → MEOS TimestampTz (PG-epoch µs)
-                long pgEpochMicros = (((java.sql.Timestamp) timeArg).getTime() - 946684800L * 1000L) * 1000L;
-                java.time.OffsetDateTime odt = java.time.OffsetDateTime.ofInstant(
-                    java.time.Instant.ofEpochSecond(pgEpochMicros, 0),
-                    java.time.ZoneOffset.UTC);
-                result = functions.temporal_at_timestamptz(tptr, odt);
-            } else {
-                String s = timeArg.toString().trim();
-                if (!s.isEmpty() && (s.charAt(0) == '[' || s.charAt(0) == '(')) {
-                    Pointer spanPtr = functions.tstzspan_in(s);
-                    if (spanPtr == null) return null;
-                    result = functions.temporal_at_tstzspan(tptr, spanPtr);
-                } else {
-                    java.time.OffsetDateTime odt = functions.pg_timestamptz_in(s, -1);
-                    if (odt == null) return null;
+            try {
+                Pointer result;
+                if (timeArg instanceof java.sql.Timestamp) {
+                    long pgEpochMicros = (((java.sql.Timestamp) timeArg).getTime() - 946684800L * 1000L) * 1000L;
+                    java.time.OffsetDateTime odt = java.time.OffsetDateTime.ofInstant(
+                        java.time.Instant.ofEpochSecond(pgEpochMicros, 0),
+                        java.time.ZoneOffset.UTC);
                     result = functions.temporal_at_timestamptz(tptr, odt);
+                } else {
+                    String s = timeArg.toString().trim();
+                    if (!s.isEmpty() && (s.charAt(0) == '[' || s.charAt(0) == '(')) {
+                        Pointer spanPtr = functions.tstzspan_in(s);
+                        if (spanPtr == null) return null;
+                        try {
+                            result = functions.temporal_at_tstzspan(tptr, spanPtr);
+                        } finally {
+                            MeosMemory.free(spanPtr);
+                        }
+                    } else {
+                        java.time.OffsetDateTime odt = functions.pg_timestamptz_in(s, -1);
+                        if (odt == null) return null;
+                        result = functions.temporal_at_timestamptz(tptr, odt);
+                    }
                 }
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(tptr);
             }
-            if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -116,7 +128,11 @@ public final class TemporalUDFs {
             MeosThread.ensureReady();
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return fromJmeosTimestamp(functions.temporal_start_timestamptz(ptr));
+            try {
+                return fromJmeosTimestamp(functions.temporal_start_timestamptz(ptr));
+            } finally {
+                MeosMemory.free(ptr);
+            }
         };
 
     // ------------------------------------------------------------------
@@ -130,7 +146,11 @@ public final class TemporalUDFs {
             MeosThread.ensureReady();
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return fromJmeosTimestamp(functions.temporal_end_timestamptz(ptr));
+            try {
+                return fromJmeosTimestamp(functions.temporal_end_timestamptz(ptr));
+            } finally {
+                MeosMemory.free(ptr);
+            }
         };
 
     // ------------------------------------------------------------------
@@ -144,14 +164,15 @@ public final class TemporalUDFs {
             MeosThread.ensureReady();
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.temporal_num_instants(ptr);
+            try {
+                return functions.temporal_num_instants(ptr);
+            } finally {
+                MeosMemory.free(ptr);
+            }
         };
 
     // ------------------------------------------------------------------
     // speed(trip STRING) → STRING (hex-WKB of tfloat)
-    //
-    // Returns the instantaneous speed of a tgeompoint as a tfloat hex-WKB
-    // string.  The result can be passed to asHexWKB() for binary serialization.
     //
     // MEOS: tpoint_speed(const Temporal *) → Temporal *  (tfloat)
     // ------------------------------------------------------------------
@@ -161,16 +182,23 @@ public final class TemporalUDFs {
             MeosThread.ensureReady();
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer result = functions.tpoint_speed(ptr);
-            if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
+            try {
+                Pointer result = functions.tpoint_speed(ptr);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
         };
 
     // ------------------------------------------------------------------
     // atGeometry(trip STRING, geomWKT STRING) → STRING
     //
-    // Restricts a tgeompoint to the instants when it was inside the given
-    // geometry (WKT string with SRID 0).
+    // Restricts a tgeompoint to the instants when it was inside geomWkt.
     //
     // MEOS: geo_from_text(const char *, int32_t) → GSERIALIZED *
     //       tgeo_at_geom(const Temporal *, const GSERIALIZED *) → Temporal *
@@ -180,20 +208,31 @@ public final class TemporalUDFs {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
             Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer gptr = functions.geo_from_text(geomWkt, 0);
-            if (tptr == null || gptr == null) return null;
-            Pointer result = functions.tgeo_at_geom(tptr, gptr);
-            if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
+            if (tptr == null) return null;
+            try {
+                Pointer gptr = functions.geo_from_text(geomWkt, 0);
+                if (gptr == null) return null;
+                try {
+                    Pointer result = functions.tgeo_at_geom(tptr, gptr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(gptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
         };
 
     // ------------------------------------------------------------------
     // asHexWKB(trip STRING) → STRING
     //
     // Serializes a temporal value to the canonical MEOS hex-WKB string
-    // (little-endian, variant 0, no SRID flag) — the RFC #861 portable
-    // binary return format, byte-for-byte identical across MobilityDB,
-    // MobilityDuck, and MobilitySpark.
+    // (little-endian, variant 0) — byte-for-byte identical across all platforms.
     //
     // MEOS: temporal_as_hexwkb(const Temporal *, uint8_t variant) → char *
     // ------------------------------------------------------------------
@@ -203,7 +242,11 @@ public final class TemporalUDFs {
             MeosThread.ensureReady();
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.temporal_as_hexwkb(ptr, (byte) 0);
+            try {
+                return functions.temporal_as_hexwkb(ptr, (byte) 0);
+            } finally {
+                MeosMemory.free(ptr);
+            }
         };
 
     public static void registerAll(org.apache.spark.sql.SparkSession spark) {

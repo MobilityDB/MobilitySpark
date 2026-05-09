@@ -82,9 +82,13 @@ ulimit -c 0
 
 QUERIES_MSG="${QUERIES:-all}"
 echo "=== Running BerlinMODBench (${RUNS} runs/query, queries=${QUERIES_MSG}) on MobilitySpark ==="
+# --driver-memory 6g: each BerlinMOD trip row is ~36 KB hex-WKB; cross-join queries (Q2, Q4)
+# hold ~1 GB of trip strings in heap simultaneously.  A 6 g heap gives the GC enough headroom
+# to avoid spilling to off-heap and prevents WSL2 OOM kills when queries run back-to-back.
 "$SPARK_SUBMIT" \
   --class org.mobilitydb.spark.demo.BerlinMODBench \
   --master "local[2]" \
+  --driver-memory 6g \
   --conf "spark.driver.extraJavaOptions=-Djava.library.path=${LIBMEOS_DIR} -Dlog4j.logger.org.apache=WARN" \
   "$JAR" \
   "$DATADIR" \

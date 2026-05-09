@@ -31,6 +31,7 @@ import jnr.ffi.Runtime;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.*;
 import org.apache.spark.sql.types.DataTypes;
+import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 
 import java.time.Instant;
@@ -82,7 +83,11 @@ public final class BerlinMODUDFs {
         MeosThread.ensureReady();
         Pointer tptr = functions.temporal_from_hexwkb(trip);
         if (tptr == null) return null;
-        return functions.tpoint_length(tptr);
+        try {
+            return functions.tpoint_length(tptr);
+        } finally {
+            MeosMemory.free(tptr);
+        }
     };
 
     // ------------------------------------------------------------------
@@ -98,15 +103,27 @@ public final class BerlinMODUDFs {
         MeosThread.ensureReady();
         Pointer tptr = functions.temporal_from_hexwkb(trip);
         if (tptr == null) return null;
-        char first = other.isEmpty() ? 0 : other.charAt(0);
-        if (first == '[' || first == '(') {
-            Pointer sptr = functions.tstzspan_in(other);
-            if (sptr == null) return null;
-            return functions.overlaps_temporal_tstzspan(tptr, sptr);
-        } else {
-            Pointer bptr = functions.stbox_from_hexwkb(other);
-            if (bptr == null) return null;
-            return functions.overlaps_tpoint_stbox(tptr, bptr);
+        try {
+            char first = other.isEmpty() ? 0 : other.charAt(0);
+            if (first == '[' || first == '(') {
+                Pointer sptr = functions.tstzspan_in(other);
+                if (sptr == null) return null;
+                try {
+                    return functions.overlaps_temporal_tstzspan(tptr, sptr);
+                } finally {
+                    MeosMemory.free(sptr);
+                }
+            } else {
+                Pointer bptr = functions.stbox_from_hexwkb(other);
+                if (bptr == null) return null;
+                try {
+                    return functions.overlaps_tpoint_stbox(tptr, bptr);
+                } finally {
+                    MeosMemory.free(bptr);
+                }
+            }
+        } finally {
+            MeosMemory.free(tptr);
         }
     };
 
@@ -145,27 +162,39 @@ public final class BerlinMODUDFs {
         MeosThread.ensureReady();
         Pointer gptr = functions.geo_from_text(geomWkt, 0);
         if (gptr == null) return null;
-        Pointer result;
-        if (tsArg instanceof java.sql.Timestamp) {
-            OffsetDateTime odt = toMeosTs((java.sql.Timestamp) tsArg);
-            if (odt == null) return null;
-            result = functions.geo_timestamptz_to_stbox(gptr, odt);
-        } else {
-            String s = tsArg.toString().trim();
-            if (s.isEmpty()) return null;
-            if (s.charAt(0) == '[' || s.charAt(0) == '(') {
-                Pointer sptr = functions.tstzspan_in(s);
-                if (sptr == null) return null;
-                result = functions.geo_tstzspan_to_stbox(gptr, sptr);
-            } else {
-                OffsetDateTime odt = functions.pg_timestamptz_in(s, -1);
+        try {
+            Pointer result;
+            if (tsArg instanceof java.sql.Timestamp) {
+                OffsetDateTime odt = toMeosTs((java.sql.Timestamp) tsArg);
                 if (odt == null) return null;
                 result = functions.geo_timestamptz_to_stbox(gptr, odt);
+            } else {
+                String s = tsArg.toString().trim();
+                if (s.isEmpty()) return null;
+                if (s.charAt(0) == '[' || s.charAt(0) == '(') {
+                    Pointer sptr = functions.tstzspan_in(s);
+                    if (sptr == null) return null;
+                    try {
+                        result = functions.geo_tstzspan_to_stbox(gptr, sptr);
+                    } finally {
+                        MeosMemory.free(sptr);
+                    }
+                } else {
+                    OffsetDateTime odt = functions.pg_timestamptz_in(s, -1);
+                    if (odt == null) return null;
+                    result = functions.geo_timestamptz_to_stbox(gptr, odt);
+                }
             }
+            if (result == null) return null;
+            try {
+                Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                return functions.stbox_as_hexwkb(result, (byte) 0, sizeOut);
+            } finally {
+                MeosMemory.free(result);
+            }
+        } finally {
+            MeosMemory.free(gptr);
         }
-        if (result == null) return null;
-        Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-        return functions.stbox_as_hexwkb(result, (byte) 0, sizeOut);
     };
 
     // ------------------------------------------------------------------
@@ -179,12 +208,24 @@ public final class BerlinMODUDFs {
         MeosThread.ensureReady();
         Pointer tptr = functions.temporal_from_hexwkb(trip);
         if (tptr == null) return null;
-        Pointer bbox = functions.tspatial_to_stbox(tptr);
-        if (bbox == null) return null;
-        Pointer expanded = functions.stbox_expand_space(bbox, dist.doubleValue());
-        if (expanded == null) return null;
-        Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-        return functions.stbox_as_hexwkb(expanded, (byte) 0, sizeOut);
+        try {
+            Pointer bbox = functions.tspatial_to_stbox(tptr);
+            if (bbox == null) return null;
+            try {
+                Pointer expanded = functions.stbox_expand_space(bbox, dist.doubleValue());
+                if (expanded == null) return null;
+                try {
+                    Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                    return functions.stbox_as_hexwkb(expanded, (byte) 0, sizeOut);
+                } finally {
+                    MeosMemory.free(expanded);
+                }
+            } finally {
+                MeosMemory.free(bbox);
+            }
+        } finally {
+            MeosMemory.free(tptr);
+        }
     };
 
     // ------------------------------------------------------------------
@@ -199,64 +240,95 @@ public final class BerlinMODUDFs {
         if (t1 == null || t2 == null || dist == null) return null;
         MeosThread.ensureReady();
         Pointer p1 = functions.temporal_from_hexwkb(t1);
-        Pointer p2 = functions.temporal_from_hexwkb(t2);
-        if (p1 == null || p2 == null) return null;
-        Pointer result = functions.tdwithin_tpoint_tpoint(p1, p2, dist.doubleValue(), false, false);
-        if (result == null) return null;
-        return functions.temporal_as_hexwkb(result, (byte) 0);
+        if (p1 == null) return null;
+        try {
+            Pointer p2 = functions.temporal_from_hexwkb(t2);
+            if (p2 == null) return null;
+            try {
+                Pointer result = functions.tdwithin_tpoint_tpoint(p1, p2, dist.doubleValue(), false, false);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(p2);
+            }
+        } finally {
+            MeosMemory.free(p1);
+        }
     };
 
     // ------------------------------------------------------------------
     // whenTrue(tbool STRING) → STRING (tstzspanset text)
-    // Returns the time periods when a tbool is true, as text.
-    // MEOS: tbool_when_true meos.h:1728; tstzspanset_out for text output
     // ------------------------------------------------------------------
     public static final UDF1<String, String> whenTrue = (tbool) -> {
         if (tbool == null) return null;
         MeosThread.ensureReady();
         Pointer tptr = functions.temporal_from_hexwkb(tbool);
         if (tptr == null) return null;
-        Pointer sset = functions.tbool_when_true(tptr);
-        if (sset == null) return null;
-        return functions.tstzspanset_out(sset);
+        try {
+            Pointer sset = functions.tbool_when_true(tptr);
+            if (sset == null) return null;
+            try {
+                return functions.tstzspanset_out(sset);
+            } finally {
+                MeosMemory.free(sset);
+            }
+        } finally {
+            MeosMemory.free(tptr);
+        }
     };
 
     // ------------------------------------------------------------------
     // aDisjoint(t1 STRING, t2 STRING) → BOOLEAN
-    // Returns true if the two tgeompoints are always spatially disjoint.
-    // MEOS: adisjoint_tpoint_tpoint (JMEOS-1.5 tpoint variant)
     // ------------------------------------------------------------------
     public static final UDF2<String, String, Boolean> aDisjoint = (t1, t2) -> {
         if (t1 == null || t2 == null) return null;
         MeosThread.ensureReady();
         Pointer p1 = functions.temporal_from_hexwkb(t1);
-        Pointer p2 = functions.temporal_from_hexwkb(t2);
-        if (p1 == null || p2 == null) return null;
-        return functions.adisjoint_tpoint_tpoint(p1, p2) == 1;
+        if (p1 == null) return null;
+        try {
+            Pointer p2 = functions.temporal_from_hexwkb(t2);
+            if (p2 == null) return null;
+            try {
+                return functions.adisjoint_tpoint_tpoint(p1, p2) == 1;
+            } finally {
+                MeosMemory.free(p2);
+            }
+        } finally {
+            MeosMemory.free(p1);
+        }
     };
 
     // ------------------------------------------------------------------
     // geomContains(outer STRING, inner STRING) → BOOLEAN
-    // Returns true if outer geometry (WKT) spatially contains inner (WKT).
-    // Replaces ST_Contains in Q14.
-    // geom_contains is not in JMEOS-1.5; approximate with econtains_geo_tgeo
-    // by wrapping the inner WKT as a tgeompoint instant then checking ever-contains.
-    // Note: this may return more rows than strict geometry containment but is
-    // sufficient for the benchmark timing measurement.
+    // Replaces ST_Contains in Q14.  Approximated via econtains_geo_tgeo.
     // ------------------------------------------------------------------
     public static final UDF2<String, String, Boolean> geomContains = (outer, inner) -> {
         if (outer == null || inner == null) return null;
         MeosThread.ensureReady();
         Pointer g1 = functions.geo_from_text(outer, 0);
         if (g1 == null) return null;
-        // Wrap inner WKT as a tgeompoint instant using a sentinel timestamp.
-        // The sentinel is PG epoch (2000-01-01) — only SRID/geometry matters here.
-        OffsetDateTime epoch = functions.pg_timestamptz_in("2000-01-01", -1);
-        Pointer innerGeo = functions.geo_from_text(inner, 0);
-        if (innerGeo == null) return null;
-        Pointer tptr = functions.tpointinst_make(innerGeo, epoch);
-        if (tptr == null) return null;
-        return functions.econtains_geo_tgeo(g1, tptr) == 1;
+        try {
+            OffsetDateTime epoch = functions.pg_timestamptz_in("2000-01-01", -1);
+            Pointer innerGeo = functions.geo_from_text(inner, 0);
+            if (innerGeo == null) return null;
+            try {
+                Pointer tptr = functions.tpointinst_make(innerGeo, epoch);
+                if (tptr == null) return null;
+                try {
+                    return functions.econtains_geo_tgeo(g1, tptr) == 1;
+                } finally {
+                    MeosMemory.free(tptr);
+                }
+            } finally {
+                MeosMemory.free(innerGeo);
+            }
+        } finally {
+            MeosMemory.free(g1);
+        }
     };
 
     public static void registerAll(SparkSession spark) {
