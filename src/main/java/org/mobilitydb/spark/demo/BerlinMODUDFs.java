@@ -245,7 +245,7 @@ public final class BerlinMODUDFs {
             Pointer p2 = functions.temporal_from_hexwkb(t2);
             if (p2 == null) return null;
             try {
-                Pointer result = functions.tdwithin_tpoint_tpoint(p1, p2, dist.doubleValue(), false, false);
+                Pointer result = functions.tdwithin_tgeo_tgeo(p1, p2, dist.doubleValue());
                 if (result == null) return null;
                 try {
                     return functions.temporal_as_hexwkb(result, (byte) 0);
