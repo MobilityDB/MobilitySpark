@@ -26,23 +26,24 @@
 package org.mobilitydb.spark;
 
 import functions.functions;
+import org.apache.spark.sql.api.java.*;
 
 /**
  * Per-thread MEOS initialisation for Spark executor threads.
  *
  * In Spark's multi-threaded executor model every task thread must initialise
  * MEOS independently because session_timezone and the timezone cache are
- * thread-local inside libmeos.  Calling ensureReady() at the start of every
- * UDF lambda guarantees that:
+ * thread-local inside libmeos.  The ThreadLocal in MEOS_READY ensures
+ * initialisation runs exactly once per native thread.
  *
- *   1. session_timezone is non-NULL before any timestamp formatting call
- *      (prevents the localsub SIGSEGV crash reported in hs_err_pid*.log).
- *   2. The no-exit error handler is installed, so MEOS logic errors (e.g.
- *      SRID mismatch) set meos_errno() and return rather than calling
- *      exit() which kills the entire JVM process.
+ * Usage — two patterns:
  *
- * The ThreadLocal ensures the initialisation runs exactly once per native
- * thread — subsequent calls to ensureReady() are a single volatile read.
+ *   1. Wrap lambdas at registration time (preferred — no boilerplate in the
+ *      lambda body and impossible to forget):
+ *        spark.udf().register("foo", MeosThread.wrap((String s) -> ...), Type);
+ *
+ *   2. Call ensureReady() explicitly at the top of a lambda where wrapping is
+ *      not convenient.
  */
 public final class MeosThread {
 
@@ -58,5 +59,23 @@ public final class MeosThread {
     /** Ensure MEOS is initialised for the calling thread. */
     public static void ensureReady() {
         MEOS_READY.get();
+    }
+
+    // ------------------------------------------------------------------
+    // UDF wrappers — call ensureReady() before delegating to the lambda.
+    // Use these in registerAll() instead of scattering ensureReady() calls
+    // inside every individual UDF method body.
+    // ------------------------------------------------------------------
+
+    public static <R> UDF1<String, R> wrap(UDF1<String, R> udf) {
+        return s -> { ensureReady(); return udf.call(s); };
+    }
+
+    public static <A, R> UDF2<String, A, R> wrap(UDF2<String, A, R> udf) {
+        return (s, a) -> { ensureReady(); return udf.call(s, a); };
+    }
+
+    public static <A, B, R> UDF3<String, A, B, R> wrap(UDF3<String, A, B, R> udf) {
+        return (s, a, b) -> { ensureReady(); return udf.call(s, a, b); };
     }
 }

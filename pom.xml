@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spark.version>3.5.1</spark.version>
         <scala.binary.version>2.13</scala.binary.version>
-        <jmeos.jar>${project.basedir}/libs/JMEOS-1.5.jar</jmeos.jar>
+        <jmeos.jar>${project.basedir}/libs/JMEOS-1.4.jar</jmeos.jar>
     </properties>
 
     <dependencies>
@@ -32,13 +32,14 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- JMEOS 1.5 installed to local Maven repo (libs/JMEOS-1.5.jar).
+        <!-- JMEOS 1.4 installed to local Maven repo (libs/JMEOS-1.4.jar).
+             Version number matches the MEOS API it implements (MEOS 1.4).
              compile scope so maven-shade-plugin bundles it in the fat JAR;
              system scope would be excluded from the shaded artifact. -->
         <dependency>
             <groupId>org.jmeos</groupId>
             <artifactId>jmeos</artifactId>
-            <version>1.5</version>
+            <version>1.4</version>
         </dependency>
 
         <!-- jnr-ffi: JMEOS uses this for native FFI. 2.2.17 is the latest release. -->
@@ -98,7 +99,7 @@
                     <reuseForks>false</reuseForks>
                     <!-- Pin libmeos.so to the system-installed version so the
                          correct (thread-safe) build is used, not any stale
-                         copy bundled inside JMEOS-1.5.jar. -->
+                         copy bundled inside JMEOS-1.4.jar. -->
                     <argLine>-Djava.library.path=/usr/local/lib</argLine>
                 </configuration>
             </plugin>
