@@ -9,12 +9,7 @@ while IFS= read -r -d '' f; do
         echo "Missing license header: $f"
         error=1
     fi
-done < <(find "$DIR/src/main" "$DIR/src/test" -name "*.java" \
-    ! -path "*/org/mobiltydb/*" \
-    ! -path "*/utils/*" \
-    ! -path "*/UDF/*" \
-    ! -path "*/UDT/*" \
-    -print0 2>/dev/null)
+done < <(find "$DIR/src/main" "$DIR/src/test" -name "*.java" -print0 2>/dev/null)
 
 if [ $error -eq 0 ]; then
     echo "License check passed."

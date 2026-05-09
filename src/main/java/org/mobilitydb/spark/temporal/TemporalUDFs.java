@@ -30,9 +30,9 @@ import jnr.ffi.Pointer;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
+import org.mobilitydb.spark.MeosThread;
 
 import java.sql.Timestamp;
-import java.util.HexFormat;
 
 /**
  * Spark SQL UDFs for generic temporal operations (type-agnostic).
@@ -65,31 +65,41 @@ public final class TemporalUDFs {
     }
 
     // ------------------------------------------------------------------
-    // atTime(trip STRING, timeArg STRING) → STRING
+    // atTime(trip STRING, timeArg STRING|TIMESTAMP) → STRING
     //
-    // Portable: timeArg is either a tstzspan literal "[t1,t2]"/"(t1,t2]"/...
-    // (for Q7-style period restriction) or a timestamptz string "YYYY-MM-DD HH:MM:SS"
-    // (Spark implicitly casts a TIMESTAMP column to STRING for Q3-style instant
-    // restriction).  Dispatch is based on the first character of timeArg.
+    // timeArg may be:
+    //   - java.sql.Timestamp  (Q3: QueryInstants.instant column, Spark TIMESTAMP type)
+    //   - String span literal "[t1,t2]"/"(t1,t2]"/...  (Q7: QueryPeriods.period)
+    //   - String instant literal "YYYY-MM-DD HH:MM:SS+TZ"  (plain string instant)
     //
     // MEOS: tstzspan_in + temporal_at_tstzspan  (span case)
-    //       pg_timestamptz_in + temporal_at_timestamptz  (instant case)
+    //       temporal_at_timestamptz              (instant case)
     // ------------------------------------------------------------------
-    public static final UDF2<String, String, String> atTime =
+    public static final UDF2<String, Object, String> atTime =
         (trip, timeArg) -> {
             if (trip == null || timeArg == null) return null;
+            MeosThread.ensureReady();
             Pointer tptr = functions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            String s = timeArg.trim();
             Pointer result;
-            if (!s.isEmpty() && (s.charAt(0) == '[' || s.charAt(0) == '(')) {
-                Pointer spanPtr = functions.tstzspan_in(s);
-                if (spanPtr == null) return null;
-                result = functions.temporal_at_tstzspan(tptr, spanPtr);
-            } else {
-                java.time.OffsetDateTime odt = functions.pg_timestamptz_in(s, -1);
-                if (odt == null) return null;
+            if (timeArg instanceof java.sql.Timestamp) {
+                // Spark TIMESTAMP → MEOS TimestampTz (PG-epoch µs)
+                long pgEpochMicros = (((java.sql.Timestamp) timeArg).getTime() - 946684800L * 1000L) * 1000L;
+                java.time.OffsetDateTime odt = java.time.OffsetDateTime.ofInstant(
+                    java.time.Instant.ofEpochSecond(pgEpochMicros, 0),
+                    java.time.ZoneOffset.UTC);
                 result = functions.temporal_at_timestamptz(tptr, odt);
+            } else {
+                String s = timeArg.toString().trim();
+                if (!s.isEmpty() && (s.charAt(0) == '[' || s.charAt(0) == '(')) {
+                    Pointer spanPtr = functions.tstzspan_in(s);
+                    if (spanPtr == null) return null;
+                    result = functions.temporal_at_tstzspan(tptr, spanPtr);
+                } else {
+                    java.time.OffsetDateTime odt = functions.pg_timestamptz_in(s, -1);
+                    if (odt == null) return null;
+                    result = functions.temporal_at_timestamptz(tptr, odt);
+                }
             }
             if (result == null) return null;
             return functions.temporal_as_hexwkb(result, (byte) 0);
@@ -103,6 +113,7 @@ public final class TemporalUDFs {
     public static final UDF1<String, Timestamp> startTimestamp =
         (trip) -> {
             if (trip == null) return null;
+            MeosThread.ensureReady();
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             return fromJmeosTimestamp(functions.temporal_start_timestamptz(ptr));
@@ -116,6 +127,7 @@ public final class TemporalUDFs {
     public static final UDF1<String, Timestamp> endTimestamp =
         (trip) -> {
             if (trip == null) return null;
+            MeosThread.ensureReady();
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             return fromJmeosTimestamp(functions.temporal_end_timestamptz(ptr));
@@ -129,6 +141,7 @@ public final class TemporalUDFs {
     public static final UDF1<String, Integer> numInstants =
         (trip) -> {
             if (trip == null) return null;
+            MeosThread.ensureReady();
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             return functions.temporal_num_instants(ptr);
@@ -145,6 +158,7 @@ public final class TemporalUDFs {
     public static final UDF1<String, String> speed =
         (trip) -> {
             if (trip == null) return null;
+            MeosThread.ensureReady();
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             Pointer result = functions.tpoint_speed(ptr);
@@ -164,6 +178,7 @@ public final class TemporalUDFs {
     public static final UDF2<String, String, String> atGeometry =
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
             Pointer tptr = functions.temporal_from_hexwkb(trip);
             Pointer gptr = functions.geo_from_text(geomWkt, 0);
             if (tptr == null || gptr == null) return null;
@@ -185,83 +200,19 @@ public final class TemporalUDFs {
     public static final UDF1<String, String> asHexWKB =
         (trip) -> {
             if (trip == null) return null;
+            MeosThread.ensureReady();
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             return functions.temporal_as_hexwkb(ptr, (byte) 0);
         };
 
-    // ------------------------------------------------------------------
-    // TemporalParquet readers: xFromBinary(BINARY) → STRING
-    //
-    // Each converts a Parquet BYTE_ARRAY column (written by MobilityDuck's
-    // asBinary()) to the internal hex-WKB string used throughout MobilitySpark.
-    //
-    // Implementation is type-agnostic: temporal_from_hexwkb handles all
-    // MEOS temporal types uniformly via the WKB type-code embedded in the
-    // byte stream.  The type-specific names exist for SQL discoverability
-    // and to match MobilityDuck's tgeompointFromBinary / tintFromBinary /
-    // tfloatFromBinary / tboolFromBinary / ttextFromBinary surface.
-    //
-    // MEOS: temporal_from_hexwkb(const char *) → Temporal *
-    //       temporal_as_hexwkb(const Temporal *, uint8_t variant) → char *
-    // ------------------------------------------------------------------
-    private static String fromBinaryImpl(byte[] bytes) throws Exception {
-        if (bytes == null) return null;
-        String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-        Pointer ptr = functions.temporal_from_hexwkb(hex);
-        if (ptr == null) return null;
-        return functions.temporal_as_hexwkb(ptr, (byte) 0);
-    }
-
-    public static final UDF1<byte[], String> tgeompointFromBinary =
-        (bytes) -> fromBinaryImpl(bytes);
-
-    public static final UDF1<byte[], String> tgeogpointFromBinary =
-        (bytes) -> fromBinaryImpl(bytes);
-
-    public static final UDF1<byte[], String> tintFromBinary =
-        (bytes) -> fromBinaryImpl(bytes);
-
-    public static final UDF1<byte[], String> tfloatFromBinary =
-        (bytes) -> fromBinaryImpl(bytes);
-
-    public static final UDF1<byte[], String> tboolFromBinary =
-        (bytes) -> fromBinaryImpl(bytes);
-
-    public static final UDF1<byte[], String> ttextFromBinary =
-        (bytes) -> fromBinaryImpl(bytes);
-
-    // ------------------------------------------------------------------
-    // asBinary(trip STRING) → BINARY
-    //
-    // Converts an internal hex-WKB string back to raw bytes for writing to
-    // a Parquet BYTE_ARRAY column — the inverse of xFromBinary().  No MEOS
-    // call is needed: the internal format is already hex-encoded MEOS-WKB,
-    // so hex-decoding is sufficient.
-    //
-    // Use this to write any temporal type (tgeompoint, tint, tfloat, …)
-    // back to Parquet after processing in Spark SQL.
-    // ------------------------------------------------------------------
-    public static final UDF1<String, byte[]> asBinary =
-        (hexWkb) -> {
-            if (hexWkb == null) return null;
-            return HexFormat.of().parseHex(hexWkb.toLowerCase());
-        };
-
     public static void registerAll(org.apache.spark.sql.SparkSession spark) {
-        spark.udf().register("atTime",           atTime,           DataTypes.StringType);
-        spark.udf().register("startTimestamp",    startTimestamp,   DataTypes.TimestampType);
-        spark.udf().register("endTimestamp",      endTimestamp,     DataTypes.TimestampType);
-        spark.udf().register("numInstants",       numInstants,      DataTypes.IntegerType);
-        spark.udf().register("speed",             speed,            DataTypes.StringType);
-        spark.udf().register("atGeometry",        atGeometry,       DataTypes.StringType);
-        spark.udf().register("asHexWKB",          asHexWKB,         DataTypes.StringType);
-        spark.udf().register("tgeompointFromBinary", tgeompointFromBinary, DataTypes.StringType);
-        spark.udf().register("tgeogpointFromBinary", tgeogpointFromBinary, DataTypes.StringType);
-        spark.udf().register("tintFromBinary",    tintFromBinary,   DataTypes.StringType);
-        spark.udf().register("tfloatFromBinary",  tfloatFromBinary, DataTypes.StringType);
-        spark.udf().register("tboolFromBinary",   tboolFromBinary,  DataTypes.StringType);
-        spark.udf().register("ttextFromBinary",   ttextFromBinary,  DataTypes.StringType);
-        spark.udf().register("asBinary",          asBinary,         DataTypes.BinaryType);
+        spark.udf().register("atTime",          atTime,          DataTypes.StringType);
+        spark.udf().register("startTimestamp",   startTimestamp,  DataTypes.TimestampType);
+        spark.udf().register("endTimestamp",     endTimestamp,    DataTypes.TimestampType);
+        spark.udf().register("numInstants",      numInstants,     DataTypes.IntegerType);
+        spark.udf().register("speed",            speed,           DataTypes.StringType);
+        spark.udf().register("atGeometry",       atGeometry,      DataTypes.StringType);
+        spark.udf().register("asHexWKB",         asHexWKB,        DataTypes.StringType);
     }
 }

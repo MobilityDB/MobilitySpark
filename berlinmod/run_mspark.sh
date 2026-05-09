@@ -54,7 +54,7 @@ if ! command -v "$SPARK_SUBMIT" >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "=== Running BerlinMOD Q1-Q8 + QRT + Q9-Q17 on MobilitySpark ==="
+echo "=== Running BerlinMOD Q1/Q2/Q3/Q4/Q5/Q6/Q7/Q8 + QRT on MobilitySpark ==="
 "$SPARK_SUBMIT" \
   --class org.mobilitydb.spark.demo.BerlinMODDemo \
   --master "local[*]" \

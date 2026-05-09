@@ -29,6 +29,7 @@ import functions.functions;
 import jnr.ffi.Pointer;
 import org.apache.spark.sql.api.java.*;
 import org.apache.spark.sql.types.DataTypes;
+import org.mobilitydb.spark.MeosThread;
 
 /**
  * Spark SQL UDFs for spatial (geometry) operations on tgeompoint.
@@ -51,14 +52,22 @@ public final class GeoUDFs {
     // ------------------------------------------------------------------
     // eIntersects(trip STRING, geomWkt STRING) → BOOLEAN
     //
-    // geomWkt is a WKT string (e.g. "POINT(50 0)") with SRID 0 (default).
-    // When the trip is geodetic (tgeogpoint, SRID 4326 — e.g. from a
-    // TemporalParquet shard written by MobilityDuck), the geometry is
-    // automatically promoted to geographic via geom_to_geog() to avoid
-    // MEOS "Operation on mixed SRID" errors.
+    // Returns true if the trip's trajectory ever intersects geomWkt.
+    //
+    // SRID handling: we extract the trip's SRID from its bounding box and
+    // pass it to geo_from_text so that MEOS's ensure_same_srid check passes.
+    // BerlinMOD trips use SRID=3857 (Web Mercator); query regions use SRID=0
+    // (WKT with no SRID clause).  Without this, all spatial predicates silently
+    // return false because ensure_same_srid(3857, 0) fails.
+    //
+    // Thread safety: MeosThread.ensureReady() initialises MEOS per executor thread.
+    //
+    // For geodetic trips (tgeogpoint), the geometry is promoted to geography
+    // via geom_to_geog() to avoid MEOS "Operation on mixed SRID" errors.
     //
     // MEOS: geo_from_text(const char *, int32_t srid)      meos_geo.h:335
     //       tspatial_to_stbox(const Temporal *)             → STBox
+    //       stbox_srid(const STBox *)                       → int32
     //       stbox_isgeodetic(const STBox *)                 → bool
     //       geom_to_geog(const GSERIALIZED *)               → GSERIALIZED *
     //       eintersects_tgeo_geo(const Temporal *,
@@ -67,11 +76,15 @@ public final class GeoUDFs {
     public static final UDF2<String, String, Boolean> eIntersects =
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
             Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer gptr = functions.geo_from_text(geomWkt, 0);
-            if (tptr == null || gptr == null) return null;
+            if (tptr == null) return null;
             Pointer bbox = functions.tspatial_to_stbox(tptr);
-            if (bbox != null && functions.stbox_isgeodetic(bbox)) {
+            boolean geodetic = (bbox != null && functions.stbox_isgeodetic(bbox));
+            int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+            Pointer gptr = functions.geo_from_text(geomWkt, srid);
+            if (gptr == null) return null;
+            if (geodetic) {
                 gptr = functions.geom_to_geog(gptr);
                 if (gptr == null) return null;
             }
@@ -88,6 +101,7 @@ public final class GeoUDFs {
     public static final UDF2<String, String, Double> nearestApproachDistance =
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
+            MeosThread.ensureReady();
             Pointer p1 = functions.temporal_from_hexwkb(trip1);
             Pointer p2 = functions.temporal_from_hexwkb(trip2);
             if (p1 == null || p2 == null) return null;
@@ -98,16 +112,20 @@ public final class GeoUDFs {
     // ------------------------------------------------------------------
     // eDwithin(t1 STRING, t2 STRING, dist DOUBLE) → BOOLEAN
     //
+    // dist accepts Double or BigDecimal (Spark infers decimal(p,s) for
+    // numeric literals like 10.0 — use Number.doubleValue() to handle both).
+    //
     // MEOS: edwithin_tgeo_tgeo(const Temporal *, const Temporal *, double) → int
     // meos_geo.h line ~828
     // ------------------------------------------------------------------
-    public static final UDF3<String, String, Double, Boolean> eDwithin =
+    public static final UDF3<String, String, Number, Boolean> eDwithin =
         (trip1, trip2, dist) -> {
             if (trip1 == null || trip2 == null || dist == null) return null;
+            MeosThread.ensureReady();
             Pointer p1 = functions.temporal_from_hexwkb(trip1);
             Pointer p2 = functions.temporal_from_hexwkb(trip2);
             if (p1 == null || p2 == null) return null;
-            return functions.edwithin_tgeo_tgeo(p1, p2, dist) == 1;
+            return functions.edwithin_tgeo_tgeo(p1, p2, dist.doubleValue()) == 1;
         };
 
     // ------------------------------------------------------------------
@@ -122,6 +140,7 @@ public final class GeoUDFs {
     public static final UDF1<String, String> tgeompoint =
         (wkt) -> {
             if (wkt == null) return null;
+            MeosThread.ensureReady();
             Pointer p = functions.tgeompoint_in(wkt);
             if (p == null) return null;
             return functions.temporal_as_hexwkb(p, (byte) 0);
@@ -142,6 +161,7 @@ public final class GeoUDFs {
     public static final UDF1<String, String> trajectory =
         (trip) -> {
             if (trip == null) return null;
+            MeosThread.ensureReady();
             Pointer tptr = functions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             Pointer gptr = functions.tpoint_trajectory(tptr, true);
@@ -164,9 +184,13 @@ public final class GeoUDFs {
     public static final UDF2<String, String, Boolean> eContains =
         (geomWkt, trip) -> {
             if (geomWkt == null || trip == null) return null;
-            Pointer gptr = functions.geo_from_text(geomWkt, 0);
+            MeosThread.ensureReady();
             Pointer tptr = functions.temporal_from_hexwkb(trip);
-            if (gptr == null || tptr == null) return null;
+            if (tptr == null) return null;
+            Pointer bbox = functions.tspatial_to_stbox(tptr);
+            int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+            Pointer gptr = functions.geo_from_text(geomWkt, srid);
+            if (gptr == null) return null;
             return functions.econtains_geo_tgeo(gptr, tptr) == 1;
         };
 
@@ -184,196 +208,123 @@ public final class GeoUDFs {
     public static final UDF1<String, String> geomFromText =
         (wkt) -> {
             if (wkt == null) return null;
+            MeosThread.ensureReady();
             Pointer p = functions.geo_from_text(wkt, 0);
             if (p == null) return null;
             return functions.geo_as_hexewkb(p, null);
         };
 
     // ------------------------------------------------------------------
-    // length(trip STRING) → DOUBLE
+    // getX / getY / getZ(trip STRING) → STRING (tfloat hex-WKB)
+    // cumulativeLength(trip STRING) → STRING (tfloat hex-WKB)
     //
-    // Returns the total Euclidean path length of a tgeompoint trip.
-    //
-    // MEOS: tpoint_length(const Temporal *) → double
+    // MEOS: tpoint_get_x/y/z, tpoint_cumulative_length  meos_geo.h
     // ------------------------------------------------------------------
-    public static final UDF1<String, Double> length =
+    public static final UDF1<String, String> getX =
         (trip) -> {
             if (trip == null) return null;
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
-            if (ptr == null) return null;
-            return functions.tpoint_length(ptr);
-        };
-
-    // ------------------------------------------------------------------
-    // valueAtTimestamp(trip STRING, instant TIMESTAMP) → STRING (WKT)
-    //
-    // Returns the WKT geometry of a tgeompoint at a specific instant, or
-    // NULL if the instant is outside the trip's time extent.
-    //
-    // Epoch note: same PG-epoch convention as in TemporalUDFs.atTime.
-    //
-    // Implementation: temporal_at_timestamptz gives a TInstant; trajectory
-    // of a TInstant is the underlying point geometry.
-    //
-    // MEOS: temporal_at_timestamptz(const Temporal *, TimestampTz) → Temporal *
-    //       tpoint_trajectory(const Temporal *, bool merge) → GSERIALIZED *
-    //       geo_as_text(const GSERIALIZED *, int) → char *
-    // ------------------------------------------------------------------
-    public static final UDF2<String, java.sql.Timestamp, String> valueAtTimestamp =
-        (trip, instant) -> {
-            if (trip == null || instant == null) return null;
+            MeosThread.ensureReady();
             Pointer tptr = functions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            long pgEpochMicros = (instant.getTime() - 946684800L * 1000L) * 1000L;
-            java.time.OffsetDateTime odt = java.time.OffsetDateTime.ofInstant(
-                java.time.Instant.ofEpochSecond(pgEpochMicros, 0),
-                java.time.ZoneOffset.UTC);
-            Pointer instPtr = functions.temporal_at_timestamptz(tptr, odt);
-            if (instPtr == null) return null;
-            Pointer geomPtr = functions.tpoint_trajectory(instPtr, false);
-            if (geomPtr == null) return null;
-            return functions.geo_as_text(geomPtr, 0);
+            Pointer r = functions.tpoint_get_x(tptr);
+            if (r == null) return null;
+            return functions.temporal_as_hexwkb(r, (byte) 0);
+        };
+
+    public static final UDF1<String, String> getY =
+        (trip) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            Pointer r = functions.tpoint_get_y(tptr);
+            if (r == null) return null;
+            return functions.temporal_as_hexwkb(r, (byte) 0);
+        };
+
+    public static final UDF1<String, String> getZ =
+        (trip) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            // tpoint_get_z raises a MEOS error (crashing JVM via longjmp) for 2D points;
+            // guard with a Z-presence check via the bounding box.
+            Pointer bbox = functions.tspatial_to_stbox(tptr);
+            if (bbox == null || !functions.stbox_hasz(bbox)) return null;
+            Pointer r = functions.tpoint_get_z(tptr);
+            if (r == null) return null;
+            return functions.temporal_as_hexwkb(r, (byte) 0);
+        };
+
+    public static final UDF1<String, String> cumulativeLength =
+        (trip) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            Pointer r = functions.tpoint_cumulative_length(tptr);
+            if (r == null) return null;
+            return functions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
-    // tDwithin(trip1 STRING, trip2 STRING, dist DOUBLE) → STRING (tbool hex-WKB)
+    // stops(trip STRING, maxDist DOUBLE, minDuration STRING) → STRING
     //
-    // Returns a tbool (hex-WKB) representing at which times the two trips
-    // were within dist of each other.  Pass the result to whenTrue() to
-    // get the tstzspanset of matching intervals.
+    // Returns the sub-trajectories where the vehicle stayed within maxDist
+    // for at least minDuration.  minDuration is an interval string ("1 second").
+    // Returns null when no stops are found.
     //
-    // MEOS: tdwithin_tgeo_tgeo(const Temporal *, const Temporal *,
-    //           double, bool restr, bool atvalue) → Temporal *
+    // MEOS: temporal_stops(const Temporal *, double, const Interval *)  meos.h
     // ------------------------------------------------------------------
-    public static final UDF3<String, String, Double, String> tDwithin =
-        (trip1, trip2, dist) -> {
-            if (trip1 == null || trip2 == null || dist == null) return null;
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
-            if (p1 == null || p2 == null) return null;
-            Pointer result = functions.tdwithin_tgeo_tgeo(p1, p2, dist, false, false);
-            if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
+    public static final UDF3<String, Double, String, String> stops =
+        (trip, maxDist, minDuration) -> {
+            if (trip == null || maxDist == null || minDuration == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            Pointer iv = functions.pg_interval_in(minDuration, -1);
+            if (iv == null) return null;
+            Pointer r = functions.temporal_stops(tptr, maxDist, iv);
+            if (r == null) return null;
+            return functions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
-    // whenTrue(tbool STRING) → STRING (tstzspanset text)
+    // isSimple(trip STRING) → BOOLEAN
     //
-    // Returns the set of time spans during which the tbool is TRUE, as a
-    // tstzspanset text (e.g. "{[t1, t2], [t3, t4]}").
+    // True when the trip has no self-intersections.
     //
-    // MEOS: tbool_when_true(const Temporal *) → SpanSet *
-    //       tstzspanset_out(const SpanSet *) → char *
+    // MEOS: tpoint_is_simple(const Temporal *)  meos_geo.h
     // ------------------------------------------------------------------
-    public static final UDF1<String, String> whenTrue =
-        (tboolHex) -> {
-            if (tboolHex == null) return null;
-            Pointer ptr = functions.temporal_from_hexwkb(tboolHex);
-            if (ptr == null) return null;
-            Pointer ss = functions.tbool_when_true(ptr);
-            if (ss == null) return null;
-            return functions.tstzspanset_out(ss);
+    public static final UDF1<String, Boolean> isSimple =
+        (trip) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            return functions.tpoint_is_simple(tptr);
         };
 
     // ------------------------------------------------------------------
-    // aDisjoint(trip1 STRING, trip2 STRING) → BOOLEAN
+    // shortestLine(trip1 STRING, trip2 STRING) → STRING (WKT geometry)
     //
-    // Returns true if the two tgeompoints are ALWAYS spatially disjoint
-    // (their spatial extents never overlap over the common time span).
+    // Returns the WKT of the shortest line segment connecting the two trips
+    // at their closest point in time and space.
     //
-    // MEOS: adisjoint_tgeo_tgeo(const Temporal *, const Temporal *) → int
+    // MEOS: shortestline_tpoint_tpoint(const Temporal *, const Temporal *)  meos_geo.h
+    //       geo_as_text(const GSERIALIZED *, int precision)
     // ------------------------------------------------------------------
-    public static final UDF2<String, String, Boolean> aDisjoint =
+    public static final UDF2<String, String, String> shortestLine =
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
+            MeosThread.ensureReady();
             Pointer p1 = functions.temporal_from_hexwkb(trip1);
             Pointer p2 = functions.temporal_from_hexwkb(trip2);
             if (p1 == null || p2 == null) return null;
-            return functions.adisjoint_tgeo_tgeo(p1, p2) == 1;
-        };
-
-    // ------------------------------------------------------------------
-    // geomContains(containerWkt STRING, pointWkt STRING) → BOOLEAN
-    //
-    // Returns true if the first geometry (container) contains the second
-    // (typically a POINT).  WKT strings, SRID 0.
-    //
-    // Portable replacement for ST_Contains(geometry, geometry) when a
-    // PostGIS function is unavailable (e.g. in Spark SQL without GeoSpark).
-    //
-    // MEOS: geo_from_text(const char *, int32_t srid) → GSERIALIZED *
-    //       geom_contains(const GSERIALIZED *, const GSERIALIZED *) → bool
-    // ------------------------------------------------------------------
-    public static final UDF2<String, String, Boolean> geomContains =
-        (containerWkt, pointWkt) -> {
-            if (containerWkt == null || pointWkt == null) return null;
-            Pointer g1 = functions.geo_from_text(containerWkt, 0);
-            Pointer g2 = functions.geo_from_text(pointWkt, 0);
-            if (g1 == null || g2 == null) return null;
-            return functions.geom_contains(g1, g2);
-        };
-
-    // ------------------------------------------------------------------
-    // tgeompointFromBinary(wkb BINARY) → STRING (hex-WKB)
-    //
-    // Decodes a MEOS-WKB binary column written by MobilityDuck's asBinary()
-    // and returns the internal hex-WKB STRING used by all other UDFs.
-    // Entry point for reading TemporalParquet files in the edge-to-cloud
-    // pipeline — the Parquet BYTE_ARRAY traj column arrives as byte[] here.
-    //
-    // Compatible with both tgeompoint and tgeogpoint WKB (type preserved
-    // in the embedded MEOS flags).  Hex conversion is case-insensitive in
-    // MEOS; we produce uppercase to match temporal_as_hexwkb output.
-    //
-    // MEOS: temporal_from_hexwkb(const char *) → Temporal *
-    //       temporal_as_hexwkb(const Temporal *, uint8_t) → char *
-    // ------------------------------------------------------------------
-    public static final UDF1<byte[], String> tgeompointFromBinary =
-        (bytes) -> {
-            if (bytes == null) return null;
-            String hex = java.util.HexFormat.of().formatHex(bytes).toUpperCase();
-            Pointer ptr = functions.temporal_from_hexwkb(hex);
-            if (ptr == null) return null;
-            return functions.temporal_as_hexwkb(ptr, (byte) 0);
-        };
-
-    // ------------------------------------------------------------------
-    // maxSpeed(trip STRING) → DOUBLE
-    //
-    // Returns the peak instantaneous speed of a tgeompoint trip, in the
-    // same spatial units per second as the coordinate reference system
-    // (degrees/s for SRID 0, m/s for geodetic tgeogpoint from JMEOS).
-    //
-    // MEOS: tpoint_speed(const Temporal *) → Temporal * (tfloat)
-    //       tfloat_max_value(const Temporal *) → double
-    // ------------------------------------------------------------------
-    public static final UDF1<String, Double> maxSpeed =
-        (trip) -> {
-            if (trip == null) return null;
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            if (tptr == null) return null;
-            Pointer speedPtr = functions.tpoint_speed(tptr);
-            if (speedPtr == null) return null;
-            return functions.tfloat_max_value(speedPtr);
-        };
-
-    // ------------------------------------------------------------------
-    // duration(trip STRING) → STRING (interval text, e.g. "01:50:00")
-    //
-    // Returns the total time extent of a tgeompoint trip as an interval
-    // text string.  Equivalent to MobilityDB/MobilityDuck duration(traj).
-    //
-    // MEOS: temporal_duration(const Temporal *, bool) → Interval *
-    //       pg_interval_out(const Interval *) → char *
-    // ------------------------------------------------------------------
-    public static final UDF1<String, String> duration =
-        (trip) -> {
-            if (trip == null) return null;
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            if (tptr == null) return null;
-            Pointer ivPtr = functions.temporal_duration(tptr, false);
-            if (ivPtr == null) return null;
-            return functions.pg_interval_out(ivPtr);
+            Pointer g = functions.shortestline_tgeo_tgeo(p1, p2);
+            if (g == null) return null;
+            return functions.geo_as_text(g, 15);
         };
 
     public static void registerAll(org.apache.spark.sql.SparkSession spark) {
@@ -384,14 +335,12 @@ public final class GeoUDFs {
         spark.udf().register("tgeompoint",              tgeompoint,              DataTypes.StringType);
         spark.udf().register("trajectory",              trajectory,              DataTypes.StringType);
         spark.udf().register("geomFromText",            geomFromText,            DataTypes.StringType);
-        spark.udf().register("length",                  length,                  DataTypes.DoubleType);
-        spark.udf().register("valueAtTimestamp",        valueAtTimestamp,        DataTypes.StringType);
-        spark.udf().register("tDwithin",                tDwithin,                DataTypes.StringType);
-        spark.udf().register("whenTrue",                whenTrue,                DataTypes.StringType);
-        spark.udf().register("aDisjoint",               aDisjoint,               DataTypes.BooleanType);
-        spark.udf().register("geomContains",            geomContains,            DataTypes.BooleanType);
-        spark.udf().register("tgeompointFromBinary",    tgeompointFromBinary,    DataTypes.StringType);
-        spark.udf().register("maxSpeed",                maxSpeed,                DataTypes.DoubleType);
-        spark.udf().register("duration",                duration,                DataTypes.StringType);
+        spark.udf().register("getX",                   getX,                   DataTypes.StringType);
+        spark.udf().register("getY",                   getY,                   DataTypes.StringType);
+        spark.udf().register("getZ",                   getZ,                   DataTypes.StringType);
+        spark.udf().register("cumulativeLength",        cumulativeLength,        DataTypes.StringType);
+        spark.udf().register("stops",                  stops,                  DataTypes.StringType);
+        spark.udf().register("isSimple",               isSimple,               DataTypes.BooleanType);
+        spark.udf().register("shortestLine",           shortestLine,           DataTypes.StringType);
     }
 }

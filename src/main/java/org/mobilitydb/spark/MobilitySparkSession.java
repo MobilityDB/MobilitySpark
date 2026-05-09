@@ -27,7 +27,15 @@ package org.mobilitydb.spark;
 
 import org.apache.spark.sql.SparkSession;
 import org.mobilitydb.spark.geo.GeoUDFs;
+import org.mobilitydb.spark.geo.STBoxUDFs;
+import org.mobilitydb.spark.temporal.AccessorUDFs;
+import org.mobilitydb.spark.temporal.AnalyticsUDFs;
+import org.mobilitydb.spark.temporal.ConstructorUDFs;
+import org.mobilitydb.spark.temporal.PredicateUDFs;
+import org.mobilitydb.spark.temporal.SpanAccessorUDFs;
+import org.mobilitydb.spark.temporal.SpanAlgebraUDFs;
 import org.mobilitydb.spark.temporal.SpanUDFs;
+import org.mobilitydb.spark.temporal.TTextUDFs;
 import org.mobilitydb.spark.temporal.TemporalUDFs;
 
 import java.io.File;
@@ -61,10 +69,19 @@ public final class MobilitySparkSession implements AutoCloseable {
     public static MobilitySparkSession create(SparkSession spark) {
         meos_initialize();
         meos_initialize_timezone("UTC");
+        meos_initialize_noexit_error_handler();
         registerSpatialRefSys();
         TemporalUDFs.registerAll(spark);
         SpanUDFs.registerAll(spark);
         GeoUDFs.registerAll(spark);
+        ConstructorUDFs.registerAll(spark);
+        AccessorUDFs.registerAll(spark);
+        SpanAccessorUDFs.registerAll(spark);
+        SpanAlgebraUDFs.registerAll(spark);
+        AnalyticsUDFs.registerAll(spark);
+        PredicateUDFs.registerAll(spark);
+        TTextUDFs.registerAll(spark);
+        STBoxUDFs.registerAll(spark);
         return new MobilitySparkSession();
     }
 

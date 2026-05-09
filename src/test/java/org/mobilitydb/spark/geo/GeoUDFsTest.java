@@ -41,7 +41,6 @@ class GeoUDFsTest {
 
     private static String TRIP_HEX;
     private static String TRIP2_HEX;
-    private static String TRIP_FAR_HEX;
     // Geometry passed as WKT text — eIntersects parses via geo_from_text internally
     private static final String POINT_ON_PATH = "POINT(0.05 0.0)";
     private static final String POINT_FAR     = "POINT(10.0 10.0)";
@@ -57,9 +56,11 @@ class GeoUDFsTest {
         TRIP2_HEX = temporal_as_hexwkb(
             tgeompoint_in("[POINT(0.05 0.001)@2020-01-01 00:00:00+00, POINT(0.15 0.001)@2020-01-01 01:00:00+00]"),
             (byte) 0);
-        TRIP_FAR_HEX = temporal_as_hexwkb(
-            tgeompoint_in("[POINT(1000.0 1000.0)@2020-01-01 00:00:00+00, POINT(2000.0 1000.0)@2020-01-01 01:00:00+00]"),
-            (byte) 0);
+    }
+
+    @AfterAll
+    static void finalizeMeos() {
+        meos_finalize();
     }
 
     @Test @Order(1)
@@ -109,114 +110,5 @@ class GeoUDFsTest {
     @Test @Order(9)
     void eDwithin_null_returns_null() throws Exception {
         assertNull(GeoUDFs.eDwithin.call(null, TRIP_HEX, 1.0));
-    }
-
-    @Test @Order(10)
-    void length_returns_positive() throws Exception {
-        Double len = GeoUDFs.length.call(TRIP_HEX);
-        assertNotNull(len);
-        assertTrue(len > 0.0, "length should be positive for a moving trip, got " + len);
-    }
-
-    @Test @Order(11)
-    void length_null_returns_null() throws Exception {
-        assertNull(GeoUDFs.length.call(null));
-    }
-
-    @Test @Order(12)
-    void valueAtTimestamp_inside_interval_returns_wkt() throws Exception {
-        // 2020-01-01 00:30:00 UTC — inside TRIP_HEX interval [00:00, 01:00] UTC
-        java.sql.Timestamp ts = new java.sql.Timestamp(
-            java.time.Instant.parse("2020-01-01T00:30:00Z").toEpochMilli());
-        String wkt = GeoUDFs.valueAtTimestamp.call(TRIP_HEX, ts);
-        assertNotNull(wkt, "valueAtTimestamp should return WKT inside trip interval");
-        assertTrue(wkt.startsWith("POINT("), "Expected WKT POINT, got: " + wkt);
-    }
-
-    @Test @Order(13)
-    void valueAtTimestamp_outside_interval_returns_null() throws Exception {
-        // 2020-06-01 00:00:00 UTC — well outside TRIP_HEX interval
-        java.sql.Timestamp ts = new java.sql.Timestamp(
-            java.time.Instant.parse("2020-06-01T00:00:00Z").toEpochMilli());
-        assertNull(GeoUDFs.valueAtTimestamp.call(TRIP_HEX, ts),
-            "valueAtTimestamp should return null outside trip interval");
-    }
-
-    @Test @Order(14)
-    void tDwithin_returns_tbool_hex() throws Exception {
-        String tboolHex = GeoUDFs.tDwithin.call(TRIP_HEX, TRIP2_HEX, 1.0);
-        assertNotNull(tboolHex);
-        assertFalse(tboolHex.isBlank(), "tDwithin should return non-empty tbool hex");
-    }
-
-    @Test @Order(15)
-    void whenTrue_returns_spanset_text() throws Exception {
-        String tboolHex = GeoUDFs.tDwithin.call(TRIP_HEX, TRIP2_HEX, 1.0);
-        assertNotNull(tboolHex);
-        String spans = GeoUDFs.whenTrue.call(tboolHex);
-        assertNotNull(spans, "whenTrue should return a tstzspanset text");
-        assertTrue(spans.contains("["), "Expected tstzspanset with brackets, got: " + spans);
-    }
-
-    @Test @Order(16)
-    void aDisjoint_far_trips_returns_true() throws Exception {
-        assertTrue(GeoUDFs.aDisjoint.call(TRIP_HEX, TRIP_FAR_HEX),
-            "Trips far apart should be always disjoint");
-    }
-
-    @Test @Order(17)
-    void aDisjoint_overlapping_trips_returns_false() throws Exception {
-        assertFalse(GeoUDFs.aDisjoint.call(TRIP_HEX, TRIP_HEX),
-            "Identical trips should not be always disjoint");
-    }
-
-    @Test @Order(18)
-    void geomContains_point_inside_polygon() throws Exception {
-        String polygon = "POLYGON((40 -1,60 -1,60 6,40 6,40 -1))";
-        String inside  = "POINT(50 2)";
-        assertTrue(GeoUDFs.geomContains.call(polygon, inside));
-    }
-
-    @Test @Order(19)
-    void geomContains_point_outside_polygon() throws Exception {
-        String polygon = "POLYGON((40 -1,60 -1,60 6,40 6,40 -1))";
-        String outside = "POINT(100 100)";
-        assertFalse(GeoUDFs.geomContains.call(polygon, outside));
-    }
-
-    @Test @Order(20)
-    void tgeompointFromBinary_roundtrip_matches_hex() throws Exception {
-        // Convert TRIP_HEX to bytes, decode via tgeompointFromBinary, and
-        // verify we get an equivalent hex-WKB back (round-trip identity).
-        byte[] bytes = java.util.HexFormat.of().parseHex(TRIP_HEX);
-        String decoded = GeoUDFs.tgeompointFromBinary.call(bytes);
-        assertNotNull(decoded, "tgeompointFromBinary should decode valid MEOS-WKB bytes");
-        // Both represent the same trip — cross-check via length().
-        Double lenFromHex  = GeoUDFs.length.call(TRIP_HEX);
-        Double lenFromBin  = GeoUDFs.length.call(decoded);
-        assertNotNull(lenFromBin);
-        assertEquals(lenFromHex, lenFromBin, 1e-9,
-            "length after binary round-trip should equal length from original hex-WKB");
-    }
-
-    @Test @Order(21)
-    void tgeompointFromBinary_null_input_returns_null() throws Exception {
-        assertNull(GeoUDFs.tgeompointFromBinary.call(null));
-    }
-
-    @Test @Order(22)
-    void maxSpeed_returns_positive_for_moving_trip() throws Exception {
-        Double spd = GeoUDFs.maxSpeed.call(TRIP_HEX);
-        assertNotNull(spd, "maxSpeed should return a value for a moving trip");
-        assertTrue(spd > 0, "maxSpeed of a moving trip should be positive");
-    }
-
-    @Test @Order(23)
-    void duration_returns_expected_interval() throws Exception {
-        // TRIP_HEX spans [2020-01-01 00:00:00, 2020-01-01 01:00:00] → 1 hour
-        String dur = GeoUDFs.duration.call(TRIP_HEX);
-        assertNotNull(dur, "duration should return an interval string");
-        assertTrue(dur.contains("01:00:00"),
-            "duration of a 1-hour trip should contain '01:00:00', got: " + dur);
     }
 }

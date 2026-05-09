@@ -16,3 +16,8 @@
 # Maven
 log/
 target/
+
+# Large BerlinMOD benchmark data (generated locally — too large for GitHub)
+berlinmod/data/trips.csv
+dependency-reduced-pom.xml
+hs_err_pid*.log

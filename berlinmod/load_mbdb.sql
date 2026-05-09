@@ -55,13 +55,13 @@ CREATE TABLE QueryInstants (
 );
 
 CREATE TABLE QueryPoints (
-  pointId INTEGER         PRIMARY KEY,
-  geom    geometry(Point) NOT NULL
+  pointId INTEGER              PRIMARY KEY,
+  geom    geometry(Point,3857) NOT NULL
 );
 
 CREATE TABLE QueryRegions (
-  regionId INTEGER             PRIMARY KEY,
-  geom     geometry(Polygon)   NOT NULL
+  regionId INTEGER                PRIMARY KEY,
+  geom     geometry(Polygon,3857) NOT NULL
 );
 
 CREATE TABLE QueryPeriods (
@@ -79,12 +79,12 @@ CREATE TABLE QueryPeriods (
 \copy QueryInstants FROM 'DATADIR/query_instants.csv' DELIMITER ',' CSV HEADER
 
 -------------------------------------------------------------------------------
--- Load Trips: read WKT text, cast to tgeompoint
+-- Load Trips: read EWKB hex text, convert to tgeompoint
 -------------------------------------------------------------------------------
 
 CREATE TEMP TABLE TripsTmp (tripId INTEGER, vehId INTEGER, trip TEXT);
 \copy TripsTmp FROM 'DATADIR/trips.csv' DELIMITER ',' CSV HEADER
-INSERT INTO Trips SELECT tripId, vehId, trip::tgeompoint FROM TripsTmp;
+INSERT INTO Trips SELECT tripId, vehId, tgeompointfromhexewkb(trip) FROM TripsTmp;
 DROP TABLE TripsTmp;
 
 -------------------------------------------------------------------------------
@@ -93,7 +93,7 @@ DROP TABLE TripsTmp;
 
 CREATE TEMP TABLE QueryPointsTmp (pointId INTEGER, geom TEXT);
 \copy QueryPointsTmp FROM 'DATADIR/query_points.csv' DELIMITER ',' CSV HEADER
-INSERT INTO QueryPoints SELECT pointId, ST_GeomFromText(geom) FROM QueryPointsTmp;
+INSERT INTO QueryPoints SELECT pointId, ST_GeomFromText(geom, 3857) FROM QueryPointsTmp;
 DROP TABLE QueryPointsTmp;
 
 -------------------------------------------------------------------------------
@@ -102,7 +102,7 @@ DROP TABLE QueryPointsTmp;
 
 CREATE TEMP TABLE QueryRegionsTmp (regionId INTEGER, geom TEXT);
 \copy QueryRegionsTmp FROM 'DATADIR/query_regions.csv' DELIMITER ',' CSV HEADER
-INSERT INTO QueryRegions SELECT regionId, ST_GeomFromText(geom) FROM QueryRegionsTmp;
+INSERT INTO QueryRegions SELECT regionId, ST_GeomFromText(geom, 3857) FROM QueryRegionsTmp;
 DROP TABLE QueryRegionsTmp;
 
 -------------------------------------------------------------------------------

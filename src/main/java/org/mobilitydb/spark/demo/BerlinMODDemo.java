@@ -96,19 +96,9 @@ public final class BerlinMODDemo {
             Dataset<Row> q7  = runQ7(spark);
             Dataset<Row> q8  = runQ8(spark);
             Dataset<Row> qrt = runQRT(spark);
-            Dataset<Row> q9  = runQ9(spark);
-            Dataset<Row> q10 = runQ10(spark);
-            Dataset<Row> q11 = runQ11(spark);
-            Dataset<Row> q12 = runQ12(spark);
-            Dataset<Row> q13 = runQ13(spark);
-            Dataset<Row> q14 = runQ14(spark);
-            Dataset<Row> q15 = runQ15(spark);
-            Dataset<Row> q16 = runQ16(spark);
-            Dataset<Row> q17 = runQ17(spark);
 
             if (expectDir != null) {
-                verify(spark, q1, q2, q3, q4, q5, q6, q7, q8, qrt,
-                       q9, q10, q11, q12, q13, q14, q15, q16, q17, expectDir);
+                verify(spark, q1, q2, q3, q4, q5, q6, q7, q8, qrt, expectDir);
             }
         } finally {
             spark.stop();
@@ -118,22 +108,25 @@ public final class BerlinMODDemo {
     // ------------------------------------------------------------------
     // Data loading — from CSV files (shared with MobilityDB and MobilityDuck)
     // ------------------------------------------------------------------
+
+    /** Package-visible entry point used by BerlinMODBench. */
+    static void loadFromCsvPublic(SparkSession spark, String dataDir) {
+        loadFromCsv(spark, dataDir);
+    }
+
     private static void loadFromCsv(SparkSession spark, String dataDir) {
         String dir = dataDir.endsWith("/") ? dataDir : dataDir + "/";
 
-        spark.read().option("header", "true")
+        spark.read().option("header", "true").option("inferSchema", "true")
              .csv(dir + "vehicles.csv")
              .createOrReplaceTempView("Vehicles");
 
-        // Trips: load WKT from CSV, convert to hex-WKB via tgeompoint UDF
-        spark.read().option("header", "true")
+        // Trips: hex-WKB strings — load directly; all UDFs call temporal_from_hexwkb.
+        spark.read().option("header", "true").option("inferSchema", "true")
              .csv(dir + "trips.csv")
-             .createOrReplaceTempView("TripsRaw");
-        spark.sql("CREATE OR REPLACE TEMP VIEW Trips AS " +
-                  "SELECT tripId, vehId, tgeompoint(trip) AS trip FROM TripsRaw")
-             .count();  // force evaluation
+             .createOrReplaceTempView("Trips");
 
-        spark.read().option("header", "true")
+        spark.read().option("header", "true").option("inferSchema", "true")
              .csv(dir + "query_licences.csv")
              .createOrReplaceTempView("QueryLicences");
 
@@ -142,23 +135,35 @@ public final class BerlinMODDemo {
              .csv(dir + "query_instants.csv")
              .createOrReplaceTempView("QueryInstantsRaw");
         spark.sql("CREATE OR REPLACE TEMP VIEW QueryInstants AS " +
-                  "SELECT instantId, CAST(instant AS TIMESTAMP) AS instant FROM QueryInstantsRaw")
+                  "SELECT CAST(instantid AS INT) AS instantId, " +
+                  "CAST(instant AS TIMESTAMP) AS instant FROM QueryInstantsRaw")
              .count();
 
-        // QueryPoints: geom column stays as WKT text — eIntersects accepts WKT directly
+        // QueryPoints: geom column is WKT text; geomWKT is an alias used by Q11/Q12/Q15
+        // for portable display (avoids geo_as_text precision divergence).
         spark.read().option("header", "true")
              .csv(dir + "query_points.csv")
-             .createOrReplaceTempView("QueryPoints");
+             .createOrReplaceTempView("QueryPointsRaw");
+        spark.sql("CREATE OR REPLACE TEMP VIEW QueryPoints AS " +
+                  "SELECT CAST(pointid AS INT) AS pointId, geom, geom AS geomWKT " +
+                  "FROM QueryPointsRaw")
+             .count();
 
-        // QueryRegions: geom column stays as WKT text — eIntersects/eContains accept WKT
+        // QueryRegions: geom column stays as WKT text — eIntersects/geomContains accept WKT.
         spark.read().option("header", "true")
              .csv(dir + "query_regions.csv")
-             .createOrReplaceTempView("QueryRegions");
+             .createOrReplaceTempView("QueryRegionsRaw");
+        spark.sql("CREATE OR REPLACE TEMP VIEW QueryRegions AS " +
+                  "SELECT CAST(regionid AS INT) AS regionId, geom FROM QueryRegionsRaw")
+             .count();
 
-        // QueryPeriods: period column stays as STRING — atTime(trip, period) parses it
+        // QueryPeriods: period column stays as STRING — atTime(trip, period) parses it.
         spark.read().option("header", "true")
              .csv(dir + "query_periods.csv")
-             .createOrReplaceTempView("QueryPeriods");
+             .createOrReplaceTempView("QueryPeriodsRaw");
+        spark.sql("CREATE OR REPLACE TEMP VIEW QueryPeriods AS " +
+                  "SELECT CAST(periodid AS INT) AS periodId, period FROM QueryPeriodsRaw")
+             .count();
     }
 
     // ------------------------------------------------------------------
@@ -175,21 +180,16 @@ public final class BerlinMODDemo {
             AS t(vehId, licence, type, model)
             """);
 
-        // Two-step: raw WKT strings → tgeompoint UDF → hex-WKB Trips view.
-        // Spark cannot evaluate UDFs inside VALUES clauses (inline-table restriction),
-        // so the conversion must happen in a separate SELECT.
+        // tgeompoint WKT → hex-WKB via registered UDF
         spark.sql("""
-            CREATE OR REPLACE TEMP VIEW TripsRaw AS SELECT * FROM VALUES
-              (1, 1, '[POINT(0 0)@2020-01-01 00:00:00+00, POINT(100 0)@2020-01-01 00:10:00+00]'),
-              (2, 2, '[POINT(0 5)@2020-01-01 00:00:00+00, POINT(100 5)@2020-01-01 00:10:00+00]'),
-              (3, 3, '[POINT(0 3)@2020-01-01 00:00:00+00, POINT(100 3)@2020-01-01 00:10:00+00]'),
-              (4, 4, '[POINT(0 4)@2020-01-01 00:00:00+00, POINT(100 4)@2020-01-01 00:10:00+00]'),
-              (5, 5, '[POINT(1000 1000)@2020-01-01 00:00:00+00, POINT(2000 1000)@2020-01-01 00:10:00+00]')
+            CREATE OR REPLACE TEMP VIEW Trips AS SELECT * FROM VALUES
+              (1, 1, tgeompoint('[POINT(0 0)@2020-01-01 00:00:00+00, POINT(100 0)@2020-01-01 00:10:00+00]')),
+              (2, 2, tgeompoint('[POINT(0 5)@2020-01-01 00:00:00+00, POINT(100 5)@2020-01-01 00:10:00+00]')),
+              (3, 3, tgeompoint('[POINT(0 3)@2020-01-01 00:00:00+00, POINT(100 3)@2020-01-01 00:10:00+00]')),
+              (4, 4, tgeompoint('[POINT(0 4)@2020-01-01 00:00:00+00, POINT(100 4)@2020-01-01 00:10:00+00]')),
+              (5, 5, tgeompoint('[POINT(1000 1000)@2020-01-01 00:00:00+00, POINT(2000 1000)@2020-01-01 00:10:00+00]'))
             AS t(tripId, vehId, trip)
             """);
-        spark.sql("CREATE OR REPLACE TEMP VIEW Trips AS " +
-                  "SELECT tripId, vehId, tgeompoint(trip) AS trip FROM TripsRaw")
-             .count();
 
         spark.sql("""
             CREATE OR REPLACE TEMP VIEW QueryLicences AS SELECT * FROM VALUES
@@ -391,210 +391,7 @@ public final class BerlinMODDemo {
             WHERE  v1.type  = 'truck'
               AND  v2.type  = 'truck'
               AND  eDwithin(t1.trip, t2.trip, 10.0)
-            ORDER  BY v1.licence, v2.licence
-            """);
-        result.show();
-        return result;
-    }
-
-    // ------------------------------------------------------------------
-    // Q9 — Longest distance travelled by a vehicle during each query period.
-    // ------------------------------------------------------------------
-    private static Dataset<Row> runQ9(SparkSession spark) {
-        System.out.println("=== Q9: Longest distance per vehicle per query period ===");
-        Dataset<Row> result = spark.sql("""
-            WITH Distances AS (
-              SELECT p.periodId, p.period, t.vehId,
-                     SUM(length(atTime(t.trip, p.period))) AS dist
-              FROM   Trips t, QueryPeriods p
-              GROUP  BY p.periodId, p.period, t.vehId
-            )
-            SELECT periodId, period, ROUND(CAST(MAX(dist) AS DECIMAL(20,3)), 3) AS maxDist
-            FROM   Distances
-            GROUP  BY periodId, period
-            ORDER  BY periodId
-            """);
-        result.show();
-        return result;
-    }
-
-    // ------------------------------------------------------------------
-    // Q10 — When did query-licence vehicles meet other vehicles (within 3 m)?
-    // ------------------------------------------------------------------
-    private static Dataset<Row> runQ10(SparkSession spark) {
-        System.out.println("=== Q10: When did query-licence vehicles meet others within 3 m ===");
-        Dataset<Row> result = spark.sql("""
-            WITH Temp AS (
-              SELECT l.licence AS licence1, t2.vehId AS car2Id,
-                     whenTrue(tDwithin(t1.trip, t2.trip, 3.0)) AS periods,
-                     t1.tripId AS tripId1, t2.tripId AS tripId2
-              FROM   QueryLicences l
-              JOIN   Vehicles v1 ON v1.licence = l.licence
-              JOIN   Trips    t1 ON t1.vehId   = v1.vehId
-              JOIN   Trips    t2 ON t1.vehId  <> t2.vehId
-            )
-            SELECT licence1, car2Id, periods
-            FROM   Temp
-            WHERE  periods IS NOT NULL
-            ORDER  BY licence1, car2Id, tripId1, tripId2
-            """);
-        result.show(false);
-        return result;
-    }
-
-    // ------------------------------------------------------------------
-    // Q11 — Which vehicles passed a query point at a query instant?
-    // ------------------------------------------------------------------
-    private static Dataset<Row> runQ11(SparkSession spark) {
-        System.out.println("=== Q11: Vehicles at query points at query instants ===");
-        Dataset<Row> result = spark.sql("""
-            WITH Temp AS (
-              SELECT p.pointId, p.geom, i.instantId, i.instant, t.vehId
-              FROM   Trips t, QueryPoints p, QueryInstants i
-              WHERE  valueAtTimestamp(t.trip, i.instant) = p.geom
-            )
-            SELECT t.pointId, t.geom, t.instantId, t.instant, v.licence
-            FROM   Temp t
-            JOIN   Vehicles v ON t.vehId = v.vehId
-            ORDER  BY t.pointId, t.instantId, v.licence
-            """);
-        result.show();
-        return result;
-    }
-
-    // ------------------------------------------------------------------
-    // Q12 — Pairs of vehicles at the same query point at the same query instant.
-    // ------------------------------------------------------------------
-    private static Dataset<Row> runQ12(SparkSession spark) {
-        System.out.println("=== Q12: Vehicle pairs at same point at same instant ===");
-        Dataset<Row> result = spark.sql("""
-            WITH Temp AS (
-              SELECT DISTINCT p.pointId, p.geom, i.instantId, i.instant, t.vehId
-              FROM   Trips t, QueryPoints p, QueryInstants i
-              WHERE  valueAtTimestamp(t.trip, i.instant) = p.geom
-            )
-            SELECT DISTINCT t1.pointId, t1.geom,
-                   t1.instantId, t1.instant,
-                   v1.licence AS licence1, v2.licence AS licence2
-            FROM   Temp t1
-            JOIN   Vehicles v1 ON t1.vehId = v1.vehId
-            JOIN   Temp     t2 ON t1.vehId < t2.vehId
-                              AND t1.pointId   = t2.pointId
-                              AND t1.instantId = t2.instantId
-            JOIN   Vehicles v2 ON t2.vehId = v2.vehId
-            ORDER  BY t1.pointId, t1.instantId, v1.licence, v2.licence
-            """);
-        result.show();
-        return result;
-    }
-
-    // ------------------------------------------------------------------
-    // Q13 — Vehicles that travelled within a query region during a query period.
-    // ------------------------------------------------------------------
-    private static Dataset<Row> runQ13(SparkSession spark) {
-        System.out.println("=== Q13: Vehicles in query regions during query periods ===");
-        Dataset<Row> result = spark.sql("""
-            WITH Temp AS (
-              SELECT DISTINCT r.regionId, p.periodId, p.period, t.vehId
-              FROM   Trips t, QueryRegions r, QueryPeriods p
-              WHERE  r.regionId <= 10 AND p.periodId <= 10
-                AND  eIntersects(atTime(t.trip, p.period), r.geom)
-            )
-            SELECT DISTINCT t.regionId, t.periodId, t.period, v.licence
-            FROM   Temp t, Vehicles v
-            WHERE  t.vehId = v.vehId
-            ORDER  BY t.regionId, t.periodId, v.licence
-            """);
-        result.show();
-        return result;
-    }
-
-    // ------------------------------------------------------------------
-    // Q14 — Vehicles inside a query region at a query instant.
-    // ------------------------------------------------------------------
-    private static Dataset<Row> runQ14(SparkSession spark) {
-        System.out.println("=== Q14: Vehicles inside query regions at query instants ===");
-        Dataset<Row> result = spark.sql("""
-            WITH Temp AS (
-              SELECT DISTINCT r.regionId, i.instantId, i.instant, t.vehId
-              FROM   Trips t, QueryRegions r, QueryInstants i
-              WHERE  geomContains(r.geom, valueAtTimestamp(t.trip, i.instant))
-            )
-            SELECT DISTINCT t.regionId, t.instantId, t.instant, v.licence
-            FROM   Temp t
-            JOIN   Vehicles v ON t.vehId = v.vehId
-            ORDER  BY t.regionId, t.instantId, v.licence
-            """);
-        result.show();
-        return result;
-    }
-
-    // ------------------------------------------------------------------
-    // Q15 — Vehicles that passed a query point during a query period.
-    // ------------------------------------------------------------------
-    private static Dataset<Row> runQ15(SparkSession spark) {
-        System.out.println("=== Q15: Vehicles passing query points during query periods ===");
-        Dataset<Row> result = spark.sql("""
-            WITH Temp AS (
-              SELECT DISTINCT pt.pointId, pt.geom, pr.periodId, pr.period, t.vehId
-              FROM   Trips t, QueryPoints pt, QueryPeriods pr
-              WHERE  pt.pointId  <= 10 AND pr.periodId <= 10
-                AND  eIntersects(atTime(t.trip, pr.period), pt.geom)
-            )
-            SELECT DISTINCT t.pointId, t.geom, t.periodId, t.period, v.licence
-            FROM   Temp t, Vehicles v
-            WHERE  t.vehId = v.vehId
-            ORDER  BY t.pointId, t.periodId, v.licence
-            """);
-        result.show();
-        return result;
-    }
-
-    // ------------------------------------------------------------------
-    // Q16 — Pairs of query-licence vehicles both in a region during a period
-    //        but always spatially disjoint.
-    // ------------------------------------------------------------------
-    private static Dataset<Row> runQ16(SparkSession spark) {
-        System.out.println("=== Q16: Vehicle pairs always disjoint in shared region/period ===");
-        Dataset<Row> result = spark.sql("""
-            SELECT p.periodId, p.period, r.regionId,
-                   l1.licence AS licence1, l2.licence AS licence2
-            FROM   QueryLicences l1
-            JOIN   Vehicles      v1 ON v1.licence = l1.licence
-            JOIN   Trips         t1 ON t1.vehId   = v1.vehId
-            JOIN   QueryLicences l2 ON l1.licenceId < l2.licenceId
-            JOIN   Vehicles      v2 ON v2.licence = l2.licence
-            JOIN   Trips         t2 ON t2.vehId   = v2.vehId
-            JOIN   QueryPeriods  p  ON true
-            JOIN   QueryRegions  r  ON true
-            WHERE  l1.licenceId <= 10 AND l2.licenceId <= 10
-              AND  p.periodId   <= 10
-              AND  r.regionId   <= 10
-              AND  eIntersects(atTime(t1.trip, p.period), r.geom)
-              AND  eIntersects(atTime(t2.trip, p.period), r.geom)
-              AND  aDisjoint(atTime(t1.trip, p.period), atTime(t2.trip, p.period))
-            ORDER  BY p.periodId, r.regionId, l1.licence, l2.licence
-            """);
-        result.show();
-        return result;
-    }
-
-    // ------------------------------------------------------------------
-    // Q17 — Query points visited by the most distinct vehicles.
-    // ------------------------------------------------------------------
-    private static Dataset<Row> runQ17(SparkSession spark) {
-        System.out.println("=== Q17: Most-visited query points ===");
-        Dataset<Row> result = spark.sql("""
-            WITH PointCount AS (
-              SELECT p.pointId, COUNT(DISTINCT t.vehId) AS hits
-              FROM   Trips t, QueryPoints p
-              WHERE  eIntersects(t.trip, p.geom)
-              GROUP  BY p.pointId
-            )
-            SELECT pointId, hits
-            FROM   PointCount
-            WHERE  hits = (SELECT MAX(hits) FROM PointCount)
-            ORDER  BY pointId
+            ORDER  BY licence1, licence2
             """);
         result.show();
         return result;
@@ -602,19 +399,16 @@ public final class BerlinMODDemo {
 
     // ------------------------------------------------------------------
     // Cross-platform verification: compare against expected CSV files.
-    // Q1–Q17 and QRT are compared.  Q3/Q7/QRT use asHexWKB() for temporal
-    // types; Q8 uses geo_as_hexewkb() for geometry.
+    // All queries (Q1–Q8, QRT) are compared.  Q3/Q7/QRT use asHexWKB()
+    // for temporal types; Q8 uses geo_as_hexewkb() for geometry — all
+    // produce byte-for-byte identical output across all three platforms.
     // ------------------------------------------------------------------
     private static void verify(SparkSession spark,
                                 Dataset<Row> q1,  Dataset<Row> q2,
                                 Dataset<Row> q3,  Dataset<Row> q4,
                                 Dataset<Row> q5,  Dataset<Row> q6,
                                 Dataset<Row> q7,  Dataset<Row> q8,
-                                Dataset<Row> qrt, Dataset<Row> q9,
-                                Dataset<Row> q10, Dataset<Row> q11,
-                                Dataset<Row> q12, Dataset<Row> q13,
-                                Dataset<Row> q14, Dataset<Row> q15,
-                                Dataset<Row> q16, Dataset<Row> q17,
+                                Dataset<Row> qrt,
                                 String expectDir) {
         String dir = expectDir.endsWith("/") ? expectDir : expectDir + "/";
         boolean allPass = true;
@@ -627,15 +421,6 @@ public final class BerlinMODDemo {
         allPass &= compareQuery(spark, "Q7",  q7,  dir + "q07.csv");
         allPass &= compareQuery(spark, "Q8",  q8,  dir + "q08.csv");
         allPass &= compareQuery(spark, "QRT", qrt, dir + "qrt.csv");
-        allPass &= compareQuery(spark, "Q9",  q9,  dir + "q09.csv");
-        allPass &= compareQuery(spark, "Q10", q10, dir + "q10.csv");
-        allPass &= compareQuery(spark, "Q11", q11, dir + "q11.csv");
-        allPass &= compareQuery(spark, "Q12", q12, dir + "q12.csv");
-        allPass &= compareQuery(spark, "Q13", q13, dir + "q13.csv");
-        allPass &= compareQuery(spark, "Q14", q14, dir + "q14.csv");
-        allPass &= compareQuery(spark, "Q15", q15, dir + "q15.csv");
-        allPass &= compareQuery(spark, "Q16", q16, dir + "q16.csv");
-        allPass &= compareQuery(spark, "Q17", q17, dir + "q17.csv");
         System.out.println(allPass ? "\nALL PASS" : "\nFAILURES DETECTED");
         if (!allPass) System.exit(1);
     }

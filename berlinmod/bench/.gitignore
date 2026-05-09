@@ -1,0 +1,6 @@
+# Machine-specific benchmark results — do not commit
+results/*.json
+results/report.md
+
+# DuckDB scratch database
+/tmp/berlinmod_bench.duckdb

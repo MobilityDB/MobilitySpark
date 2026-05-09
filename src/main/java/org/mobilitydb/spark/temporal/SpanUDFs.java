@@ -27,6 +27,7 @@ package org.mobilitydb.spark.temporal;
 
 import functions.functions;
 import jnr.ffi.Pointer;
+import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.DataTypes;
 
@@ -61,6 +62,7 @@ public final class SpanUDFs {
     // ------------------------------------------------------------------
     private static String spanFromBinaryImpl(byte[] bytes) throws Exception {
         if (bytes == null) return null;
+        MeosThread.ensureReady();
         String hex = HexFormat.of().formatHex(bytes).toUpperCase();
         Pointer ptr = functions.span_from_hexwkb(hex);
         if (ptr == null) return null;
@@ -75,6 +77,7 @@ public final class SpanUDFs {
     // ------------------------------------------------------------------
     private static String spansetFromBinaryImpl(byte[] bytes) throws Exception {
         if (bytes == null) return null;
+        MeosThread.ensureReady();
         String hex = HexFormat.of().formatHex(bytes).toUpperCase();
         Pointer ptr = functions.spanset_from_hexwkb(hex);
         if (ptr == null) return null;
@@ -84,31 +87,31 @@ public final class SpanUDFs {
     // ------------------------------------------------------------------
     // Span fromBinary UDFs
     // ------------------------------------------------------------------
-    public static final UDF1<byte[], String> tstzspanFromBinary  = SpanUDFs::spanFromBinaryImpl;
-    public static final UDF1<byte[], String> intspanFromBinary   = SpanUDFs::spanFromBinaryImpl;
-    public static final UDF1<byte[], String> floatspanFromBinary = SpanUDFs::spanFromBinaryImpl;
-    public static final UDF1<byte[], String> bigintspanFromBinary= SpanUDFs::spanFromBinaryImpl;
-    public static final UDF1<byte[], String> datespanFromBinary  = SpanUDFs::spanFromBinaryImpl;
+    public static final UDF1<byte[], String> tstzspanFromBinary   = SpanUDFs::spanFromBinaryImpl;
+    public static final UDF1<byte[], String> intspanFromBinary    = SpanUDFs::spanFromBinaryImpl;
+    public static final UDF1<byte[], String> floatspanFromBinary  = SpanUDFs::spanFromBinaryImpl;
+    public static final UDF1<byte[], String> bigintspanFromBinary = SpanUDFs::spanFromBinaryImpl;
+    public static final UDF1<byte[], String> datespanFromBinary   = SpanUDFs::spanFromBinaryImpl;
 
     // ------------------------------------------------------------------
     // Spanset fromBinary UDFs
     // ------------------------------------------------------------------
-    public static final UDF1<byte[], String> tstzspansetFromBinary  = SpanUDFs::spansetFromBinaryImpl;
-    public static final UDF1<byte[], String> intspansetFromBinary   = SpanUDFs::spansetFromBinaryImpl;
-    public static final UDF1<byte[], String> floatspansetFromBinary = SpanUDFs::spansetFromBinaryImpl;
-    public static final UDF1<byte[], String> bigintspansetFromBinary= SpanUDFs::spansetFromBinaryImpl;
-    public static final UDF1<byte[], String> datespansetFromBinary  = SpanUDFs::spansetFromBinaryImpl;
+    public static final UDF1<byte[], String> tstzspansetFromBinary   = SpanUDFs::spansetFromBinaryImpl;
+    public static final UDF1<byte[], String> intspansetFromBinary    = SpanUDFs::spansetFromBinaryImpl;
+    public static final UDF1<byte[], String> floatspansetFromBinary  = SpanUDFs::spansetFromBinaryImpl;
+    public static final UDF1<byte[], String> bigintspansetFromBinary = SpanUDFs::spansetFromBinaryImpl;
+    public static final UDF1<byte[], String> datespansetFromBinary   = SpanUDFs::spansetFromBinaryImpl;
 
     public static void registerAll(org.apache.spark.sql.SparkSession spark) {
-        spark.udf().register("tstzspanFromBinary",     tstzspanFromBinary,     DataTypes.StringType);
-        spark.udf().register("intspanFromBinary",      intspanFromBinary,      DataTypes.StringType);
-        spark.udf().register("floatspanFromBinary",    floatspanFromBinary,    DataTypes.StringType);
-        spark.udf().register("bigintspanFromBinary",   bigintspanFromBinary,   DataTypes.StringType);
-        spark.udf().register("datespanFromBinary",     datespanFromBinary,     DataTypes.StringType);
-        spark.udf().register("tstzspansetFromBinary",  tstzspansetFromBinary,  DataTypes.StringType);
-        spark.udf().register("intspansetFromBinary",   intspansetFromBinary,   DataTypes.StringType);
-        spark.udf().register("floatspansetFromBinary", floatspansetFromBinary, DataTypes.StringType);
-        spark.udf().register("bigintspansetFromBinary",bigintspansetFromBinary,DataTypes.StringType);
-        spark.udf().register("datespansetFromBinary",  datespansetFromBinary,  DataTypes.StringType);
+        spark.udf().register("tstzspanFromBinary",      tstzspanFromBinary,      DataTypes.StringType);
+        spark.udf().register("intspanFromBinary",       intspanFromBinary,       DataTypes.StringType);
+        spark.udf().register("floatspanFromBinary",     floatspanFromBinary,     DataTypes.StringType);
+        spark.udf().register("bigintspanFromBinary",    bigintspanFromBinary,    DataTypes.StringType);
+        spark.udf().register("datespanFromBinary",      datespanFromBinary,      DataTypes.StringType);
+        spark.udf().register("tstzspansetFromBinary",   tstzspansetFromBinary,   DataTypes.StringType);
+        spark.udf().register("intspansetFromBinary",    intspansetFromBinary,    DataTypes.StringType);
+        spark.udf().register("floatspansetFromBinary",  floatspansetFromBinary,  DataTypes.StringType);
+        spark.udf().register("bigintspansetFromBinary", bigintspansetFromBinary, DataTypes.StringType);
+        spark.udf().register("datespansetFromBinary",   datespansetFromBinary,   DataTypes.StringType);
     }
 }
