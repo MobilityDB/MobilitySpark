@@ -40,8 +40,12 @@ import org.mobilitydb.spark.temporal.SimilarityUDFs;
 import org.mobilitydb.spark.temporal.SpanAccessorUDFs;
 import org.mobilitydb.spark.temporal.SpanAlgebraUDFs;
 import org.mobilitydb.spark.temporal.SpanUDFs;
+import org.mobilitydb.spark.temporal.AggregateUDAFs;
+import org.mobilitydb.spark.temporal.MoreAccessorUDFs;
+import org.mobilitydb.spark.temporal.RestrictionUDFs;
 import org.mobilitydb.spark.temporal.TTextUDFs;
 import org.mobilitydb.spark.temporal.TemporalUDFs;
+import org.mobilitydb.spark.temporal.TransformUDFs;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -92,6 +96,10 @@ public final class MobilitySparkSession implements AutoCloseable {
         BoolOpsUDFs.registerAll(spark);
         SimilarityUDFs.registerAll(spark);
         TempSpatialRelsUDFs.registerAll(spark);
+        MoreAccessorUDFs.registerAll(spark);
+        RestrictionUDFs.registerAll(spark);
+        TransformUDFs.registerAll(spark);
+        AggregateUDAFs.registerAll(spark);
         return new MobilitySparkSession();
     }
 
