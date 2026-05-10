@@ -53,6 +53,60 @@ public final class RestrictionUDFs {
     // Timestamp-set restriction
     // ------------------------------------------------------------------
 
+    // temporalAtTstzspan(s STRING, spanHex STRING) → STRING
+    // MEOS: temporal_at_tstzspan(const Temporal *, const Span *) → Temporal *
+    public static final UDF2<String, String, String> temporalAtTstzspan =
+        (s, spanHex) -> {
+            if (s == null || spanHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer spanPtr = functions.span_from_hexwkb(spanHex);
+                if (spanPtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_at_tstzspan(tptr, spanPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(spanPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // temporalAtTstzspanset(s STRING, spansetHex STRING) → STRING
+    // MEOS: temporal_at_tstzspanset(const Temporal *, const SpanSet *) → Temporal *
+    public static final UDF2<String, String, String> temporalAtTstzspanset =
+        (s, spansetHex) -> {
+            if (s == null || spansetHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer ssPtr = functions.spanset_from_hexwkb(spansetHex);
+                if (ssPtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_at_tstzspanset(tptr, ssPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(ssPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
     // temporalAtTstzset(s STRING, tstzsetHex STRING) → STRING
     // MEOS: temporal_at_tstzset(const Temporal *, const Set *) → Temporal *
     public static final UDF2<String, String, String> temporalAtTstzset =
@@ -430,6 +484,91 @@ public final class RestrictionUDFs {
         };
 
     // ------------------------------------------------------------------
+    // STBox and elevation restriction (tpoint)
+    // ------------------------------------------------------------------
+
+    // tgeoAtStbox(s STRING, stboxHex STRING) → STRING
+    // MEOS: tgeo_at_stbox(const Temporal *, const STBox *, bool border_inc) → Temporal *
+    public static final UDF2<String, String, String> tgeoAtStbox =
+        (s, stboxHex) -> {
+            if (s == null || stboxHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer boxPtr = functions.stbox_from_hexwkb(stboxHex);
+                if (boxPtr == null) return null;
+                try {
+                    Pointer result = functions.tgeo_at_stbox(tptr, boxPtr, true);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(boxPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // tpointAtElevation(s STRING, floatspanHex STRING) → STRING
+    // MEOS: tpoint_at_elevation(const Temporal *, const Span *) → Temporal *
+    public static final UDF2<String, String, String> tpointAtElevation =
+        (s, spanHex) -> {
+            if (s == null || spanHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer spanPtr = functions.span_from_hexwkb(spanHex);
+                if (spanPtr == null) return null;
+                try {
+                    Pointer result = functions.tpoint_at_elevation(tptr, spanPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(spanPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // tpointMinusElevation(s STRING, floatspanHex STRING) → STRING
+    // MEOS: tpoint_minus_elevation(const Temporal *, const Span *) → Temporal *
+    public static final UDF2<String, String, String> tpointMinusElevation =
+        (s, spanHex) -> {
+            if (s == null || spanHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer spanPtr = functions.span_from_hexwkb(spanHex);
+                if (spanPtr == null) return null;
+                try {
+                    Pointer result = functions.tpoint_minus_elevation(tptr, spanPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(spanPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // Extrema restriction — at maximum / minimum value
     // ------------------------------------------------------------------
 
@@ -538,6 +677,9 @@ public final class RestrictionUDFs {
     // ------------------------------------------------------------------
 
     public static void registerAll(SparkSession spark) {
+        // Timestamp-span/spanset restriction
+        spark.udf().register("temporalAtTstzspan",       temporalAtTstzspan,       DataTypes.StringType);
+        spark.udf().register("temporalAtTstzspanset",    temporalAtTstzspanset,    DataTypes.StringType);
         // Timestamp-set restriction
         spark.udf().register("temporalAtTstzset",        temporalAtTstzset,        DataTypes.StringType);
         spark.udf().register("temporalMinusTstzset",     temporalMinusTstzset,     DataTypes.StringType);
@@ -558,6 +700,10 @@ public final class RestrictionUDFs {
         // Value restriction: tpoint
         spark.udf().register("tpointAtValue",   tpointAtValue,   DataTypes.StringType);
         spark.udf().register("tpointMinusValue", tpointMinusValue, DataTypes.StringType);
+        // STBox and elevation restriction
+        spark.udf().register("tgeoAtStbox",           tgeoAtStbox,           DataTypes.StringType);
+        spark.udf().register("tpointAtElevation",     tpointAtElevation,     DataTypes.StringType);
+        spark.udf().register("tpointMinusElevation",  tpointMinusElevation,  DataTypes.StringType);
         // Extrema restriction
         spark.udf().register("temporalAtMax",   temporalAtMax,   DataTypes.StringType);
         spark.udf().register("temporalAtMin",   temporalAtMin,   DataTypes.StringType);
