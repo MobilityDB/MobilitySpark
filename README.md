@@ -61,7 +61,7 @@ The fat jar is written to `target/mobilityspark-0.1.0-SNAPSHOT-spark.jar`.
 ### 3.1. Initialise MEOS and register UDFs
 
 ```java
-SparkSession spark = SparkSession.builder().master("local[*]").getOrCreate();
+SparkSession spark = SparkSession.builder().master("local[2]").getOrCreate();
 try (MobilitySparkSession ms = MobilitySparkSession.create(spark)) {
     // All UDFs are now available in Spark SQL
     spark.sql("SELECT atTime(trip, TIMESTAMP '2020-01-01 00:30:00') FROM trips").show();

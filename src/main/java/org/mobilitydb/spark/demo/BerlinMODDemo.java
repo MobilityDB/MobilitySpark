@@ -74,7 +74,7 @@ public final class BerlinMODDemo {
         String expectDir  = args.length > 1 ? args[1] : null;
 
         SparkSession spark = SparkSession.builder()
-                .master("local[*]")
+                .master("local[2]")
                 .appName("MobilitySpark — BerlinMOD portable SQL")
                 .config("spark.sql.legacy.createHiveTableByDefault", "false")
                 .getOrCreate();
