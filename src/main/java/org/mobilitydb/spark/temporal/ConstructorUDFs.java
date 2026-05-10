@@ -257,24 +257,92 @@ public final class ConstructorUDFs {
             return functions.tbox_as_hexwkb(ptr, (byte) 0, sizeOut);
         };
 
+    // ------------------------------------------------------------------
+    // MFJSON constructors  (JSON string in → hex-WKB out)
+    //
+    // MEOS: tbool_from_mfjson, tint_from_mfjson, tfloat_from_mfjson,
+    //       ttext_from_mfjson  (meos.h)
+    //       tgeompoint_from_mfjson, tgeogpoint_from_mfjson  (meos_geo.h)
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, String> tboolFromMfjson =
+        (json) -> {
+            if (json == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.tbool_from_mfjson(json);
+            if (p == null) return null;
+            return functions.temporal_as_hexwkb(p, (byte) 0);
+        };
+
+    public static final UDF1<String, String> tintFromMfjson =
+        (json) -> {
+            if (json == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.tint_from_mfjson(json);
+            if (p == null) return null;
+            return functions.temporal_as_hexwkb(p, (byte) 0);
+        };
+
+    public static final UDF1<String, String> tfloatFromMfjson =
+        (json) -> {
+            if (json == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.tfloat_from_mfjson(json);
+            if (p == null) return null;
+            return functions.temporal_as_hexwkb(p, (byte) 0);
+        };
+
+    public static final UDF1<String, String> ttextFromMfjson =
+        (json) -> {
+            if (json == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.ttext_from_mfjson(json);
+            if (p == null) return null;
+            return functions.temporal_as_hexwkb(p, (byte) 0);
+        };
+
+    public static final UDF1<String, String> tgeompointFromMfjson =
+        (json) -> {
+            if (json == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.tgeompoint_from_mfjson(json);
+            if (p == null) return null;
+            return functions.temporal_as_hexwkb(p, (byte) 0);
+        };
+
+    public static final UDF1<String, String> tgeogpointFromMfjson =
+        (json) -> {
+            if (json == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.tgeogpoint_from_mfjson(json);
+            if (p == null) return null;
+            return functions.temporal_as_hexwkb(p, (byte) 0);
+        };
+
     public static void registerAll(SparkSession spark) {
-        spark.udf().register("tint",         tint,         DataTypes.StringType);
-        spark.udf().register("tfloat",        tfloat,       DataTypes.StringType);
-        spark.udf().register("tbool",         tbool,        DataTypes.StringType);
-        spark.udf().register("ttext",         ttext,        DataTypes.StringType);
-        spark.udf().register("tgeogpoint",    tgeogpoint,   DataTypes.StringType);
-        spark.udf().register("tstzspan",      tstzspan,     DataTypes.StringType);
-        spark.udf().register("tstzspanset",   tstzspanset,  DataTypes.StringType);
-        spark.udf().register("intspan",       intspan,      DataTypes.StringType);
-        spark.udf().register("floatspan",     floatspan,    DataTypes.StringType);
-        spark.udf().register("datespan",      datespan,     DataTypes.StringType);
-        spark.udf().register("datespanset",   datespanset,  DataTypes.StringType);
-        spark.udf().register("intset",        intset,       DataTypes.StringType);
-        spark.udf().register("floatset",      floatset,     DataTypes.StringType);
-        spark.udf().register("tstzset",       tstzset,      DataTypes.StringType);
-        spark.udf().register("textset",       textset,      DataTypes.StringType);
-        spark.udf().register("bigintset",     bigintset,    DataTypes.StringType);
-        spark.udf().register("stbox",         stbox,        DataTypes.StringType);
-        spark.udf().register("tbox",          tbox,         DataTypes.StringType);
+        spark.udf().register("tint",                tint,                DataTypes.StringType);
+        spark.udf().register("tfloat",              tfloat,              DataTypes.StringType);
+        spark.udf().register("tbool",               tbool,               DataTypes.StringType);
+        spark.udf().register("ttext",               ttext,               DataTypes.StringType);
+        spark.udf().register("tgeogpoint",          tgeogpoint,          DataTypes.StringType);
+        spark.udf().register("tstzspan",            tstzspan,            DataTypes.StringType);
+        spark.udf().register("tstzspanset",         tstzspanset,         DataTypes.StringType);
+        spark.udf().register("intspan",             intspan,             DataTypes.StringType);
+        spark.udf().register("floatspan",           floatspan,           DataTypes.StringType);
+        spark.udf().register("datespan",            datespan,            DataTypes.StringType);
+        spark.udf().register("datespanset",         datespanset,         DataTypes.StringType);
+        spark.udf().register("intset",              intset,              DataTypes.StringType);
+        spark.udf().register("floatset",            floatset,            DataTypes.StringType);
+        spark.udf().register("tstzset",             tstzset,             DataTypes.StringType);
+        spark.udf().register("textset",             textset,             DataTypes.StringType);
+        spark.udf().register("bigintset",           bigintset,           DataTypes.StringType);
+        spark.udf().register("stbox",               stbox,               DataTypes.StringType);
+        spark.udf().register("tbox",                tbox,                DataTypes.StringType);
+        spark.udf().register("tboolFromMfjson",     tboolFromMfjson,     DataTypes.StringType);
+        spark.udf().register("tintFromMfjson",      tintFromMfjson,      DataTypes.StringType);
+        spark.udf().register("tfloatFromMfjson",    tfloatFromMfjson,    DataTypes.StringType);
+        spark.udf().register("ttextFromMfjson",     ttextFromMfjson,     DataTypes.StringType);
+        spark.udf().register("tgeompointFromMfjson",tgeompointFromMfjson,DataTypes.StringType);
+        spark.udf().register("tgeogpointFromMfjson",tgeogpointFromMfjson,DataTypes.StringType);
     }
 }
