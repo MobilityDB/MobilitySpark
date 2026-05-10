@@ -309,4 +309,70 @@ class SpanAlgebraUDFsExtTest {
         assertNull(SpanAlgebraUDFs.spansetIntersectionSpan.call(null, TSTZSPAN_HEX));
         assertNull(SpanAlgebraUDFs.spansetIntersectionSpan.call(TSTZSPANSET_HEX, null));
     }
+
+    // ------------------------------------------------------------------
+    // Scalar singleton constructors
+    // ------------------------------------------------------------------
+
+    @Test @Order(33)
+    void intToSpan_returns_nonnull() throws Exception {
+        String r = SpanAlgebraUDFs.intToSpan.call(5);
+        assertNotNull(r, "intToSpan(5) must return non-null");
+        assertFalse(r.isBlank());
+    }
+
+    @Test @Order(34)
+    void intToSet_returns_nonnull() throws Exception {
+        String r = SpanAlgebraUDFs.intToSet.call(5);
+        assertNotNull(r);
+        assertFalse(r.isBlank());
+    }
+
+    @Test @Order(35)
+    void intToSpanset_returns_nonnull() throws Exception {
+        String r = SpanAlgebraUDFs.intToSpanset.call(5);
+        assertNotNull(r);
+        assertFalse(r.isBlank());
+    }
+
+    @Test @Order(36)
+    void floatToSpan_returns_nonnull() throws Exception {
+        String r = SpanAlgebraUDFs.floatToSpan.call(3.14);
+        assertNotNull(r, "floatToSpan(3.14) must return non-null");
+        assertFalse(r.isBlank());
+    }
+
+    @Test @Order(37)
+    void floatToSet_returns_nonnull() throws Exception {
+        String r = SpanAlgebraUDFs.floatToSet.call(3.14);
+        assertNotNull(r);
+        assertFalse(r.isBlank());
+    }
+
+    @Test @Order(38)
+    void floatToSpanset_returns_nonnull() throws Exception {
+        String r = SpanAlgebraUDFs.floatToSpanset.call(3.14);
+        assertNotNull(r);
+        assertFalse(r.isBlank());
+    }
+
+    @Test @Order(39)
+    void intToTbox_returns_nonnull() throws Exception {
+        String r = SpanAlgebraUDFs.intToTbox.call(42);
+        assertNotNull(r, "intToTbox(42) must return non-null");
+        assertFalse(r.isBlank());
+    }
+
+    @Test @Order(40)
+    void floatToTbox_returns_nonnull() throws Exception {
+        String r = SpanAlgebraUDFs.floatToTbox.call(2.5);
+        assertNotNull(r, "floatToTbox(2.5) must return non-null");
+        assertFalse(r.isBlank());
+    }
+
+    @Test @Order(41)
+    void intToSpan_null_returns_null() throws Exception {
+        assertNull(SpanAlgebraUDFs.intToSpan.call(null));
+        assertNull(SpanAlgebraUDFs.floatToSpan.call(null));
+    }
 }

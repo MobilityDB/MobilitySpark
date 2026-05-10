@@ -330,6 +330,58 @@ public final class RestrictionUDFs {
         };
 
     // ------------------------------------------------------------------
+    // Timestamp restriction (AT / MINUS for a single timestamptz)
+    // ------------------------------------------------------------------
+
+    // temporalAtTimestamptz(s STRING, ts TIMESTAMP) → STRING
+    // MEOS: temporal_at_timestamptz(const Temporal *, TimestampTz) → Temporal *
+    public static final UDF2<String, Timestamp, String> temporalAtTimestamptz =
+        (s, ts) -> {
+            if (s == null || ts == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                long pgEpochMicros = (ts.getTime() - 946684800L * 1000L) * 1000L;
+                OffsetDateTime odt = OffsetDateTime.ofInstant(
+                    Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
+                Pointer result = functions.temporal_at_timestamptz(tptr, odt);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // temporalMinusTimestamptz(s STRING, ts TIMESTAMP) → STRING
+    // MEOS: temporal_minus_timestamptz(const Temporal *, TimestampTz) → Temporal *
+    public static final UDF2<String, Timestamp, String> temporalMinusTimestamptz =
+        (s, ts) -> {
+            if (s == null || ts == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                long pgEpochMicros = (ts.getTime() - 946684800L * 1000L) * 1000L;
+                OffsetDateTime odt = OffsetDateTime.ofInstant(
+                    Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
+                Pointer result = functions.temporal_minus_timestamptz(tptr, odt);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // Value restriction: tfloat
     // ------------------------------------------------------------------
 
@@ -852,6 +904,65 @@ public final class RestrictionUDFs {
         };
 
     // ------------------------------------------------------------------
+    // Value-set restriction — at/minus a set of values
+    // ------------------------------------------------------------------
+
+    // temporalAtValues(s STRING, setHex STRING) → STRING
+    // MEOS: temporal_at_values(const Temporal *, const Set *) → Temporal *
+    //       setHex is an intset/floatset/textset/etc. in hex-WKB form.
+    public static final UDF2<String, String, String> temporalAtValues =
+        (s, setHex) -> {
+            if (s == null || setHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer setPtr = functions.set_from_hexwkb(setHex);
+                if (setPtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_at_values(tptr, setPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(setPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // temporalMinusValues(s STRING, setHex STRING) → STRING
+    // MEOS: temporal_minus_values(const Temporal *, const Set *) → Temporal *
+    public static final UDF2<String, String, String> temporalMinusValues =
+        (s, setHex) -> {
+            if (s == null || setHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer setPtr = functions.set_from_hexwkb(setHex);
+                if (setPtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_minus_values(tptr, setPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(setPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // Spatial restriction — at/minus geometry
     // ------------------------------------------------------------------
 
@@ -922,6 +1033,9 @@ public final class RestrictionUDFs {
         spark.udf().register("temporalMinusTstzset",     temporalMinusTstzset,     DataTypes.StringType);
         spark.udf().register("temporalMinusTstzspan",    temporalMinusTstzspan,    DataTypes.StringType);
         spark.udf().register("temporalMinusTstzspanset", temporalMinusTstzspanset, DataTypes.StringType);
+        // Single-timestamptz restriction
+        spark.udf().register("temporalAtTimestamptz",    temporalAtTimestamptz,    DataTypes.StringType);
+        spark.udf().register("temporalMinusTimestamptz", temporalMinusTimestamptz, DataTypes.StringType);
         // Delete operations
         spark.udf().register("temporalDeleteTstzspan",    temporalDeleteTstzspan,    DataTypes.StringType);
         spark.udf().register("temporalDeleteTstzspanset", temporalDeleteTstzspanset, DataTypes.StringType);
@@ -954,6 +1068,9 @@ public final class RestrictionUDFs {
         // Extrema restriction
         spark.udf().register("temporalAtMax",   temporalAtMax,   DataTypes.StringType);
         spark.udf().register("temporalAtMin",   temporalAtMin,   DataTypes.StringType);
+        // Value-set restriction
+        spark.udf().register("temporalAtValues",    temporalAtValues,    DataTypes.StringType);
+        spark.udf().register("temporalMinusValues", temporalMinusValues, DataTypes.StringType);
         // Spatial restriction
         spark.udf().register("tgeoAtGeom",      tgeoAtGeom,      DataTypes.StringType);
         spark.udf().register("tgeoMinusGeom",   tgeoMinusGeom,   DataTypes.StringType);

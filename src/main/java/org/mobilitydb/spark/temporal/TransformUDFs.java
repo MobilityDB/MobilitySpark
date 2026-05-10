@@ -666,11 +666,290 @@ public final class TransformUDFs {
             }
         };
 
-    // tpointMakeSimple(s STRING) → STRING
-    // Splits a self-intersecting temporal point into non-self-intersecting parts.
-    // Returns the first non-self-intersecting piece (for simplicity in SQL context).
-    // MEOS: tpoint_make_simple(const Temporal *, int *count) → Temporal **
-    // (omitted: tpoint_make_simple returns an array; complex to expose as single UDF)
+    // ------------------------------------------------------------------
+    // floatset transforms
+    // ------------------------------------------------------------------
+
+    // floatsetCeil(setHex STRING) → STRING
+    // MEOS: floatset_ceil(const Set *) → Set *
+    public static final UDF1<String, String> floatsetCeil =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatset_ceil(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatsetFloor(setHex STRING) → STRING
+    // MEOS: floatset_floor(const Set *) → Set *
+    public static final UDF1<String, String> floatsetFloor =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatset_floor(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatsetDegrees(setHex STRING) → STRING  (radians → degrees)
+    // MEOS: floatset_degrees(const Set *, bool normalize) → Set *
+    public static final UDF1<String, String> floatsetDegrees =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatset_degrees(p, false);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatsetRadians(setHex STRING) → STRING  (degrees → radians)
+    // MEOS: floatset_radians(const Set *) → Set *
+    public static final UDF1<String, String> floatsetRadians =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatset_radians(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // textset transforms (case normalization)
+    // ------------------------------------------------------------------
+
+    // textsetLower(setHex STRING) → STRING  (all elements lowercased)
+    // MEOS: textset_lower(const Set *) → Set *
+    public static final UDF1<String, String> textsetLower =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.textset_lower(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // textsetUpper(setHex STRING) → STRING  (all elements uppercased)
+    // MEOS: textset_upper(const Set *) → Set *
+    public static final UDF1<String, String> textsetUpper =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.textset_upper(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // textsetInitcap(setHex STRING) → STRING  (first letter of each element capitalized)
+    // MEOS: textset_initcap(const Set *) → Set *
+    public static final UDF1<String, String> textsetInitcap =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.textset_initcap(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // intspan / floatspan shift-scale
+    // ------------------------------------------------------------------
+
+    // intspanShiftScale(spanHex STRING, shift INTEGER, width INTEGER) → STRING
+    // MEOS: intspan_shift_scale(const Span *, int shift, int width,
+    //                           bool hasshift, bool haswidth) → Span *
+    public static final UDF3<String, Integer, Integer, String> intspanShiftScale =
+        (hex, shift, width) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.span_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int s = (shift == null) ? 0 : shift;
+                int w = (width == null) ? 0 : width;
+                Pointer r = functions.intspan_shift_scale(p, s, w,
+                    shift != null, width != null);
+                if (r == null) return null;
+                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspanShiftScale(spanHex STRING, shift DOUBLE, width DOUBLE) → STRING
+    // MEOS: floatspan_shift_scale(const Span *, double, double, bool, bool) → Span *
+    public static final UDF3<String, Double, Double, String> floatspanShiftScale =
+        (hex, shift, width) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.span_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                double s = (shift == null) ? 0.0 : shift;
+                double w = (width == null) ? 0.0 : width;
+                Pointer r = functions.floatspan_shift_scale(p, s, w,
+                    shift != null, width != null);
+                if (r == null) return null;
+                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // intspanset / floatspanset shift-scale and type conversion
+    // ------------------------------------------------------------------
+
+    // intspansetShiftScale(hex STRING, shift INTEGER, width INTEGER) → STRING
+    // MEOS: intspanset_shift_scale(const SpanSet *, int, int, bool, bool) → SpanSet *
+    public static final UDF3<String, Integer, Integer, String> intspansetShiftScale =
+        (hex, shift, width) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int s = (shift == null) ? 0 : shift;
+                int w = (width == null) ? 0 : width;
+                Pointer r = functions.intspanset_shift_scale(p, s, w,
+                    shift != null, width != null);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetShiftScale(hex STRING, shift DOUBLE, width DOUBLE) → STRING
+    // MEOS: floatspanset_shift_scale(const SpanSet *, double, double, bool, bool) → SpanSet *
+    public static final UDF3<String, Double, Double, String> floatspansetShiftScale =
+        (hex, shift, width) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                double s = (shift == null) ? 0.0 : shift;
+                double w = (width == null) ? 0.0 : width;
+                Pointer r = functions.floatspanset_shift_scale(p, s, w,
+                    shift != null, width != null);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetCeil(hex STRING) → STRING
+    // MEOS: floatspanset_ceil(const SpanSet *) → SpanSet *
+    public static final UDF1<String, String> floatspansetCeil =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatspanset_ceil(p);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetFloor(hex STRING) → STRING
+    // MEOS: floatspanset_floor(const SpanSet *) → SpanSet *
+    public static final UDF1<String, String> floatspansetFloor =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatspanset_floor(p);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetRound(hex STRING, maxDecimals INTEGER) → STRING
+    // MEOS: floatspanset_round(const SpanSet *, int) → SpanSet *
+    public static final UDF2<String, Integer, String> floatspansetRound =
+        (hex, decimals) -> {
+            if (hex == null || decimals == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatspanset_round(p, decimals);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // intspansetToFloat(hex STRING) → STRING  (intspanset → floatspanset)
+    // MEOS: intspanset_to_floatspanset(const SpanSet *) → SpanSet *
+    public static final UDF1<String, String> intspansetToFloat =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.intspanset_to_floatspanset(p);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetToInt(hex STRING) → STRING  (floatspanset → intspanset)
+    // MEOS: floatspanset_to_intspanset(const SpanSet *) → SpanSet *
+    public static final UDF1<String, String> floatspansetToInt =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatspanset_to_intspanset(p);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
 
     // ------------------------------------------------------------------
     // Registration
@@ -711,5 +990,25 @@ public final class TransformUDFs {
         spark.udf().register("temporalTSample", temporalTSample, DataTypes.StringType);
         // Trajectory extraction
         spark.udf().register("tpointTrajectory", tpointTrajectory, DataTypes.StringType);
+        // floatset transforms
+        spark.udf().register("floatsetCeil",    floatsetCeil,    DataTypes.StringType);
+        spark.udf().register("floatsetFloor",   floatsetFloor,   DataTypes.StringType);
+        spark.udf().register("floatsetDegrees", floatsetDegrees, DataTypes.StringType);
+        spark.udf().register("floatsetRadians", floatsetRadians, DataTypes.StringType);
+        // textset case normalization
+        spark.udf().register("textsetLower",   textsetLower,   DataTypes.StringType);
+        spark.udf().register("textsetUpper",   textsetUpper,   DataTypes.StringType);
+        spark.udf().register("textsetInitcap", textsetInitcap, DataTypes.StringType);
+        // intspan / floatspan shift-scale
+        spark.udf().register("intspanShiftScale",   intspanShiftScale,   DataTypes.StringType);
+        spark.udf().register("floatspanShiftScale",  floatspanShiftScale,  DataTypes.StringType);
+        // intspanset / floatspanset transforms
+        spark.udf().register("intspansetShiftScale",   intspansetShiftScale,   DataTypes.StringType);
+        spark.udf().register("floatspansetShiftScale", floatspansetShiftScale, DataTypes.StringType);
+        spark.udf().register("floatspansetCeil",       floatspansetCeil,       DataTypes.StringType);
+        spark.udf().register("floatspansetFloor",      floatspansetFloor,      DataTypes.StringType);
+        spark.udf().register("floatspansetRound",      floatspansetRound,      DataTypes.StringType);
+        spark.udf().register("intspansetToFloat",      intspansetToFloat,      DataTypes.StringType);
+        spark.udf().register("floatspansetToInt",      floatspansetToInt,      DataTypes.StringType);
     }
 }

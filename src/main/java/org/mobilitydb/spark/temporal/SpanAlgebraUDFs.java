@@ -652,5 +652,85 @@ public final class SpanAlgebraUDFs {
         spark.udf().register("spansetIntersectionSpan",  spansetIntersectionSpan,  DataTypes.StringType);
         spark.udf().register("spansetUnionSpan",         spansetUnionSpan,         DataTypes.StringType);
         spark.udf().register("spansetMinusSpan",         spansetMinusSpan,         DataTypes.StringType);
+        // Scalar singleton constructors
+        spark.udf().register("intToSpan",      intToSpan,      DataTypes.StringType);
+        spark.udf().register("intToSet",       intToSet,       DataTypes.StringType);
+        spark.udf().register("intToSpanset",   intToSpanset,   DataTypes.StringType);
+        spark.udf().register("floatToSpan",    floatToSpan,    DataTypes.StringType);
+        spark.udf().register("floatToSet",     floatToSet,     DataTypes.StringType);
+        spark.udf().register("floatToSpanset", floatToSpanset, DataTypes.StringType);
+        spark.udf().register("intToTbox",      intToTbox,      DataTypes.StringType);
+        spark.udf().register("floatToTbox",    floatToTbox,    DataTypes.StringType);
     }
+
+    // ------------------------------------------------------------------
+    // Scalar singleton constructors
+    // MEOS: int_to_span/set/spanset(int) → Span/Set/SpanSet *
+    //       float_to_span/set/spanset(double) → Span/Set/SpanSet *
+    //       int_to_tbox(int) / float_to_tbox(double) → TBox *
+    // ------------------------------------------------------------------
+
+    public static final UDF1<Integer, String> intToSpan =
+        (v) -> { if (v == null) return null; MeosThread.ensureReady();
+            Pointer r = functions.int_to_span(v);
+            if (r == null) return null;
+            String h = functions.span_as_hexwkb(r, (byte) 0);
+            MeosMemory.free(r); return h; };
+
+    public static final UDF1<Integer, String> intToSet =
+        (v) -> { if (v == null) return null; MeosThread.ensureReady();
+            Pointer r = functions.int_to_set(v);
+            if (r == null) return null;
+            String h = functions.set_as_hexwkb(r, (byte) 0);
+            MeosMemory.free(r); return h; };
+
+    public static final UDF1<Integer, String> intToSpanset =
+        (v) -> { if (v == null) return null; MeosThread.ensureReady();
+            Pointer r = functions.int_to_spanset(v);
+            if (r == null) return null;
+            String h = functions.spanset_as_hexwkb(r, (byte) 0);
+            MeosMemory.free(r); return h; };
+
+    public static final UDF1<Double, String> floatToSpan =
+        (v) -> { if (v == null) return null; MeosThread.ensureReady();
+            Pointer r = functions.float_to_span(v);
+            if (r == null) return null;
+            String h = functions.span_as_hexwkb(r, (byte) 0);
+            MeosMemory.free(r); return h; };
+
+    public static final UDF1<Double, String> floatToSet =
+        (v) -> { if (v == null) return null; MeosThread.ensureReady();
+            Pointer r = functions.float_to_set(v);
+            if (r == null) return null;
+            String h = functions.set_as_hexwkb(r, (byte) 0);
+            MeosMemory.free(r); return h; };
+
+    public static final UDF1<Double, String> floatToSpanset =
+        (v) -> { if (v == null) return null; MeosThread.ensureReady();
+            Pointer r = functions.float_to_spanset(v);
+            if (r == null) return null;
+            String h = functions.spanset_as_hexwkb(r, (byte) 0);
+            MeosMemory.free(r); return h; };
+
+    public static final UDF1<Integer, String> intToTbox =
+        (v) -> {
+            if (v == null) return null; MeosThread.ensureReady();
+            Pointer r = functions.int_to_tbox(v);
+            if (r == null) return null;
+            jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
+            String h = functions.tbox_as_hexwkb(r, (byte) 0,
+                rt.getMemoryManager().allocateDirect(8));
+            MeosMemory.free(r); return h;
+        };
+
+    public static final UDF1<Double, String> floatToTbox =
+        (v) -> {
+            if (v == null) return null; MeosThread.ensureReady();
+            Pointer r = functions.float_to_tbox(v);
+            if (r == null) return null;
+            jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
+            String h = functions.tbox_as_hexwkb(r, (byte) 0,
+                rt.getMemoryManager().allocateDirect(8));
+            MeosMemory.free(r); return h;
+        };
 }
