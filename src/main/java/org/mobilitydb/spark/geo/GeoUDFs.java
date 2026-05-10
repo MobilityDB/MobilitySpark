@@ -700,5 +700,73 @@ public final class GeoUDFs {
         spark.udf().register("stops",                  stops,                  DataTypes.StringType);
         spark.udf().register("isSimple",               isSimple,               DataTypes.BooleanType);
         spark.udf().register("shortestLine",           shortestLine,           DataTypes.StringType);
+        spark.udf().register("geoAsEwkt",              geoAsEwkt,              DataTypes.StringType);
+        spark.udf().register("geoAsGeojson",           geoAsGeojson,           DataTypes.StringType);
+        spark.udf().register("geoFromGeojson",         geoFromGeojson,         DataTypes.StringType);
     }
+
+    // ------------------------------------------------------------------
+    // geoAsEwkt(wkt STRING, precision INTEGER) → STRING
+    //
+    // Returns Extended WKT (SRID=N;...) for a geometry given as WKT.
+    //
+    // MEOS: geo_as_ewkt(const GSERIALIZED *, int precision)
+    // ------------------------------------------------------------------
+    public static final UDF2<String, Integer, String> geoAsEwkt =
+        (wkt, precision) -> {
+            if (wkt == null) return null;
+            MeosThread.ensureReady();
+            int prec = (precision == null) ? 15 : precision;
+            Pointer gptr = functions.geo_from_text(wkt, 0);
+            if (gptr == null) return null;
+            try {
+                return functions.geo_as_ewkt(gptr, prec);
+            } finally {
+                MeosMemory.free(gptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // geoAsGeojson(wkt STRING, options INTEGER, precision INTEGER) → STRING
+    //
+    // Returns GeoJSON for a geometry. options: 0=no bbox, 1=bbox, 2=short CRS.
+    //
+    // MEOS: geo_as_geojson(const GSERIALIZED *, int options, int precision,
+    //                       const char *srs)
+    // ------------------------------------------------------------------
+    public static final UDF3<String, Integer, Integer, String> geoAsGeojson =
+        (wkt, options, precision) -> {
+            if (wkt == null) return null;
+            MeosThread.ensureReady();
+            int opts = (options == null) ? 0 : options;
+            int prec = (precision == null) ? 9 : precision;
+            Pointer gptr = functions.geo_from_text(wkt, 0);
+            if (gptr == null) return null;
+            try {
+                return functions.geo_as_geojson(gptr, opts, prec, null);
+            } finally {
+                MeosMemory.free(gptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // geoFromGeojson(geojson STRING) → STRING  (WKT)
+    //
+    // Parses GeoJSON and returns the geometry as WKT.
+    //
+    // MEOS: geo_from_geojson(const char *) → GSERIALIZED *
+    //       geo_as_text(const GSERIALIZED *, int precision)
+    // ------------------------------------------------------------------
+    public static final UDF1<String, String> geoFromGeojson =
+        (geojson) -> {
+            if (geojson == null) return null;
+            MeosThread.ensureReady();
+            Pointer gptr = functions.geo_from_geojson(geojson);
+            if (gptr == null) return null;
+            try {
+                return functions.geo_as_text(gptr, 15);
+            } finally {
+                MeosMemory.free(gptr);
+            }
+        };
 }
