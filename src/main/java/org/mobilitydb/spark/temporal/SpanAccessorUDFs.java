@@ -634,7 +634,70 @@ public final class SpanAccessorUDFs {
         spark.udf().register("tstzspansetEndTimestamptz",    tstzspansetEndTimestamptz,    DataTypes.TimestampType);
         // spanset nth-span accessor
         spark.udf().register("spansetSpanN", spansetSpanN, DataTypes.StringType);
+        // tstzspanset extra accessors
+        spark.udf().register("tstzspansetNumTimestamps", tstzspansetNumTimestamps, DataTypes.IntegerType);
+        spark.udf().register("tstzspansetTimestamps",    tstzspansetTimestamps,
+            DataTypes.createArrayType(DataTypes.TimestampType));
+        spark.udf().register("tstzspansetDuration",      tstzspansetDuration,      DataTypes.StringType);
     }
+
+    // ------------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // tstzspanset extra accessors
+    // ------------------------------------------------------------------
+
+    // tstzspansetNumTimestamps(hex STRING) → INTEGER
+    // MEOS: tstzspanset_num_timestamps(const SpanSet *) → int
+    public static final UDF1<String, Integer> tstzspansetNumTimestamps =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try { return functions.tstzspanset_num_timestamps(p); }
+            finally { MeosMemory.free(p); }
+        };
+
+    // tstzspansetTimestamps(hex STRING) → ARRAY<TIMESTAMP>
+    // MEOS: tstzspanset_timestamps(const SpanSet *) → TimestampTz *
+    // Returns int64* array (PG-epoch microseconds); count via tstzspanset_num_timestamps.
+    public static final UDF1<String, List<java.sql.Timestamp>> tstzspansetTimestamps =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int n = functions.tstzspanset_num_timestamps(p);
+                Pointer arr = functions.tstzspanset_timestamps(p);
+                if (arr == null) return null;
+                try {
+                    List<java.sql.Timestamp> result = new ArrayList<>(n);
+                    for (int i = 0; i < n; i++) {
+                        long pgMicros = arr.getLong((long) i * 8);
+                        result.add(new java.sql.Timestamp(pgMicros / 1000L + PG_UNIX_OFFSET_MS));
+                    }
+                    return result;
+                } finally { MeosMemory.free(arr); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // tstzspansetDuration(hex STRING, ignoreGaps BOOLEAN) → STRING (interval)
+    // MEOS: tstzspanset_duration(const SpanSet *, bool) → Interval *
+    public static final UDF2<String, Boolean, String> tstzspansetDuration =
+        (hex, ignoreGaps) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            boolean ignore = (ignoreGaps != null && ignoreGaps);
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer iv = functions.tstzspanset_duration(p, ignore);
+                if (iv == null) return null;
+                try { return functions.pg_interval_out(iv); }
+                finally { MeosMemory.free(iv); }
+            } finally { MeosMemory.free(p); }
+        };
 
     // ------------------------------------------------------------------
     // spanset_span_n(spanset, n) → span hex-WKB  (1-based index)

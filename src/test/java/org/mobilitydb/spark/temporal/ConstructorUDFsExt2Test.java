@@ -131,4 +131,25 @@ class ConstructorUDFsExt2Test {
         assertNull(ConstructorUDFs.ttextFromBaseTemp.call(null, TINT_REF_HEX));
         assertNull(ConstructorUDFs.ttextFromBaseTemp.call("hello", null));
     }
+
+    // ------------------------------------------------------------------
+    // tpointFromBaseTemp
+    // ------------------------------------------------------------------
+
+    @Test @Order(10)
+    void tpointFromBaseTemp_returns_nonnull_hexwkb() throws Exception {
+        String r = ConstructorUDFs.tpointFromBaseTemp.call("POINT(1.0 2.0)", TINT_REF_HEX);
+        assertNotNull(r, "tpointFromBaseTemp must return non-null");
+        assertFalse(r.isBlank());
+    }
+
+    @Test @Order(11)
+    void tpointFromBaseTemp_null_geo_returns_null() throws Exception {
+        assertNull(ConstructorUDFs.tpointFromBaseTemp.call(null, TINT_REF_HEX));
+    }
+
+    @Test @Order(12)
+    void tpointFromBaseTemp_null_ref_returns_null() throws Exception {
+        assertNull(ConstructorUDFs.tpointFromBaseTemp.call("POINT(1.0 2.0)", null));
+    }
 }
