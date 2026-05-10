@@ -419,6 +419,35 @@ public final class ConstructorUDFs {
             }
         };
 
+    // tpointFromBaseTemp(geoWkt STRING, refHex STRING) → STRING
+    // Creates a constant tpoint that takes the temporal structure from refHex
+    // and uses the given geometry (WKT) as the base value.
+    // MEOS: tpoint_from_base_temp(const GSERIALIZED *, const Temporal *) → Temporal *
+    public static final UDF2<String, String, String> tpointFromBaseTemp =
+        (geoWkt, refHex) -> {
+            if (geoWkt == null || refHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer gptr = functions.geo_from_text(geoWkt, 0);
+            if (gptr == null) return null;
+            try {
+                Pointer ref = functions.temporal_from_hexwkb(refHex);
+                if (ref == null) return null;
+                try {
+                    Pointer result = functions.tpoint_from_base_temp(gptr, ref);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(ref);
+                }
+            } finally {
+                MeosMemory.free(gptr);
+            }
+        };
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("tint",                tint,                DataTypes.StringType);
         spark.udf().register("tfloat",              tfloat,              DataTypes.StringType);
@@ -448,6 +477,7 @@ public final class ConstructorUDFs {
         spark.udf().register("tboolFromBaseTemp",   tboolFromBaseTemp,   DataTypes.StringType);
         spark.udf().register("tintFromBaseTemp",    tintFromBaseTemp,    DataTypes.StringType);
         spark.udf().register("tfloatFromBaseTemp",  tfloatFromBaseTemp,  DataTypes.StringType);
-        spark.udf().register("ttextFromBaseTemp",   ttextFromBaseTemp,   DataTypes.StringType);
+        spark.udf().register("ttextFromBaseTemp",    ttextFromBaseTemp,    DataTypes.StringType);
+        spark.udf().register("tpointFromBaseTemp",   tpointFromBaseTemp,   DataTypes.StringType);
     }
 }
