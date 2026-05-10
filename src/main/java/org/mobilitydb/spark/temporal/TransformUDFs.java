@@ -261,6 +261,60 @@ public final class TransformUDFs {
     // Time-domain shifting and scaling
     // ------------------------------------------------------------------
 
+    // temporalShiftTime(s STRING, shiftStr STRING) → STRING
+    // MEOS: temporal_shift_time(const Temporal *, const Interval *) → Temporal *
+    public static final UDF2<String, String, String> temporalShiftTime =
+        (s, shiftStr) -> {
+            if (s == null || shiftStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer shiftPtr = functions.pg_interval_in(shiftStr, -1);
+                if (shiftPtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_shift_time(tptr, shiftPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(shiftPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // temporalScaleTime(s STRING, scaleStr STRING) → STRING
+    // MEOS: temporal_scale_time(const Temporal *, const Interval *) → Temporal *
+    public static final UDF2<String, String, String> temporalScaleTime =
+        (s, scaleStr) -> {
+            if (s == null || scaleStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer scalePtr = functions.pg_interval_in(scaleStr, -1);
+                if (scalePtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_scale_time(tptr, scalePtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(scalePtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
     // temporalShiftScaleTime(s STRING, shiftStr STRING, scaleStr STRING) → STRING
     // shiftStr and scaleStr are PostgreSQL interval literals, e.g. "1 day".
     // MEOS: temporal_shift_scale_time(const Temporal *, const Interval *, const Interval *) → Temporal *
@@ -494,6 +548,8 @@ public final class TransformUDFs {
         spark.udf().register("tfloatScaleValue",      tfloatScaleValue,      DataTypes.StringType);
         spark.udf().register("tfloatShiftScaleValue", tfloatShiftScaleValue, DataTypes.StringType);
         // Time-domain shifting and scaling
+        spark.udf().register("temporalShiftTime",       temporalShiftTime,       DataTypes.StringType);
+        spark.udf().register("temporalScaleTime",       temporalScaleTime,       DataTypes.StringType);
         spark.udf().register("temporalShiftScaleTime", temporalShiftScaleTime, DataTypes.StringType);
         // Spatial transformations
         spark.udf().register("tpointSetSrid",         tpointSetSrid,         DataTypes.StringType);

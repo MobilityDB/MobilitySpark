@@ -292,6 +292,50 @@ public final class AnalyticsUDFs {
             }
         };
 
+    // tpointCumulativeLength(tpoint_hex) → tfloat hex-WKB
+    // Returns the cumulative distance along the trajectory.
+    // MEOS: tpoint_cumulative_length(const Temporal *) → Temporal *
+    public static final UDF1<String, String> tpointCumulativeLength =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer r = functions.tpoint_cumulative_length(ptr);
+                if (r == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                } finally {
+                    MeosMemory.free(r);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tgeoTraversedArea(tgeo_hex) → WKT STRING
+    // Returns the geometry swept out by a temporal geometry.
+    // MEOS: tgeo_traversed_area(const Temporal *, bool unary_union) → GSERIALIZED *
+    public static final UDF1<String, String> tgeoTraversedArea =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer gsPtr = functions.tgeo_traversed_area(ptr, false);
+                if (gsPtr == null) return null;
+                try {
+                    return functions.geo_as_text(gsPtr, 6);
+                } finally {
+                    MeosMemory.free(gsPtr);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("tfloatDerivative", tfloatDerivative, DataTypes.StringType);
         spark.udf().register("tfloatRound",       tfloatRound,      DataTypes.StringType);
@@ -304,7 +348,9 @@ public final class AnalyticsUDFs {
         spark.udf().register("tnumberTrend",      tnumberTrend,     DataTypes.StringType);
         spark.udf().register("tpointLength",      tpointLength,     DataTypes.DoubleType);
         spark.udf().register("tpointSpeed",       tpointSpeed,      DataTypes.StringType);
-        spark.udf().register("tpointAzimuth",     tpointAzimuth,    DataTypes.StringType);
-        spark.udf().register("tpointDirection",   tpointDirection,  DataTypes.StringType);
+        spark.udf().register("tpointAzimuth",          tpointAzimuth,          DataTypes.StringType);
+        spark.udf().register("tpointDirection",         tpointDirection,         DataTypes.StringType);
+        spark.udf().register("tpointCumulativeLength",  tpointCumulativeLength,  DataTypes.StringType);
+        spark.udf().register("tgeoTraversedArea",       tgeoTraversedArea,       DataTypes.StringType);
     }
 }
