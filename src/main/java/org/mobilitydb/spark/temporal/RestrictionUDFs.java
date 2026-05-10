@@ -273,6 +273,33 @@ public final class RestrictionUDFs {
             }
         };
 
+    // temporalDeleteTstzset(s STRING, setHex STRING) → STRING
+    // MEOS: temporal_delete_tstzset(const Temporal *, const Set *, bool connect) → Temporal *
+    public static final UDF2<String, String, String> temporalDeleteTstzset =
+        (s, setHex) -> {
+            if (s == null || setHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer sptr = functions.set_from_hexwkb(setHex);
+                if (sptr == null) return null;
+                try {
+                    Pointer result = functions.temporal_delete_tstzset(tptr, sptr, false);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(sptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
     // ------------------------------------------------------------------
     // Value restriction: tfloat
     // ------------------------------------------------------------------
@@ -848,6 +875,7 @@ public final class RestrictionUDFs {
         // Delete operations
         spark.udf().register("temporalDeleteTstzspan",    temporalDeleteTstzspan,    DataTypes.StringType);
         spark.udf().register("temporalDeleteTstzspanset", temporalDeleteTstzspanset, DataTypes.StringType);
+        spark.udf().register("temporalDeleteTstzset",     temporalDeleteTstzset,     DataTypes.StringType);
         // Value restriction: tfloat / tint
         spark.udf().register("tfloatAtValue",   tfloatAtValue,   DataTypes.StringType);
         spark.udf().register("tfloatMinusValue", tfloatMinusValue, DataTypes.StringType);
