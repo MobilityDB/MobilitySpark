@@ -35,6 +35,9 @@ import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.api.java.UDF3;
 import org.apache.spark.sql.types.DataTypes;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
 /**
  * Spark SQL UDFs for converting and transforming temporal types.
  *
@@ -386,6 +389,93 @@ public final class TransformUDFs {
             }
         };
 
+    // temporalSimplifyMinDist(s STRING, dist DOUBLE) → STRING
+    // Removes consecutive instants whose distance is below the threshold.
+    // MEOS: temporal_simplify_min_dist(const Temporal *, double dist) → Temporal *
+    public static final UDF2<String, Double, String> temporalSimplifyMinDist =
+        (s, dist) -> {
+            if (s == null || dist == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.temporal_simplify_min_dist(ptr, dist);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // temporalTSample(s STRING, durationStr STRING, interpStr STRING) → STRING
+    // Re-samples a temporal value at regular time intervals.
+    // origin is fixed at 2000-01-01 00:00:00 UTC (MEOS/PG epoch).
+    // MEOS: temporal_tsample(const Temporal *, const Interval *, TimestampTz, interpType) → Temporal *
+    private static final OffsetDateTime PG_EPOCH = OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
+    public static final UDF3<String, String, String, String> temporalTSample =
+        (s, durationStr, interpStr) -> {
+            if (s == null || durationStr == null || interpStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer ivPtr = functions.pg_interval_in(durationStr, -1);
+                if (ivPtr == null) return null;
+                try {
+                    int interp;
+                    switch (interpStr) {
+                        case "Discrete": interp = 1; break;
+                        case "Step":     interp = 2; break;
+                        default:         interp = 3; break;
+                    }
+                    Pointer result = functions.temporal_tsample(ptr, ivPtr, PG_EPOCH, interp);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(ivPtr);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tpointTrajectory(s STRING) → STRING  (WKT of the trajectory geometry)
+    // For a tgeompoint sequence, this returns a LINESTRING or POINT geometry.
+    // MEOS: tpoint_trajectory(const Temporal *, bool unary_union) → GSERIALIZED *
+    public static final UDF1<String, String> tpointTrajectory =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer gsPtr = functions.tpoint_trajectory(ptr, false);
+                if (gsPtr == null) return null;
+                try {
+                    return functions.geo_as_text(gsPtr, 6);
+                } finally {
+                    MeosMemory.free(gsPtr);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tpointMakeSimple(s STRING) → STRING
+    // Splits a self-intersecting temporal point into non-self-intersecting parts.
+    // Returns the first non-self-intersecting piece (for simplicity in SQL context).
+    // MEOS: tpoint_make_simple(const Temporal *, int *count) → Temporal **
+    // (omitted: tpoint_make_simple returns an array; complex to expose as single UDF)
+
     // ------------------------------------------------------------------
     // Registration
     // ------------------------------------------------------------------
@@ -411,5 +501,10 @@ public final class TransformUDFs {
         // Trajectory simplification
         spark.udf().register("temporalSimplifyDp",      temporalSimplifyDp,      DataTypes.StringType);
         spark.udf().register("temporalSimplifyMaxDist", temporalSimplifyMaxDist, DataTypes.StringType);
+        spark.udf().register("temporalSimplifyMinDist", temporalSimplifyMinDist, DataTypes.StringType);
+        // Temporal sampling
+        spark.udf().register("temporalTSample", temporalTSample, DataTypes.StringType);
+        // Trajectory extraction
+        spark.udf().register("tpointTrajectory", tpointTrajectory, DataTypes.StringType);
     }
 }

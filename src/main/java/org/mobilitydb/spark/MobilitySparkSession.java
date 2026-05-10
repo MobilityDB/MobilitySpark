@@ -26,6 +26,7 @@
 package org.mobilitydb.spark;
 
 import org.apache.spark.sql.SparkSession;
+import org.mobilitydb.spark.geo.DistanceUDFs;
 import org.mobilitydb.spark.geo.GeoUDFs;
 import org.mobilitydb.spark.geo.STBoxUDFs;
 import org.mobilitydb.spark.geo.TempSpatialRelsUDFs;
@@ -83,6 +84,7 @@ public final class MobilitySparkSession implements AutoCloseable {
         TemporalUDFs.registerAll(spark);
         SpanUDFs.registerAll(spark);
         GeoUDFs.registerAll(spark);
+        DistanceUDFs.registerAll(spark);
         ConstructorUDFs.registerAll(spark);
         AccessorUDFs.registerAll(spark);
         SpanAccessorUDFs.registerAll(spark);

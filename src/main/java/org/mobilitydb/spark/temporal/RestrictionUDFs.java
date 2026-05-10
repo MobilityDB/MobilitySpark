@@ -430,6 +430,110 @@ public final class RestrictionUDFs {
         };
 
     // ------------------------------------------------------------------
+    // Extrema restriction — at maximum / minimum value
+    // ------------------------------------------------------------------
+
+    // temporalAtMax(s STRING) → STRING  (restricts to instants at the maximum value)
+    // MEOS: temporal_at_max(const Temporal *) → Temporal *
+    public static final UDF1<String, String> temporalAtMax =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer r = functions.temporal_at_max(ptr);
+                if (r == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                } finally {
+                    MeosMemory.free(r);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // temporalAtMin(s STRING) → STRING  (restricts to instants at the minimum value)
+    // MEOS: temporal_at_min(const Temporal *) → Temporal *
+    public static final UDF1<String, String> temporalAtMin =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer r = functions.temporal_at_min(ptr);
+                if (r == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                } finally {
+                    MeosMemory.free(r);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Spatial restriction — at/minus geometry
+    // ------------------------------------------------------------------
+
+    // tgeoAtGeom(s STRING, geomWkt STRING) → STRING
+    // MEOS: tgeo_at_geom(const Temporal *, const GSERIALIZED *) → Temporal *
+    public static final UDF2<String, String, String> tgeoAtGeom =
+        (s, geomWkt) -> {
+            if (s == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+                if (gsptr == null) return null;
+                try {
+                    Pointer r = functions.tgeo_at_geom(tptr, gsptr);
+                    if (r == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                    } finally {
+                        MeosMemory.free(r);
+                    }
+                } finally {
+                    MeosMemory.free(gsptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // tgeoMinusGeom(s STRING, geomWkt STRING) → STRING
+    // MEOS: tgeo_minus_geom(const Temporal *, const GSERIALIZED *) → Temporal *
+    public static final UDF2<String, String, String> tgeoMinusGeom =
+        (s, geomWkt) -> {
+            if (s == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+                if (gsptr == null) return null;
+                try {
+                    Pointer r = functions.tgeo_minus_geom(tptr, gsptr);
+                    if (r == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                    } finally {
+                        MeosMemory.free(r);
+                    }
+                } finally {
+                    MeosMemory.free(gsptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // Registration
     // ------------------------------------------------------------------
 
@@ -454,5 +558,11 @@ public final class RestrictionUDFs {
         // Value restriction: tpoint
         spark.udf().register("tpointAtValue",   tpointAtValue,   DataTypes.StringType);
         spark.udf().register("tpointMinusValue", tpointMinusValue, DataTypes.StringType);
+        // Extrema restriction
+        spark.udf().register("temporalAtMax",   temporalAtMax,   DataTypes.StringType);
+        spark.udf().register("temporalAtMin",   temporalAtMin,   DataTypes.StringType);
+        // Spatial restriction
+        spark.udf().register("tgeoAtGeom",      tgeoAtGeom,      DataTypes.StringType);
+        spark.udf().register("tgeoMinusGeom",   tgeoMinusGeom,   DataTypes.StringType);
     }
 }
