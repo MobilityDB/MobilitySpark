@@ -27,6 +27,7 @@ package org.mobilitydb.spark.temporal;
 
 import functions.functions;
 import jnr.ffi.Pointer;
+import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF1;
@@ -530,7 +531,7 @@ public final class AccessorUDFs {
         };
 
     // ------------------------------------------------------------------
-    // Value span: tnumberValuespans
+    // Value span: tnumberValuespans, tnumberToSpan, tnumberToTbox
     // ------------------------------------------------------------------
 
     // tnumberValuespans(trip STRING) → STRING  (hex-WKB of value spanset)
@@ -543,6 +544,50 @@ public final class AccessorUDFs {
             Pointer ss = functions.tnumber_valuespans(ptr);
             if (ss == null) return null;
             return functions.spanset_as_hexwkb(ss, (byte) 0);
+        };
+
+    // tnumberToSpan(trip STRING) → STRING  (hex-WKB of value span covering all values)
+    // MEOS: tnumber_to_span(const Temporal *) → Span *
+    public static final UDF1<String, String> tnumberToSpan =
+        (trip) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            if (ptr == null) return null;
+            try {
+                Pointer sp = functions.tnumber_to_span(ptr);
+                if (sp == null) return null;
+                try {
+                    return functions.span_as_hexwkb(sp, (byte) 0);
+                } finally {
+                    MeosMemory.free(sp);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tnumberToTbox(trip STRING) → STRING  (hex-WKB of TBox bounding box)
+    // MEOS: tnumber_to_tbox(const Temporal *) → TBox *
+    public static final UDF1<String, String> tnumberToTbox =
+        (trip) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            if (ptr == null) return null;
+            try {
+                Pointer tb = functions.tnumber_to_tbox(ptr);
+                if (tb == null) return null;
+                try {
+                    jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
+                    jnr.ffi.Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
+                    return functions.tbox_as_hexwkb(tb, (byte) 0, sizeOut);
+                } finally {
+                    MeosMemory.free(tb);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
         };
 
     public static void registerAll(SparkSession spark) {
@@ -594,5 +639,7 @@ public final class AccessorUDFs {
         spark.udf().register("appendSequence",    appendSequence,   DataTypes.StringType);
         // Value spans
         spark.udf().register("tnumberValuespans", tnumberValuespans, DataTypes.StringType);
+        spark.udf().register("tnumberToSpan",     tnumberToSpan,     DataTypes.StringType);
+        spark.udf().register("tnumberToTbox",     tnumberToTbox,     DataTypes.StringType);
     }
 }

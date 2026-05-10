@@ -531,6 +531,27 @@ public final class MoreAccessorUDFs {
         };
 
     // ------------------------------------------------------------------
+    // tint value accessor
+    // ------------------------------------------------------------------
+
+    // tintValueN(trip STRING, n INT) → INT  (n-th distinct value, 1-based)
+    // MEOS: tint_value_n(const Temporal *, int n) → int * (JNR-allocated; do NOT MeosMemory.free)
+    public static final UDF2<String, Integer, Integer> tintValueN =
+        (trip, n) -> {
+            if (trip == null || n == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            if (ptr == null) return null;
+            try {
+                Pointer valPtr = functions.tint_value_n(ptr, n);
+                if (valPtr == null) return null;
+                return valPtr.getInt(0);
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // value_at_timestamptz: retrieve value at a given instant
     //
     // MEOS: tbool_value_at_timestamptz / tint_value_at_timestamptz /
@@ -632,6 +653,7 @@ public final class MoreAccessorUDFs {
         spark.udf().register("tpointValueN",                 tpointValueN,                 DataTypes.StringType);
         spark.udf().register("tpointConvexHull",             tpointConvexHull,             DataTypes.StringType);
         // value_at_timestamptz
+        spark.udf().register("tintValueN",                   tintValueN,                   DataTypes.IntegerType);
         spark.udf().register("tboolValueAtTimestamptz",      tboolValueAtTimestamptz,      DataTypes.BooleanType);
         spark.udf().register("tintValueAtTimestamptz",       tintValueAtTimestamptz,       DataTypes.IntegerType);
         spark.udf().register("tfloatValueAtTimestamptz",     tfloatValueAtTimestamptz,     DataTypes.DoubleType);
