@@ -82,7 +82,7 @@ public final class TileUDFs {
             Pointer iv = functions.pg_interval_in(intervalStr, -1);
             if (iv == null) return null;
             try {
-                Pointer r = MeosNative.INSTANCE.stbox_get_time_tile(pgEpoch(t), iv, pgEpoch(torigin));
+                Pointer r = functions.MeosLibrary.meos.stbox_get_time_tile(pgEpoch(t), iv, pgEpoch(torigin));
                 if (r == null) return null;
                 try {
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
@@ -100,7 +100,7 @@ public final class TileUDFs {
             if (pt == null) return null;
             Pointer origin = (originWkt == null) ? null : functions.geo_from_text(originWkt, 0);
             try {
-                Pointer r = MeosNative.INSTANCE.stbox_get_space_tile(pt, xsize, ysize, zsize, origin);
+                Pointer r = functions.MeosLibrary.meos.stbox_get_space_tile(pt, xsize, ysize, zsize, origin);
                 if (r == null) return null;
                 try {
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
@@ -124,7 +124,7 @@ public final class TileUDFs {
             if (iv == null) { MeosMemory.free(pt); return null; }
             Pointer origin = (originWkt == null) ? null : functions.geo_from_text(originWkt, 0);
             try {
-                Pointer r = MeosNative.INSTANCE.stbox_get_space_time_tile(
+                Pointer r = functions.MeosLibrary.meos.stbox_get_space_time_tile(
                     pt, pgEpoch(t), xsize, ysize, zsize, iv, origin, pgEpoch(torigin));
                 if (r == null) return null;
                 try {
@@ -152,7 +152,7 @@ public final class TileUDFs {
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = MeosNative.INSTANCE.tgeo_space_boxes(t, xsize, ysize, zsize, origin,
+                Pointer arr = functions.tgeo_space_boxes(t, xsize, ysize, zsize, origin,
                     bitmatrix != null && bitmatrix, borderInc == null ? true : borderInc, countOut);
                 if (arr == null) return null;
                 try {
@@ -183,7 +183,7 @@ public final class TileUDFs {
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = MeosNative.INSTANCE.tgeo_space_time_boxes(
+                Pointer arr = functions.MeosLibrary.meos.tgeo_space_time_boxes(
                     t, xsize, ysize, zsize, iv, origin, pgEpoch(torigin),
                     bitmatrix != null && bitmatrix, borderInc == null ? true : borderInc, countOut);
                 if (arr == null) return null;
@@ -274,7 +274,7 @@ public final class TileUDFs {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
                 Pointer binsOut  = rt.getMemoryManager().allocateDirect(8);
-                Pointer arr = MeosNative.INSTANCE.temporal_time_split(t, iv, pgEpoch(torigin), binsOut, countOut);
+                Pointer arr = functions.MeosLibrary.meos.temporal_time_split(t, iv, pgEpoch(torigin), binsOut, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -306,7 +306,7 @@ public final class TileUDFs {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
                 Pointer binsOut  = rt.getMemoryManager().allocateDirect(8);
-                Pointer arr = MeosNative.INSTANCE.tgeo_space_split(t, xsize, ysize, zsize, origin,
+                Pointer arr = functions.MeosLibrary.meos.tgeo_space_split(t, xsize, ysize, zsize, origin,
                     bitmatrix != null && bitmatrix, borderInc == null ? true : borderInc, binsOut, countOut);
                 if (arr == null) return null;
                 try {
@@ -346,7 +346,7 @@ public final class TileUDFs {
                 Pointer countOut    = rt.getMemoryManager().allocateDirect(4);
                 Pointer spaceBinsOut = rt.getMemoryManager().allocateDirect(8);
                 Pointer timeBinsOut  = rt.getMemoryManager().allocateDirect(8);
-                Pointer arr = MeosNative.INSTANCE.tgeo_space_time_split(
+                Pointer arr = functions.MeosLibrary.meos.tgeo_space_time_split(
                     t, xsize, ysize, zsize, iv, origin, pgEpoch(torigin),
                     bitmatrix != null && bitmatrix, borderInc == null ? true : borderInc,
                     spaceBinsOut, timeBinsOut, countOut);
@@ -391,7 +391,7 @@ public final class TileUDFs {
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = MeosNative.INSTANCE.stbox_space_tiles(b, xsize, ysize, zsize, origin,
+                Pointer arr = functions.stbox_space_tiles(b, xsize, ysize, zsize, origin,
                     borderInc == null ? true : borderInc, countOut);
                 if (arr == null) return null;
                 try {
@@ -420,7 +420,7 @@ public final class TileUDFs {
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = MeosNative.INSTANCE.stbox_time_tiles(b, iv, pgEpoch(torigin),
+                Pointer arr = functions.MeosLibrary.meos.stbox_time_tiles(b, iv, pgEpoch(torigin),
                     borderInc == null ? true : borderInc, countOut);
                 if (arr == null) return null;
                 try {
@@ -448,7 +448,7 @@ public final class TileUDFs {
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = MeosNative.INSTANCE.stbox_space_time_tiles(b, xsize, ysize, zsize, iv,
+                Pointer arr = functions.MeosLibrary.meos.stbox_space_time_tiles(b, xsize, ysize, zsize, iv,
                     origin, pgEpoch(torigin), borderInc == null ? true : borderInc, countOut);
                 if (arr == null) return null;
                 try {
@@ -483,8 +483,8 @@ public final class TileUDFs {
             jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
             Pointer countOut = rt.getMemoryManager().allocateDirect(4);
             Pointer arr = isFloat
-                ? MeosNative.INSTANCE.tfloatbox_time_tiles(b, iv, pgEpoch(torigin), countOut)
-                : MeosNative.INSTANCE.tintbox_time_tiles(b, iv, pgEpoch(torigin), countOut);
+                ? functions.MeosLibrary.meos.tfloatbox_time_tiles(b, iv, pgEpoch(torigin), countOut)
+                : functions.MeosLibrary.meos.tintbox_time_tiles(b, iv, pgEpoch(torigin), countOut);
             if (arr == null) return null;
             try {
                 int n = countOut.getInt(0);
@@ -506,7 +506,7 @@ public final class TileUDFs {
             if (t == null) return null;
             try {
                 Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
-                Pointer arr = MeosNative.INSTANCE.tpoint_make_simple(t, countOut);
+                Pointer arr = functions.tpoint_make_simple(t, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -533,11 +533,11 @@ public final class TileUDFs {
             Pointer iv = functions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
             try {
-                Pointer box = MeosNative.INSTANCE.tnumber_to_tbox(t);
+                Pointer box = functions.tnumber_to_tbox(t);
                 if (box == null) return null;
                 try {
                     Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
-                    Pointer arr = MeosNative.INSTANCE.tfloatbox_time_tiles(box, iv, pgEpoch(torigin), countOut);
+                    Pointer arr = functions.MeosLibrary.meos.tfloatbox_time_tiles(box, iv, pgEpoch(torigin), countOut);
                     if (arr == null) return null;
                     try {
                         int n = countOut.getInt(0);
@@ -560,11 +560,11 @@ public final class TileUDFs {
             Pointer iv = functions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
             try {
-                Pointer box = MeosNative.INSTANCE.tnumber_to_tbox(t);
+                Pointer box = functions.tnumber_to_tbox(t);
                 if (box == null) return null;
                 try {
                     Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
-                    Pointer arr = MeosNative.INSTANCE.tintbox_time_tiles(box, iv, pgEpoch(torigin), countOut);
+                    Pointer arr = functions.MeosLibrary.meos.tintbox_time_tiles(box, iv, pgEpoch(torigin), countOut);
                     if (arr == null) return null;
                     try {
                         int n = countOut.getInt(0);
@@ -592,7 +592,7 @@ public final class TileUDFs {
                 if (box == null) return null;
                 try {
                     Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
-                    Pointer arr = MeosNative.INSTANCE.stbox_time_tiles(box, iv, pgEpoch(torigin), true, countOut);
+                    Pointer arr = functions.MeosLibrary.meos.stbox_time_tiles(box, iv, pgEpoch(torigin), true, countOut);
                     if (arr == null) return null;
                     try {
                         int n = countOut.getInt(0);
@@ -615,7 +615,7 @@ public final class TileUDFs {
             if (b == null) return null;
             try {
                 Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
-                Pointer arr = MeosNative.INSTANCE.tfloatbox_value_tiles(b, vsize, vorigin, countOut);
+                Pointer arr = functions.tfloatbox_value_tiles(b, vsize, vorigin, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -636,7 +636,7 @@ public final class TileUDFs {
             if (b == null) return null;
             try {
                 Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
-                Pointer arr = MeosNative.INSTANCE.tintbox_value_tiles(b, vsize, vorigin, countOut);
+                Pointer arr = functions.tintbox_value_tiles(b, vsize, vorigin, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -827,11 +827,8 @@ public final class TileUDFs {
             Pointer m  = functions.temporal_from_hexwkb(measureHex);
             if (m == null) { MeosMemory.free(tp); return null; }
             try {
-                Pointer outBuf = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                boolean ok = MeosNative.INSTANCE.tpoint_tfloat_to_geomeas(
-                    tp, m, segmentize != null && segmentize, outBuf);
-                if (!ok) return null;
-                Pointer geo = outBuf.getPointer(0);
+                Pointer geo = functions.tpoint_tfloat_to_geomeas(
+                    tp, m, segmentize != null && segmentize);
                 if (geo == null) return null;
                 try { return functions.geo_as_hexewkb(geo, "NDR"); }
                 finally { MeosMemory.free(geo); }
@@ -853,7 +850,7 @@ public final class TileUDFs {
                 Pointer gsArrOut    = rt.getMemoryManager().allocateDirect(8);
                 Pointer timesArrOut = rt.getMemoryManager().allocateDirect(8);
                 Pointer countOut    = rt.getMemoryManager().allocateDirect(4);
-                boolean ok = MeosNative.INSTANCE.tpoint_as_mvtgeom(tp, b,
+                boolean ok = functions.tpoint_as_mvtgeom(tp, b,
                     extent == null ? 4096 : extent, buffer == null ? 256 : buffer,
                     clipGeom == null || clipGeom, gsArrOut, timesArrOut, countOut);
                 if (!ok) return null;

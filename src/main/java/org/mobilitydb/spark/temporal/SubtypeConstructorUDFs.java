@@ -113,8 +113,7 @@ public final class SubtypeConstructorUDFs {
             Pointer g = functions.geo_from_text(geomWkt, 0);
             if (g == null) return null;
             try {
-                Pointer p = org.mobilitydb.spark.MeosNative.INSTANCE
-                    .tgeoinst_make(g, toPgEpochMicros(ts));
+                Pointer p = functions.MeosLibrary.meos.tgeoinst_make(g, toPgEpochMicros(ts));
                 if (p == null) return null;
                 try { return functions.temporal_as_hexwkb(p, (byte) 0); }
                 finally { MeosMemory.free(p); }
@@ -149,7 +148,7 @@ public final class SubtypeConstructorUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequence(p, "linear");
+                Pointer r = functions.temporal_to_tsequence(p, 3 /* LINEAR */);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -164,7 +163,7 @@ public final class SubtypeConstructorUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequenceset(p, "linear");
+                Pointer r = functions.temporal_to_tsequenceset(p, 3 /* LINEAR */);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -258,8 +257,7 @@ public final class SubtypeConstructorUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE
-                    .temporal_before_timestamptz(p, toPgEpochMicros(ts));
+                Pointer r = functions.MeosLibrary.meos.temporal_before_timestamptz(p, toPgEpochMicros(ts), false);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -273,8 +271,7 @@ public final class SubtypeConstructorUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE
-                    .temporal_after_timestamptz(p, toPgEpochMicros(ts));
+                Pointer r = functions.MeosLibrary.meos.temporal_after_timestamptz(p, toPgEpochMicros(ts), false);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }

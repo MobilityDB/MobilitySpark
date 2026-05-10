@@ -243,7 +243,7 @@ public final class SpanAlgebraUDFs {
             Pointer p = spanPtr(s);
             if (p == null) return null;
             try {
-                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.intspan_expand(p, v.intValue());
+                Pointer r = functions.intspan_expand(p, v.intValue());
                 if (r == null) return null;
                 try { return functions.span_as_hexwkb(r, (byte) 0); }
                 finally { org.mobilitydb.spark.MeosMemory.free(r); }
@@ -256,7 +256,7 @@ public final class SpanAlgebraUDFs {
             Pointer p = spanPtr(s);
             if (p == null) return null;
             try {
-                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.bigintspan_expand(p, v.longValue());
+                Pointer r = functions.bigintspan_expand(p, v.longValue());
                 if (r == null) return null;
                 try { return functions.span_as_hexwkb(r, (byte) 0); }
                 finally { org.mobilitydb.spark.MeosMemory.free(r); }
@@ -269,7 +269,7 @@ public final class SpanAlgebraUDFs {
             Pointer p = spanPtr(s);
             if (p == null) return null;
             try {
-                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.floatspan_expand(p, v.doubleValue());
+                Pointer r = functions.floatspan_expand(p, v.doubleValue());
                 if (r == null) return null;
                 try { return functions.span_as_hexwkb(r, (byte) 0); }
                 finally { org.mobilitydb.spark.MeosMemory.free(r); }

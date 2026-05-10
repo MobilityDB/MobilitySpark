@@ -419,7 +419,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer result = org.mobilitydb.spark.MeosNative.INSTANCE.tfloatbox_expand(p, v);
+            Pointer result = functions.tfloatbox_expand(p, v);
             if (result == null) return null;
             try {
                 return functions.tbox_as_hexwkb(result, (byte) 0,
@@ -437,7 +437,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer result = org.mobilitydb.spark.MeosNative.INSTANCE.tintbox_expand(p, v);
+            Pointer result = functions.tintbox_expand(p, v);
             if (result == null) return null;
             try {
                 return functions.tbox_as_hexwkb(result, (byte) 0,

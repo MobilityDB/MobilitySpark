@@ -215,7 +215,7 @@ public final class AccessorAliasUDFs {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer outBuf = rt.getMemoryManager().allocateDirect(8);
                 for (int i = 0; i < n; i++) {
-                    if (org.mobilitydb.spark.MeosNative.INSTANCE.intset_value_n(p, i + 1, outBuf)) {
+                    if (functions.MeosLibrary.meos.intset_value_n(p, i + 1, outBuf)) {
                         out[i] = outBuf.getInt(0);
                     }
                 }
@@ -235,7 +235,7 @@ public final class AccessorAliasUDFs {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer outBuf = rt.getMemoryManager().allocateDirect(8);
                 for (int i = 0; i < n; i++) {
-                    if (org.mobilitydb.spark.MeosNative.INSTANCE.bigintset_value_n(p, i + 1, outBuf)) {
+                    if (functions.MeosLibrary.meos.bigintset_value_n(p, i + 1, outBuf)) {
                         out[i] = outBuf.getLong(0);
                     }
                 }
@@ -265,7 +265,7 @@ public final class AccessorAliasUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE.tnumber_tboxes(p, countOut);
+                Pointer arr = functions.tnumber_tboxes(p, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -291,7 +291,7 @@ public final class AccessorAliasUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE.intspan_bins(p, vsize, vorigin, countOut);
+                Pointer arr = functions.intspan_bins(p, vsize, vorigin, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -311,7 +311,7 @@ public final class AccessorAliasUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE.bigintspan_bins(p, vsize, vorigin, countOut);
+                Pointer arr = functions.bigintspan_bins(p, vsize, vorigin, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -388,22 +388,22 @@ public final class AccessorAliasUDFs {
     }
 
     public static final UDF2<String, Integer, String[]> splitNSpans =
-        (h, n) -> splitArrSpan(h, n, org.mobilitydb.spark.MeosNative.INSTANCE::temporal_split_n_spans);
+        (h, n) -> splitArrSpan(h, n, functions::temporal_split_n_spans);
 
     public static final UDF2<String, Integer, String[]> splitEachNSpans =
-        (h, n) -> splitArrSpan(h, n, org.mobilitydb.spark.MeosNative.INSTANCE::temporal_split_each_n_spans);
+        (h, n) -> splitArrSpan(h, n, functions::temporal_split_each_n_spans);
 
     public static final UDF2<String, Integer, String[]> splitNTboxes =
-        (h, n) -> splitArrTbox(h, n, org.mobilitydb.spark.MeosNative.INSTANCE::tnumber_split_n_tboxes);
+        (h, n) -> splitArrTbox(h, n, functions::tnumber_split_n_tboxes);
 
     public static final UDF2<String, Integer, String[]> splitEachNTboxes =
-        (h, n) -> splitArrTbox(h, n, org.mobilitydb.spark.MeosNative.INSTANCE::tnumber_split_each_n_tboxes);
+        (h, n) -> splitArrTbox(h, n, functions::tnumber_split_each_n_tboxes);
 
     public static final UDF2<String, Integer, String[]> splitNStboxes =
-        (h, n) -> splitArrStbox(h, n, org.mobilitydb.spark.MeosNative.INSTANCE::tgeo_split_n_stboxes);
+        (h, n) -> splitArrStbox(h, n, functions::tgeo_split_n_stboxes);
 
     public static final UDF2<String, Integer, String[]> splitEachNStboxes =
-        (h, n) -> splitArrStbox(h, n, org.mobilitydb.spark.MeosNative.INSTANCE::tgeo_split_each_n_stboxes);
+        (h, n) -> splitArrStbox(h, n, functions::tgeo_split_each_n_stboxes);
 
     // ------------------------------------------------------------------
     // Temporal time bins / tstzspan bins (interval input as ISO 8601 string)
@@ -424,8 +424,7 @@ public final class AccessorAliasUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE
-                    .temporal_time_bins(t, iv, tsToPgEpochMicros(origin), countOut);
+                Pointer arr = functions.MeosLibrary.meos.temporal_time_bins(t, iv, tsToPgEpochMicros(origin), countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -449,7 +448,7 @@ public final class AccessorAliasUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE.stbox_quad_split(s, countOut);
+                Pointer arr = functions.stbox_quad_split(s, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -469,8 +468,7 @@ public final class AccessorAliasUDFs {
             Pointer iv = functions.pg_interval_in(intervalStr, -1);
             if (iv == null) return null;
             try {
-                long binStart = org.mobilitydb.spark.MeosNative.INSTANCE
-                    .timestamptz_get_bin(tsToPgEpochMicros(ts), iv, tsToPgEpochMicros(origin));
+                long binStart = functions.MeosLibrary.meos.timestamptz_get_bin(tsToPgEpochMicros(ts), iv, tsToPgEpochMicros(origin));
                 // Convert PG-epoch micros → java Timestamp
                 long unixMicros = binStart + 946684800L * 1000000L;
                 return new java.sql.Timestamp(unixMicros / 1000);
@@ -486,7 +484,7 @@ public final class AccessorAliasUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE.tint_value_bins(t, vsize, vorigin, countOut);
+                Pointer arr = functions.tint_value_bins(t, vsize, vorigin, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -506,7 +504,7 @@ public final class AccessorAliasUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE.tfloat_value_bins(t, vsize, vorigin, countOut);
+                Pointer arr = functions.tfloat_value_bins(t, vsize, vorigin, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -528,8 +526,7 @@ public final class AccessorAliasUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE
-                    .tstzspan_bins(s, iv, tsToPgEpochMicros(origin), countOut);
+                Pointer arr = functions.MeosLibrary.meos.tstzspan_bins(s, iv, tsToPgEpochMicros(origin), countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -549,7 +546,7 @@ public final class AccessorAliasUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE.floatspan_bins(p, vsize, vorigin, countOut);
+                Pointer arr = functions.floatspan_bins(p, vsize, vorigin, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -569,7 +566,7 @@ public final class AccessorAliasUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE.tgeo_stboxes(p, countOut);
+                Pointer arr = functions.tgeo_stboxes(p, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -594,7 +591,7 @@ public final class AccessorAliasUDFs {
             MeosThread.ensureReady();
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            try { return org.mobilitydb.spark.MeosNative.INSTANCE.tnumber_avg_value(p); }
+            try { return functions.tnumber_avg_value(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -610,7 +607,7 @@ public final class AccessorAliasUDFs {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer outBuf = rt.getMemoryManager().allocateDirect(8);
                 for (int i = 0; i < n; i++) {
-                    if (org.mobilitydb.spark.MeosNative.INSTANCE.floatset_value_n(p, i + 1, outBuf)) {
+                    if (functions.MeosLibrary.meos.floatset_value_n(p, i + 1, outBuf)) {
                         out[i] = outBuf.getDouble(0);
                     }
                 }
@@ -810,8 +807,7 @@ public final class AccessorAliasUDFs {
         Pointer iv = functions.pg_interval_in(intervalStr, -1);
         if (iv == null) { MeosMemory.free(t); return null; }
         try {
-            Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE
-                .temporal_segm_duration(t, iv, atleast, strict != null && strict);
+            Pointer r = functions.MeosLibrary.meos.temporal_segm_duration(t, iv, atleast, strict != null && strict);
             if (r == null) return null;
             try { return functions.temporal_as_hexwkb(r, (byte) 0); }
             finally { MeosMemory.free(r); }
@@ -827,9 +823,9 @@ public final class AccessorAliasUDFs {
             Pointer s = functions.stbox_from_hexwkb(hex);
             if (s == null) return null;
             try {
-                Pointer b = org.mobilitydb.spark.MeosNative.INSTANCE.stbox_to_gbox(s);
+                Pointer b = functions.stbox_to_gbox(s);
                 if (b == null) return null;
-                try { return org.mobilitydb.spark.MeosNative.INSTANCE.gbox_out(b, 15); }
+                try { return functions.gbox_out(b, 15); }
                 finally { MeosMemory.free(b); }
             } finally { MeosMemory.free(s); }
         };
@@ -843,9 +839,9 @@ public final class AccessorAliasUDFs {
             Pointer s = functions.stbox_from_hexwkb(hex);
             if (s == null) return null;
             try {
-                Pointer b = org.mobilitydb.spark.MeosNative.INSTANCE.stbox_to_box3d(s);
+                Pointer b = functions.stbox_to_box3d(s);
                 if (b == null) return null;
-                try { return org.mobilitydb.spark.MeosNative.INSTANCE.box3d_out(b, 15); }
+                try { return functions.box3d_out(b, 15); }
                 finally { MeosMemory.free(b); }
             } finally { MeosMemory.free(s); }
         };
@@ -858,8 +854,8 @@ public final class AccessorAliasUDFs {
             if (p == null) return null;
             try {
                 // Try tgeompoint → tgeometry first; if that fails, try tgeography → tgeometry
-                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.tgeompoint_to_tgeometry(p);
-                if (r == null) r = org.mobilitydb.spark.MeosNative.INSTANCE.tgeography_to_tgeometry(p);
+                Pointer r = functions.tgeompoint_to_tgeometry(p);
+                if (r == null) r = functions.tgeography_to_tgeometry(p);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -873,8 +869,8 @@ public final class AccessorAliasUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.tgeogpoint_to_tgeography(p);
-                if (r == null) r = org.mobilitydb.spark.MeosNative.INSTANCE.tgeometry_to_tgeography(p);
+                Pointer r = functions.tgeogpoint_to_tgeography(p);
+                if (r == null) r = functions.tgeometry_to_tgeography(p);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }

@@ -27,8 +27,9 @@ ULB is an OGC Associate Member and member of the OGC Moving Feature Standard Wor
 - **Apache Spark 3.5** (provided at runtime; not needed to compile)
 - **JMEOS 1.4** — bundled in `libs/JMEOS-1.4.jar`
   (the Java binding for MEOS 1.4; includes `libmeos.so` for Linux).
-  A small `MeosNative.java` supplement covers ~70 MEOS-1.4-renamed
-  symbols not yet in the released JAR.
+  A small `MeosNative.java` supplement (10 methods) covers MEOS private-
+  header symbols (`Datum` / `MeosType` parameters) that the JMEOS
+  generator does not currently lower.
 
 ---
 

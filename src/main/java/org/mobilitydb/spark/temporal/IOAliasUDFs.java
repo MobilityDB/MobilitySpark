@@ -163,8 +163,8 @@ public final class IOAliasUDFs {
     // Temporal-geo MFJSON constructors
     // ------------------------------------------------------------------
 
-    public static final UDF1<String, String> tgeometryFromMFJSON  = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeometry_from_mfjson);
-    public static final UDF1<String, String> tgeographyFromMFJSON = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeography_from_mfjson);
+    public static final UDF1<String, String> tgeometryFromMFJSON  = mfjsonToHex(functions::tgeometry_from_mfjson);
+    public static final UDF1<String, String> tgeographyFromMFJSON = mfjsonToHex(functions::tgeography_from_mfjson);
     public static final UDF1<String, String> tgeompointFromMFJSON = mfjsonToHex(functions::tgeompoint_from_mfjson);
     public static final UDF1<String, String> tgeogpointFromMFJSON = mfjsonToHex(functions::tgeogpoint_from_mfjson);
 
@@ -182,10 +182,10 @@ public final class IOAliasUDFs {
     public static final UDF1<String, String> tgeogpointFromText  = mfjsonToHex(functions::tgeogpoint_in);
     public static final UDF1<String, String> tgeompointFromEWKT  = mfjsonToHex(functions::tgeompoint_in);
     public static final UDF1<String, String> tgeogpointFromEWKT  = mfjsonToHex(functions::tgeogpoint_in);
-    public static final UDF1<String, String> tgeometryFromText   = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeometry_in);
-    public static final UDF1<String, String> tgeographyFromText  = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeography_in);
-    public static final UDF1<String, String> tgeometryFromEWKT   = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeometry_in);
-    public static final UDF1<String, String> tgeographyFromEWKT  = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeography_in);
+    public static final UDF1<String, String> tgeometryFromText   = mfjsonToHex(functions::tgeometry_in);
+    public static final UDF1<String, String> tgeographyFromText  = mfjsonToHex(functions::tgeography_in);
+    public static final UDF1<String, String> tgeometryFromEWKT   = mfjsonToHex(functions::tgeometry_in);
+    public static final UDF1<String, String> tgeographyFromEWKT  = mfjsonToHex(functions::tgeography_in);
 
     // ------------------------------------------------------------------
     // Binary I/O — bytes ↔ temporal via hex round-trip

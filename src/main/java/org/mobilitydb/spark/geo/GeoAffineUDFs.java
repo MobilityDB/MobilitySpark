@@ -83,7 +83,7 @@ public final class GeoAffineUDFs {
         Pointer t = functions.temporal_from_hexwkb(hex);
         if (t == null) return null;
         try {
-            Pointer r = MeosNative.INSTANCE.tgeo_affine(t, affine);
+            Pointer r = functions.tgeo_affine(t, affine);
             if (r == null) return null;
             try { return functions.temporal_as_hexwkb(r, (byte) 0); }
             finally { MeosMemory.free(r); }

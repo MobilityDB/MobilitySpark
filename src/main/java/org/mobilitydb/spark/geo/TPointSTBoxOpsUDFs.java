@@ -68,7 +68,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.left_stbox_tspatial(s, t); }
+            try { return functions.left_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -77,7 +77,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.overleft_stbox_tspatial(s, t); }
+            try { return functions.overleft_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -86,7 +86,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.right_stbox_tspatial(s, t); }
+            try { return functions.right_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -95,7 +95,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.overright_stbox_tspatial(s, t); }
+            try { return functions.overright_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -104,7 +104,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.below_stbox_tspatial(s, t); }
+            try { return functions.below_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -113,7 +113,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.overbelow_stbox_tspatial(s, t); }
+            try { return functions.overbelow_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -122,7 +122,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.above_stbox_tspatial(s, t); }
+            try { return functions.above_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -131,7 +131,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.overabove_stbox_tspatial(s, t); }
+            try { return functions.overabove_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -140,7 +140,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.front_stbox_tspatial(s, t); }
+            try { return functions.front_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -149,7 +149,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.overfront_stbox_tspatial(s, t); }
+            try { return functions.overfront_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -158,7 +158,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.back_stbox_tspatial(s, t); }
+            try { return functions.back_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -167,7 +167,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.overback_stbox_tspatial(s, t); }
+            try { return functions.overback_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -180,7 +180,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.before_stbox_tspatial(s, t); }
+            try { return functions.before_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -189,7 +189,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.overbefore_stbox_tspatial(s, t); }
+            try { return functions.overbefore_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -198,7 +198,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.after_stbox_tspatial(s, t); }
+            try { return functions.after_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -207,7 +207,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.overafter_stbox_tspatial(s, t); }
+            try { return functions.overafter_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -220,7 +220,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.adjacent_stbox_tspatial(s, t); }
+            try { return functions.adjacent_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -229,7 +229,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.contains_stbox_tspatial(s, t); }
+            try { return functions.contains_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -238,7 +238,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.contained_stbox_tspatial(s, t); }
+            try { return functions.contained_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -247,7 +247,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.overlaps_stbox_tspatial(s, t); }
+            try { return functions.overlaps_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -256,7 +256,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer s = stboxPtr(sb); if (s == null) return null;
             Pointer t = tpointPtr(tp); if (t == null) { MeosMemory.free(s); return null; }
-            try { return MeosNative.INSTANCE.same_stbox_tspatial(s, t); }
+            try { return functions.same_stbox_tspatial(s, t); }
             finally { MeosMemory.free(s, t); }
         };
 
@@ -269,7 +269,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.left_tspatial_stbox(t, s); }
+            try { return functions.left_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -278,7 +278,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.overleft_tspatial_stbox(t, s); }
+            try { return functions.overleft_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -287,7 +287,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.right_tspatial_stbox(t, s); }
+            try { return functions.right_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -296,7 +296,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.overright_tspatial_stbox(t, s); }
+            try { return functions.overright_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -305,7 +305,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.below_tspatial_stbox(t, s); }
+            try { return functions.below_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -314,7 +314,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.overbelow_tspatial_stbox(t, s); }
+            try { return functions.overbelow_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -323,7 +323,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.above_tspatial_stbox(t, s); }
+            try { return functions.above_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -332,7 +332,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.overabove_tspatial_stbox(t, s); }
+            try { return functions.overabove_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -341,7 +341,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.front_tspatial_stbox(t, s); }
+            try { return functions.front_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -350,7 +350,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.overfront_tspatial_stbox(t, s); }
+            try { return functions.overfront_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -359,7 +359,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.back_tspatial_stbox(t, s); }
+            try { return functions.back_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -368,7 +368,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.overback_tspatial_stbox(t, s); }
+            try { return functions.overback_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -381,7 +381,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.before_tspatial_stbox(t, s); }
+            try { return functions.before_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -390,7 +390,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.overbefore_tspatial_stbox(t, s); }
+            try { return functions.overbefore_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -399,7 +399,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.after_tspatial_stbox(t, s); }
+            try { return functions.after_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -408,7 +408,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.overafter_tspatial_stbox(t, s); }
+            try { return functions.overafter_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -421,7 +421,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.adjacent_tspatial_stbox(t, s); }
+            try { return functions.adjacent_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -430,7 +430,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.contains_tspatial_stbox(t, s); }
+            try { return functions.contains_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -439,7 +439,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.contained_tspatial_stbox(t, s); }
+            try { return functions.contained_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -448,7 +448,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.overlaps_tspatial_stbox(t, s); }
+            try { return functions.overlaps_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 
@@ -457,7 +457,7 @@ public final class TPointSTBoxOpsUDFs {
             MeosThread.ensureReady();
             Pointer t = tpointPtr(tp); if (t == null) return null;
             Pointer s = stboxPtr(sb); if (s == null) { MeosMemory.free(t); return null; }
-            try { return MeosNative.INSTANCE.same_tspatial_stbox(t, s); }
+            try { return functions.same_tspatial_stbox(t, s); }
             finally { MeosMemory.free(t, s); }
         };
 

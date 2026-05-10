@@ -196,7 +196,7 @@ public final class DistanceUDFs {
             Pointer gsptr = functions.geo_from_text(geomWkt, 0);
             if (gsptr == null) { MeosMemory.free(tptr); return null; }
             try {
-                double d = MeosNative.INSTANCE.nad_tgeo_geo(tptr, gsptr);
+                double d = functions.nad_tgeo_geo(tptr, gsptr);
                 return d == Double.MAX_VALUE ? null : d;
             } finally {
                 MeosMemory.free(tptr);
@@ -215,7 +215,7 @@ public final class DistanceUDFs {
             Pointer sptr = functions.stbox_from_hexwkb(stboxHex);
             if (sptr == null) { MeosMemory.free(tptr); return null; }
             try {
-                double d = MeosNative.INSTANCE.nad_tgeo_stbox(tptr, sptr);
+                double d = functions.nad_tgeo_stbox(tptr, sptr);
                 return d == Double.MAX_VALUE ? null : d;
             } finally {
                 MeosMemory.free(tptr);
@@ -234,7 +234,7 @@ public final class DistanceUDFs {
             Pointer p2 = functions.temporal_from_hexwkb(trip2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
-                double d = MeosNative.INSTANCE.nad_tgeo_tgeo(p1, p2);
+                double d = functions.nad_tgeo_tgeo(p1, p2);
                 return d == Double.MAX_VALUE ? null : d;
             } finally {
                 MeosMemory.free(p1);
@@ -257,7 +257,7 @@ public final class DistanceUDFs {
             Pointer gsptr = functions.geo_from_text(geomWkt, 0);
             if (gsptr == null) { MeosMemory.free(tptr); return null; }
             try {
-                Pointer r = MeosNative.INSTANCE.nai_tgeo_geo(tptr, gsptr);
+                Pointer r = functions.nai_tgeo_geo(tptr, gsptr);
                 if (r == null) return null;
                 try {
                     return functions.temporal_as_hexwkb(r, (byte) 0);
@@ -285,7 +285,7 @@ public final class DistanceUDFs {
             Pointer gsptr = functions.geo_from_text(geomWkt, 0);
             if (gsptr == null) { MeosMemory.free(tptr); return null; }
             try {
-                Pointer r = MeosNative.INSTANCE.shortestline_tgeo_geo(tptr, gsptr);
+                Pointer r = functions.shortestline_tgeo_geo(tptr, gsptr);
                 if (r == null) return null;
                 try {
                     return functions.geo_as_text(r, 6);
@@ -333,7 +333,7 @@ public final class DistanceUDFs {
             Pointer p2 = functions.temporal_from_hexwkb(trip2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
-                Pointer r = MeosNative.INSTANCE.nai_tgeo_tgeo(p1, p2);
+                Pointer r = functions.nai_tgeo_tgeo(p1, p2);
                 if (r == null) return null;
                 try {
                     return functions.temporal_as_hexwkb(r, (byte) 0);

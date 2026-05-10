@@ -145,8 +145,7 @@ public final class SimilarityUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 jnr.ffi.Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                jnr.ffi.Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE
-                    .temporal_dyntimewarp_path(p1, p2, countOut);
+                jnr.ffi.Pointer arr = functions.MeosLibrary.meos.temporal_dyntimewarp_path(p1, p2, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);
@@ -173,8 +172,7 @@ public final class SimilarityUDFs {
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 jnr.ffi.Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                jnr.ffi.Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE
-                    .temporal_frechet_path(p1, p2, countOut);
+                jnr.ffi.Pointer arr = functions.MeosLibrary.meos.temporal_frechet_path(p1, p2, countOut);
                 if (arr == null) return null;
                 try {
                     int n = countOut.getInt(0);

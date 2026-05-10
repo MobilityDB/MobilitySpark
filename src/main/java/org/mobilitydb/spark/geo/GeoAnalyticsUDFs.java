@@ -436,7 +436,7 @@ public final class GeoAnalyticsUDFs {
             jnr.ffi.Pointer t = functions.temporal_from_hexwkb(trip);
             if (t == null) return null;
             try {
-                jnr.ffi.Pointer r = functions.tpoint_transform_pipeline(t, pipeline,
+                jnr.ffi.Pointer r = functions.tspatial_transform_pipeline(t, pipeline,
                     srid == null ? 0 : srid, isForward == null ? true : isForward);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
@@ -471,7 +471,7 @@ public final class GeoAnalyticsUDFs {
             jnr.ffi.Pointer g = functions.geo_from_text(geomWkt, 0);
             if (g == null) { org.mobilitydb.spark.MeosMemory.free(t); return null; }
             try {
-                jnr.ffi.Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.tpoint_minus_geom(t, g);
+                jnr.ffi.Pointer r = functions.tpoint_minus_geom(t, g);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { org.mobilitydb.spark.MeosMemory.free(r); }
@@ -487,7 +487,7 @@ public final class GeoAnalyticsUDFs {
             if (t == null) return null;
             try {
                 jnr.ffi.Pointer outBuf = jnr.ffi.Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                boolean ok = org.mobilitydb.spark.MeosNative.INSTANCE.tpoint_direction(t, outBuf);
+                boolean ok = functions.MeosLibrary.meos.tpoint_direction(t, outBuf);
                 return ok ? outBuf.getDouble(0) : null;
             } finally { org.mobilitydb.spark.MeosMemory.free(t); }
         };

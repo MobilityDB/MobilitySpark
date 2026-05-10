@@ -239,7 +239,7 @@ public final class TTextUDFs {
             Pointer t = functions.cstring2text(txt);
             if (t == null) { MeosMemory.free(p); return null; }
             try {
-                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.textcat_ttext_text(p, t);
+                Pointer r = functions.textcat_ttext_text(p, t);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -255,7 +255,7 @@ public final class TTextUDFs {
             Pointer p = functions.temporal_from_hexwkb(ttextHex);
             if (p == null) { MeosMemory.free(t); return null; }
             try {
-                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.textcat_text_ttext(t, p);
+                Pointer r = functions.textcat_text_ttext(t, p);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -271,7 +271,7 @@ public final class TTextUDFs {
             Pointer p2 = functions.temporal_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
-                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.textcat_ttext_ttext(p1, p2);
+                Pointer r = functions.textcat_ttext_ttext(p1, p2);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }

@@ -25,6 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
+import functions.functions;
 import org.mobilitydb.spark.MeosNative;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
@@ -51,7 +52,7 @@ public final class BucketUDFs {
         (value, size, origin) -> {
             if (value == null || size == null || origin == null) return null;
             MeosThread.ensureReady();
-            return MeosNative.INSTANCE.float_get_bin(value, size, origin);
+            return functions.float_get_bin(value, size, origin);
         };
 
     // intBucket(value INT, size INT, origin INT) → INT
@@ -60,7 +61,7 @@ public final class BucketUDFs {
         (value, size, origin) -> {
             if (value == null || size == null || origin == null) return null;
             MeosThread.ensureReady();
-            return MeosNative.INSTANCE.int_get_bin(value, size, origin);
+            return functions.int_get_bin(value, size, origin);
         };
 
     public static void registerAll(SparkSession spark) {

@@ -141,7 +141,7 @@ public final class BerlinMODUDFs {
         OffsetDateTime odt = parseTs(tsArg);
         if (odt == null) return null;
         Pointer valueOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-        boolean found = functions.temporal_value_at_timestamptz(tptr, odt, true, valueOut);
+        boolean found = functions.tgeo_value_at_timestamptz(tptr, odt, true, valueOut);
         if (!found) return null;
         long addr = valueOut.getLong(0);
         if (addr == 0L) return null;

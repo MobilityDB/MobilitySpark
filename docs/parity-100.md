@@ -49,10 +49,15 @@ consistent gap inventories.
 
 ### Supplementary JNR-FFI interface (`MeosNative.java`)
 
-JMEOS-1.4 was generated from an earlier MEOS API snapshot, so ~70 MEOS
-1.4-renamed or internal-API symbols are bound directly via a supplementary
-JNR-FFI interface. When JMEOS is regenerated against MEOS 1.4, these
-calls migrate back to `functions.*`.
+`MeosNative.java` now binds only **10 MEOS private-header symbols** that
+use `Datum` / `MeosType` parameters not lowered by the JMEOS generator
+(`mobilitydb_version`, `mobilitydb_full_version`, `temporal_values_p`,
+`set_make_free`, `temptype_basetype`, `temporal_mem_size`,
+`tnumber_value_split`, `tnumber_value_time_split`,
+`tnumber_value_time_boxes`, `tbox_get_value_time_tile`). All other
+former-MeosNative bindings are now provided directly by
+`functions.functions.*` after the JMEOS regen against MEOS 1.4
+([JMEOS PR #15](https://github.com/MobilityDB/JMEOS/pull/15)).
 
 ---
 
