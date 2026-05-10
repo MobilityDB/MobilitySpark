@@ -27,6 +27,7 @@ package org.mobilitydb.spark.geo;
 
 import functions.functions;
 import jnr.ffi.Pointer;
+import jnr.ffi.Runtime;
 import org.apache.spark.sql.api.java.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.mobilitydb.spark.MeosMemory;
@@ -675,6 +676,153 @@ public final class GeoUDFs {
             }
         };
 
+    // ------------------------------------------------------------------
+    // tpointAsText(trip STRING, precision INTEGER) → STRING
+    //
+    // Returns WKT for each instant of the temporal point.
+    //
+    // MEOS: tspatial_as_text(const Temporal *, int precision) → char *
+    // ------------------------------------------------------------------
+    public static final UDF2<String, Integer, String> tpointAsText =
+        (trip, precision) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                return functions.tspatial_as_text(tptr, precision != null ? precision : 15);
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // tpointAsEWKT(trip STRING, precision INTEGER) → STRING
+    //
+    // Returns Extended WKT (SRID=N;...) for each instant of the temporal point.
+    //
+    // MEOS: tspatial_as_ewkt(const Temporal *, int precision) → char *
+    // ------------------------------------------------------------------
+    public static final UDF2<String, Integer, String> tpointAsEWKT =
+        (trip, precision) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                return functions.tspatial_as_ewkt(tptr, precision != null ? precision : 15);
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // tpointSRID(trip STRING) → INTEGER
+    //
+    // Returns the SRID of the temporal point via its bounding box.
+    //
+    // MEOS: tspatial_to_stbox(const Temporal *) → STBox *
+    //       stbox_srid(const STBox *) → int
+    // ------------------------------------------------------------------
+    public static final UDF1<String, Integer> tpointSRID =
+        (trip) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer stbox = functions.tspatial_to_stbox(tptr);
+                if (stbox == null) return null;
+                try {
+                    return functions.stbox_srid(stbox);
+                } finally {
+                    MeosMemory.free(stbox);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // tpointSetSRID(trip STRING, srid INTEGER) → STRING
+    //
+    // Returns a copy of the temporal point with SRID set to srid.
+    //
+    // MEOS: tspatial_set_srid(const Temporal *, int srid) → Temporal *
+    // ------------------------------------------------------------------
+    public static final UDF2<String, Integer, String> tpointSetSRID =
+        (trip, srid) -> {
+            if (trip == null || srid == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer result = functions.tspatial_set_srid(tptr, srid);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // tpointRound(trip STRING, decimals INTEGER) → STRING
+    //
+    // Returns the temporal point with coordinates rounded to decimals places.
+    //
+    // MEOS: temporal_round(const Temporal *, int maxdd) → Temporal *
+    // ------------------------------------------------------------------
+    public static final UDF2<String, Integer, String> tpointRound =
+        (trip, decimals) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer result = functions.temporal_round(tptr, decimals != null ? decimals : 6);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // tpointToStbox(trip STRING) → STRING (hex-WKB STBOX)
+    //
+    // Returns the spatiotemporal bounding box of the temporal point.
+    //
+    // MEOS: tspatial_to_stbox(const Temporal *) → STBox *
+    //       stbox_as_hexwkb(const STBox *, uint8_t variant, size_t *size)
+    // ------------------------------------------------------------------
+    public static final UDF1<String, String> tpointToStbox =
+        (trip) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer stbox = functions.tspatial_to_stbox(tptr);
+                if (stbox == null) return null;
+                try {
+                    Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                    return functions.stbox_as_hexwkb(stbox, (byte) 0, sizeOut);
+                } finally {
+                    MeosMemory.free(stbox);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
     public static void registerAll(org.apache.spark.sql.SparkSession spark) {
         spark.udf().register("eIntersects",             eIntersects,             DataTypes.BooleanType);
         spark.udf().register("eDisjoint",               eDisjoint,               DataTypes.BooleanType);
@@ -700,6 +848,12 @@ public final class GeoUDFs {
         spark.udf().register("stops",                  stops,                  DataTypes.StringType);
         spark.udf().register("isSimple",               isSimple,               DataTypes.BooleanType);
         spark.udf().register("shortestLine",           shortestLine,           DataTypes.StringType);
+        spark.udf().register("tpointAsText",           tpointAsText,           DataTypes.StringType);
+        spark.udf().register("tpointAsEWKT",           tpointAsEWKT,           DataTypes.StringType);
+        spark.udf().register("tpointSRID",             tpointSRID,             DataTypes.IntegerType);
+        spark.udf().register("tpointSetSRID",          tpointSetSRID,          DataTypes.StringType);
+        spark.udf().register("tpointRound",            tpointRound,            DataTypes.StringType);
+        spark.udf().register("tpointToStbox",          tpointToStbox,          DataTypes.StringType);
         spark.udf().register("geoAsEwkt",              geoAsEwkt,              DataTypes.StringType);
         spark.udf().register("geoAsGeojson",           geoAsGeojson,           DataTypes.StringType);
         spark.udf().register("geoFromGeojson",         geoFromGeojson,         DataTypes.StringType);
