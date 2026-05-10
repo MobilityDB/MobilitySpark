@@ -27,6 +27,7 @@ package org.mobilitydb.spark.geo;
 
 import functions.functions;
 import jnr.ffi.Pointer;
+import jnr.ffi.Runtime;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.*;
 import org.apache.spark.sql.types.DataTypes;
@@ -327,6 +328,69 @@ public final class GeoAnalyticsUDFs {
         };
 
     // ------------------------------------------------------------------
+    // tpointConvexHull(trip STRING) → STRING (hex-EWKB geometry)
+    //
+    // Returns the convex hull of the trajectory of the temporal point.
+    //
+    // MEOS: tgeo_convex_hull(const Temporal *) → GSERIALIZED *
+    //       geo_as_hexewkb(const GSERIALIZED *, const char *endian)
+    // ------------------------------------------------------------------
+    public static final UDF1<String, String> tpointConvexHull =
+        (trip) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer gptr = functions.tgeo_convex_hull(tptr);
+                if (gptr == null) return null;
+                try {
+                    return functions.geo_as_hexewkb(gptr, null);
+                } finally {
+                    MeosMemory.free(gptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // tpointExpandSpace(trip STRING, distance DOUBLE) → STRING (hex-WKB STBOX)
+    //
+    // Returns the spatiotemporal bounding box of the temporal point expanded
+    // by distance in each spatial dimension.
+    //
+    // MEOS: tspatial_to_stbox(const Temporal *) → STBox *
+    //       stbox_expand_space(const STBox *, double d) → STBox *
+    //       stbox_as_hexwkb(const STBox *, uint8_t variant, size_t *size)
+    // ------------------------------------------------------------------
+    public static final UDF2<String, Double, String> tpointExpandSpace =
+        (trip, distance) -> {
+            if (trip == null || distance == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer stbox = functions.tspatial_to_stbox(tptr);
+                if (stbox == null) return null;
+                try {
+                    Pointer expanded = functions.stbox_expand_space(stbox, distance);
+                    if (expanded == null) return null;
+                    try {
+                        Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                        return functions.stbox_as_hexwkb(expanded, (byte) 0, sizeOut);
+                    } finally {
+                        MeosMemory.free(expanded);
+                    }
+                } finally {
+                    MeosMemory.free(stbox);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // REGISTRATION
     // ------------------------------------------------------------------
 
@@ -354,5 +418,8 @@ public final class GeoAnalyticsUDFs {
         spark.udf().register("twCentroid",       twCentroid,       DataTypes.StringType);
         // geometry equality
         spark.udf().register("geoSame",          geoSame,          DataTypes.BooleanType);
+        // tpoint analytics
+        spark.udf().register("tpointConvexHull",  tpointConvexHull,  DataTypes.StringType);
+        spark.udf().register("tpointExpandSpace", tpointExpandSpace, DataTypes.StringType);
     }
 }
