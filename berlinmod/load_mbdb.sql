@@ -41,7 +41,8 @@ CREATE TABLE Vehicles (
 CREATE TABLE Trips (
   tripId   INTEGER    PRIMARY KEY,
   vehId    INTEGER    NOT NULL REFERENCES Vehicles(vehId),
-  trip     tgeompoint NOT NULL
+  trip     tgeompoint NOT NULL,
+  trip_h3  th3index   NOT NULL    -- temporal H3-cell index, computed from trip
 );
 
 CREATE TABLE QueryLicences (
@@ -79,12 +80,28 @@ CREATE TABLE QueryPeriods (
 \copy QueryInstants FROM 'DATADIR/query_instants.csv' DELIMITER ',' CSV HEADER
 
 -------------------------------------------------------------------------------
--- Load Trips: read EWKB hex text, convert to tgeompoint
+-- Load Trips: read EWKB hex text, convert to tgeompoint, and derive trip_h3.
+--
+-- The CSV produced by berlinmod_portability_export() in MobilityDB-BerlinMOD
+-- contains 4 columns (tripId, vehId, trip, trip_h3) but for backward
+-- compatibility this loader reads only the first 3 (tripId, vehId, trip)
+-- via TripsTmp's column list — psql's \copy ignores extra columns when an
+-- explicit column list is supplied, so the loader works unchanged on either
+-- the old 3-column or the new 4-column CSV.  trip_h3 is then computed from
+-- the loaded tgeompoint at the H3 resolution chosen below (default 7); this
+-- guarantees a consistent resolution across all three benchmarked platforms
+-- regardless of how the CSV was produced.
 -------------------------------------------------------------------------------
 
+\set h3resolution 7
+
 CREATE TEMP TABLE TripsTmp (tripId INTEGER, vehId INTEGER, trip TEXT);
-\copy TripsTmp FROM 'DATADIR/trips.csv' DELIMITER ',' CSV HEADER
-INSERT INTO Trips SELECT tripId, vehId, tgeompointfromhexewkb(trip) FROM TripsTmp;
+\copy TripsTmp(tripId, vehId, trip) FROM 'DATADIR/trips.csv' DELIMITER ',' CSV HEADER
+INSERT INTO Trips
+  SELECT tripId, vehId,
+         tgeompointfromhexewkb(trip)                                 AS trip,
+         tgeompoint_to_th3index(tgeompointfromhexewkb(trip), :h3resolution) AS trip_h3
+  FROM TripsTmp;
 DROP TABLE TripsTmp;
 
 -------------------------------------------------------------------------------
@@ -115,13 +132,21 @@ INSERT INTO QueryPeriods SELECT periodId, period::tstzspan FROM QueryPeriodsTmp;
 DROP TABLE QueryPeriodsTmp;
 
 -------------------------------------------------------------------------------
--- Optional GiST indexes for performance on larger datasets
+-- GiST + SP-GiST indexes — the native PostgreSQL/MobilityDB analog of the
+-- columnar prefilter the other two platforms rely on.  GiST on trip is the
+-- standard MobilityDB STBox-overlap index; GiST on trip_h3 accelerates the
+-- th3index cell-membership predicate (everEqH3IndexTh3Index /
+-- everEqTh3IndexTh3Index) used by the portable BerlinMOD SQL.  SP-GiST on
+-- trip is added as a complement — its kd-tree-style partitioning often
+-- wins on tgeompoint when trip extents differ widely.
 -------------------------------------------------------------------------------
 
-CREATE INDEX IF NOT EXISTS trips_trip_gist_idx    ON Trips       USING GIST(trip);
-CREATE INDEX IF NOT EXISTS qp_geom_gist_idx        ON QueryPoints USING GIST(geom);
-CREATE INDEX IF NOT EXISTS qr_geom_gist_idx        ON QueryRegions USING GIST(geom);
-CREATE INDEX IF NOT EXISTS qper_period_gist_idx    ON QueryPeriods USING GIST(period);
+CREATE INDEX IF NOT EXISTS trips_trip_gist_idx     ON Trips       USING GIST  (trip);
+CREATE INDEX IF NOT EXISTS trips_trip_h3_gist_idx  ON Trips       USING GIST  (trip_h3);
+CREATE INDEX IF NOT EXISTS trips_trip_spgist_idx   ON Trips       USING SPGIST(trip);
+CREATE INDEX IF NOT EXISTS qp_geom_gist_idx        ON QueryPoints USING GIST  (geom);
+CREATE INDEX IF NOT EXISTS qr_geom_gist_idx        ON QueryRegions USING GIST (geom);
+CREATE INDEX IF NOT EXISTS qper_period_gist_idx    ON QueryPeriods USING GIST (period);
 
 ANALYZE Vehicles, Trips, QueryLicences, QueryInstants, QueryPoints,
         QueryRegions, QueryPeriods;

@@ -115,22 +115,40 @@ public final class BerlinMODBench {
             System.out.println("=== Loading data from: " + dataDir + " ===");
             BerlinMODDemo.loadFromCsvPublic(spark, dataDir);
 
-            // Stage-2: materialise the th3index column on Trips at load time.
-            // Each trip's tgeompoint is converted to a temporal H3 cell sequence
-            // at TH3INDEX_RESOLUTION (default 7 ≈ 5 km cells).  The trip_h3 column
-            // is used by preprocessForSpark to inject a cheap cell-membership
-            // prefilter before the expensive eIntersects / eDwithin / NAD calls
-            // on cross-join queries (BerlinMOD Q4/Q11/Q12/Q14, point-side).
+            // Materialise the th3index column on Trips at load time.  Each trip's
+            // tgeompoint is converted to a temporal H3 cell sequence at the
+            // chosen resolution (default 7 ≈ 1.2 km cells).  The trip_h3 column
+            // is used by the portable BerlinMOD SQL (Q4 / Q5 / Q6 / Q10) as a
+            // spatial prefilter — a cheap cell-membership test that runs before
+            // the expensive eIntersects / nearestApproachDistance / eDwithin /
+            // tDwithin calls.  All three benchmarked platforms compute the
+            // column at load time so the comparison is apples-to-apples; on
+            // PostgreSQL the load script also adds a GiST index on the column
+            // so the prefilter becomes a true index seek.
             //
-            // Disabled when berlinmod.bench.th3index.disable=true (so before-vs-
-            // after measurement is reproducible without a rebuild).
+            // Disabled when berlinmod.bench.th3index.disable=true so before-vs-
+            // after measurement is reproducible without a rebuild — note that
+            // disabling it makes the prefilter expressions in the portable SQL
+            // reference a non-existent column, so use this only with a custom
+            // SQL set that omits the prefilter.
+            //
+            // If the source CSV already carries a trip_h3 column (as produced
+            // by berlinmod_portability_export() in MobilityDB-BerlinMOD), drop
+            // it first so we can rematerialise at our chosen resolution — this
+            // guarantees a consistent resolution across all three platforms
+            // regardless of how the CSV was produced.
             if (!"true".equals(System.getProperty("berlinmod.bench.th3index.disable"))) {
                 int res = Integer.getInteger("berlinmod.bench.th3index.resolution",
                                              org.mobilitydb.spark.h3.Th3IndexUDFs.DEFAULT_RESOLUTION);
                 System.out.println("=== Materialising trip_h3 column (resolution " + res + ") ===");
+                String[] cols = spark.table("Trips").schema().fieldNames();
+                String selectCols = java.util.Arrays.stream(cols)
+                    .filter(c -> !"trip_h3".equalsIgnoreCase(c))
+                    .collect(Collectors.joining(", "));
                 spark.sql(
                     "CREATE OR REPLACE TEMPORARY VIEW Trips AS " +
-                    "SELECT *, tgeompointToTh3Index(trip, " + res + ") AS trip_h3 " +
+                    "SELECT " + selectCols + ", " +
+                    "       tgeompointToTh3Index(trip, " + res + ") AS trip_h3 " +
                     "FROM Trips"
                 );
             }
@@ -233,102 +251,12 @@ public final class BerlinMODBench {
         // 4. Replace PostGIS ST_Contains with the registered geomContains UDF.
         sql = sql.replace("ST_Contains(", "geomContains(");
 
-        // 5. Inject th3index cell-membership prefilter for eIntersects(t.<col>, q.<col>).
-        //    The unmodified eIntersects predicate stays in place — Catalyst short-
-        //    circuits the AND so the cheap cell-membership test runs first and
-        //    eIntersects only on candidates that pass.
-        sql = injectTh3IndexPrefilter(sql);
-
-        return sql;
-    }
-
-    /**
-     * Inject th3index prefilter clauses before BerlinMOD's spatial-relationship
-     * predicates.  Two prefilter shapes:
-     *
-     * <ol>
-     *   <li><b>Trip × static-geometry</b> ({@code eIntersects(t.col, g.col)},
-     *       {@code eDwithin(t.col, g.col, dist)}): inject
-     *       {@code everEqH3IndexTh3Index(geomToH3Cell(g.col, R), t.trip_h3)}
-     *       wrapped in {@code COALESCE(..., TRUE)} so non-POINT geometries
-     *       degrade to no-op (correct).</li>
-     *   <li><b>Trip × Trip</b> ({@code nearestApproachDistance(t1.col, t2.col)},
-     *       {@code eDwithin(t1.col, t2.col, dist)},
-     *       {@code tDwithin(t1.col, t2.col, dist)}): inject
-     *       {@code everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)}.  This is
-     *       the headline accelerator for the BerlinMOD Cartesian-shape queries
-     *       Q5 (NAD), Q6 (eDwithin), Q10 (tDwithin), Q12.</li>
-     * </ol>
-     *
-     * Catalyst's AND short-circuit ensures the cheap H3-cell test runs first;
-     * the expensive temporal predicate only on candidates that pass.  All
-     * BerlinMOD queries' result correctness is preserved (the prefilter is a
-     * sound superset of the candidate set the original predicate would accept).
-     *
-     * Disabled by setting {@code -Dberlinmod.bench.th3index.disable=true} on the
-     * driver — useful for before-vs-after measurement without a rebuild.
-     */
-    private static String injectTh3IndexPrefilter(String sql) {
-        if ("true".equals(System.getProperty("berlinmod.bench.th3index.disable"))) {
-            return sql;
-        }
-        int res = Integer.getInteger("berlinmod.bench.th3index.resolution",
-                                     org.mobilitydb.spark.h3.Th3IndexUDFs.DEFAULT_RESOLUTION);
-
-        // BerlinMOD column convention: tgeompoint columns are always named
-        // `.trip` on aliases t / t1 / t2; static geometry columns are named
-        // `.geom`, `.geomwkt`, etc. on aliases p / r / pt / l.  We rely on
-        // the literal `.trip` suffix to distinguish the two patterns.
-
-        // 1. Trip × static-geometry: eIntersects(t.<col>, q.<non-trip-col>)
-        //    Inject COALESCE(everEqH3IndexTh3Index(geomToH3Cell(q.<col>, R),
-        //    t.trip_h3), TRUE) AND … so the prefilter degrades to no-op when
-        //    geomToH3Cell returns NULL (non-POINT geometry).  In BerlinMOD,
-        //    eIntersects is always trip × static-geometry (Q2, Q4); never
-        //    trip × trip.
-        sql = sql.replaceAll(
-            "eIntersects\\((\\w+)\\.(\\w+),\\s*(\\w+)\\.(\\w+)\\)",
-            "(COALESCE(everEqH3IndexTh3Index(geomToH3Cell($3.$4, " + res
-                + "), $1.trip_h3), TRUE) AND eIntersects($1.$2, $3.$4))"
-        );
-
-        // 2. Trip × Trip: nearestApproachDistance(t1.<col>, t2.<col>) → DOUBLE.
-        //    Wrap in CASE so the prefilter short-circuits without changing the
-        //    return type.  BerlinMOD Q5's IS NOT NULL predicate then filters
-        //    out the rows where the prefilter rejected the pair.  Soundness
-        //    note: at H3 resolution 7 the cell edge is ~1.2 km, so the
-        //    prefilter is sound for queries whose distance threshold is well
-        //    below the edge length (Q5/Q6/Q10 use 3-10 m).  The risk is at
-        //    cell boundaries — pairs whose true min distance is small but
-        //    whose paths never share a cell at common instants get excluded.
-        //    For BerlinMOD's purpose-of-comparison this is acceptable; for
-        //    exact correctness use a coarser resolution via
-        //    -Dberlinmod.bench.th3index.resolution=5.
-        sql = sql.replaceAll(
-            "nearestApproachDistance\\((\\w+)\\.(\\w+),\\s*(\\w+)\\.(\\w+)\\)",
-            "(CASE WHEN everEqTh3IndexTh3Index($1.trip_h3, $3.trip_h3)"
-                + " THEN nearestApproachDistance($1.$2, $3.$4) ELSE NULL END)"
-        );
-
-        // 3. Trip × Trip: eDwithin(t1.<col>, t2.<col>, dist) → BOOLEAN.
-        //    BerlinMOD Q6 is the only user.  Wrap in CASE; FALSE on
-        //    prefilter-reject means the trip pair contributes nothing to the
-        //    aggregate (matches the original semantics for non-overlapping
-        //    pairs).
-        sql = sql.replaceAll(
-            "eDwithin\\((\\w+)\\.(\\w+),\\s*(\\w+)\\.(\\w+),\\s*([^)]+)\\)",
-            "(CASE WHEN everEqTh3IndexTh3Index($1.trip_h3, $3.trip_h3)"
-                + " THEN eDwithin($1.$2, $3.$4, $5) ELSE FALSE END)"
-        );
-
-        // 4. Trip × Trip: tDwithin(t1.<col>, t2.<col>, dist) → tbool.
-        //    BerlinMOD Q10's whenTrue / IS NOT NULL clauses already filter
-        //    NULL, so wrapping in CASE WHEN ... ELSE NULL END is correct.
-        sql = sql.replaceAll(
-            "tDwithin\\((\\w+)\\.(\\w+),\\s*(\\w+)\\.(\\w+),\\s*([^)]+)\\)",
-            "(CASE WHEN everEqTh3IndexTh3Index($1.trip_h3, $3.trip_h3)"
-                + " THEN tDwithin($1.$2, $3.$4, $5) ELSE NULL END)"
-        );
+        // The th3index spatial prefilter for cross-join queries (Q4 / Q5 /
+        // Q6 / Q10) lives directly in the portable BerlinMOD SQL files (see
+        // the th3index unification work — every backend executes the same
+        // prefilter expressions, MobilitySpark via the Th3IndexUDFs class
+        // and the precomputed trip_h3 column on Trips).  No Spark-specific
+        // injection rule is needed here.
 
         return sql;
     }

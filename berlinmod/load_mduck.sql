@@ -48,14 +48,25 @@ CREATE TABLE QueryInstants AS
 -- keeps the CSV scan (multi-threaded) separate from the MEOS conversion
 -- (also multi-threaded but through the normal expression pipeline, which
 -- does invoke the wrapper).
+--
+-- The trip_h3 column is a temporal H3-cell index of the trip, used by the
+-- portable BerlinMOD SQL as a spatial prefilter.  We always recompute it
+-- from the loaded tgeompoint at H3 resolution 7, so the column is consistent
+-- across all three platforms regardless of whether the source CSV included
+-- a precomputed trip_h3 column.  read_csv's explicit columns parameter
+-- reads only the first 3 columns (tripId, vehId, trip) and ignores any
+-- extra header column.
 CREATE TEMP TABLE TripsRaw AS
   SELECT tripId, vehId, trip
-  FROM read_csv(getvariable('DATADIR') || 'trips.csv', header = true);
+  FROM read_csv(getvariable('DATADIR') || 'trips.csv',
+                header = true,
+                columns = {'tripId': 'INTEGER', 'vehId': 'INTEGER', 'trip': 'VARCHAR'});
 
 CREATE TABLE Trips AS
   SELECT tripId,
          vehId,
-         tgeompointFromHexWKB(trip) AS trip
+         tgeompointFromHexWKB(trip)                            AS trip,
+         tgeompoint_to_th3index(tgeompointFromHexWKB(trip), 7) AS trip_h3
   FROM TripsRaw;
 
 -- QueryPoints: geometry for spatial ops + original WKT string for portable display
