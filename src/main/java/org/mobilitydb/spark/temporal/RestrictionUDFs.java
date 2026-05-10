@@ -319,6 +319,139 @@ public final class RestrictionUDFs {
             }
         };
 
+    // tintAtValue(s STRING, value INT) → STRING
+    // MEOS: tint_at_value(const Temporal *, int) → Temporal *
+    public static final UDF2<String, Integer, String> tintAtValue =
+        (s, value) -> {
+            if (s == null || value == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer result = functions.tint_at_value(tptr, value);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Value-range restriction: tnumber (floatspan / intspan)
+    // ------------------------------------------------------------------
+
+    // tnumberAtSpan(s STRING, spanHex STRING) → STRING
+    // MEOS: tnumber_at_span(const Temporal *, const Span *) → Temporal *
+    public static final UDF2<String, String, String> tnumberAtSpan =
+        (s, spanHex) -> {
+            if (s == null || spanHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer spanPtr = functions.span_from_hexwkb(spanHex);
+                if (spanPtr == null) return null;
+                try {
+                    Pointer result = functions.tnumber_at_span(tptr, spanPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(spanPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // tnumberMinusSpan(s STRING, spanHex STRING) → STRING
+    // MEOS: tnumber_minus_span(const Temporal *, const Span *) → Temporal *
+    public static final UDF2<String, String, String> tnumberMinusSpan =
+        (s, spanHex) -> {
+            if (s == null || spanHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer spanPtr = functions.span_from_hexwkb(spanHex);
+                if (spanPtr == null) return null;
+                try {
+                    Pointer result = functions.tnumber_minus_span(tptr, spanPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(spanPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // tnumberAtSpanset(s STRING, spansetHex STRING) → STRING
+    // MEOS: tnumber_at_spanset(const Temporal *, const SpanSet *) → Temporal *
+    public static final UDF2<String, String, String> tnumberAtSpanset =
+        (s, spansetHex) -> {
+            if (s == null || spansetHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer ssPtr = functions.spanset_from_hexwkb(spansetHex);
+                if (ssPtr == null) return null;
+                try {
+                    Pointer result = functions.tnumber_at_spanset(tptr, ssPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(ssPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // tnumberMinusSpanset(s STRING, spansetHex STRING) → STRING
+    // MEOS: tnumber_minus_spanset(const Temporal *, const SpanSet *) → Temporal *
+    public static final UDF2<String, String, String> tnumberMinusSpanset =
+        (s, spansetHex) -> {
+            if (s == null || spansetHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer ssPtr = functions.spanset_from_hexwkb(spansetHex);
+                if (ssPtr == null) return null;
+                try {
+                    Pointer result = functions.tnumber_minus_spanset(tptr, ssPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(ssPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
     // ------------------------------------------------------------------
     // Value restriction: tbool
     // ------------------------------------------------------------------
@@ -514,6 +647,33 @@ public final class RestrictionUDFs {
             }
         };
 
+    // tgeoMinusStbox(s STRING, stboxHex STRING) → STRING
+    // MEOS: tgeo_minus_stbox(const Temporal *, const STBox *, bool border_inc) → Temporal *
+    public static final UDF2<String, String, String> tgeoMinusStbox =
+        (s, stboxHex) -> {
+            if (s == null || stboxHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer boxPtr = functions.stbox_from_hexwkb(stboxHex);
+                if (boxPtr == null) return null;
+                try {
+                    Pointer result = functions.tgeo_minus_stbox(tptr, boxPtr, true);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(boxPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
     // tpointAtElevation(s STRING, floatspanHex STRING) → STRING
     // MEOS: tpoint_at_elevation(const Temporal *, const Span *) → Temporal *
     public static final UDF2<String, String, String> tpointAtElevation =
@@ -688,9 +848,15 @@ public final class RestrictionUDFs {
         // Delete operations
         spark.udf().register("temporalDeleteTstzspan",    temporalDeleteTstzspan,    DataTypes.StringType);
         spark.udf().register("temporalDeleteTstzspanset", temporalDeleteTstzspanset, DataTypes.StringType);
-        // Value restriction: tfloat
+        // Value restriction: tfloat / tint
         spark.udf().register("tfloatAtValue",   tfloatAtValue,   DataTypes.StringType);
         spark.udf().register("tfloatMinusValue", tfloatMinusValue, DataTypes.StringType);
+        spark.udf().register("tintAtValue",     tintAtValue,     DataTypes.StringType);
+        // Value-range restriction: tnumber
+        spark.udf().register("tnumberAtSpan",      tnumberAtSpan,      DataTypes.StringType);
+        spark.udf().register("tnumberMinusSpan",   tnumberMinusSpan,   DataTypes.StringType);
+        spark.udf().register("tnumberAtSpanset",   tnumberAtSpanset,   DataTypes.StringType);
+        spark.udf().register("tnumberMinusSpanset", tnumberMinusSpanset, DataTypes.StringType);
         // Value restriction: tbool
         spark.udf().register("tboolAtValue",    tboolAtValue,    DataTypes.StringType);
         spark.udf().register("tboolMinusValue", tboolMinusValue, DataTypes.StringType);
@@ -702,6 +868,7 @@ public final class RestrictionUDFs {
         spark.udf().register("tpointMinusValue", tpointMinusValue, DataTypes.StringType);
         // STBox and elevation restriction
         spark.udf().register("tgeoAtStbox",           tgeoAtStbox,           DataTypes.StringType);
+        spark.udf().register("tgeoMinusStbox",        tgeoMinusStbox,        DataTypes.StringType);
         spark.udf().register("tpointAtElevation",     tpointAtElevation,     DataTypes.StringType);
         spark.udf().register("tpointMinusElevation",  tpointMinusElevation,  DataTypes.StringType);
         // Extrema restriction
