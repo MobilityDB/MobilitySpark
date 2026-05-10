@@ -2,17 +2,20 @@
 # BerlinMOD timing runner — MobilityDB / PostgreSQL
 #
 # Loads data once, runs each query RUNS times, records wall-clock time per run,
-# and writes a JSON file suitable for report.py.
+# and writes a JSON file suitable for report.py.  When --queries is given only
+# the selected queries are re-run and merged into an existing output file.
 #
 # Usage:
 #   bench_mbdb.sh [options]
 #
 # Options:
-#   --dbname NAME    PostgreSQL database name  (default: berlinmod_bench)
-#   --data   DIR     Directory containing the shared CSV files (vehicles.csv, trips.csv, …)
-#   --runs   N       Timed runs per query      (default: 3)
-#   --output FILE    Path to write results JSON (default: results/mbdb.json)
-#   --no-load        Skip data loading (reuse existing tables in DBNAME)
+#   --dbname  NAME     PostgreSQL database name  (default: berlinmod_bench)
+#   --data    DIR      Directory containing the shared CSV files
+#   --runs    N        Timed runs per query      (default: 3)
+#   --queries RANGE    Comma/range query selector: "q04", "q04,q05", "q02-q05"
+#                      Default: all queries in canonical order
+#   --output  FILE     Path to write results JSON (default: results/mbdb.json)
+#   --no-load          Skip data loading (reuse existing tables in DBNAME)
 #
 # Requirements:
 #   psql on PATH; MobilityDB installed and available for CREATE EXTENSION.
@@ -27,17 +30,55 @@ DATADIR="${BERLINMOD_DIR}/data"
 RUNS=3
 OUTPUT="${SCRIPT_DIR}/results/mbdb.json"
 LOAD=true
+QUERIES_ARG=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --dbname)  DBNAME="$2";  shift 2 ;;
-    --data)    DATADIR="$2"; shift 2 ;;
-    --runs)    RUNS="$2";    shift 2 ;;
-    --output)  OUTPUT="$2";  shift 2 ;;
-    --no-load) LOAD=false;   shift   ;;
+    --dbname)   DBNAME="$2";       shift 2 ;;
+    --data)     DATADIR="$2";      shift 2 ;;
+    --runs)     RUNS="$2";         shift 2 ;;
+    --queries)  QUERIES_ARG="$2";  shift 2 ;;
+    --output)   OUTPUT="$2";       shift 2 ;;
+    --no-load)  LOAD=false;        shift   ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
+
+ALL_QUERIES=(q01 q02 q03 q04 q05 q06 q07 q08 qrt q09 q10 q11 q12 q13 q14 q15 q16 q17)
+
+# Resolve QUERIES from QUERIES_ARG (comma/range syntax) or use all
+resolve_queries() {
+  local arg="$1"
+  if [[ -z "$arg" || "$arg" == "all" ]]; then
+    echo "${ALL_QUERIES[@]}"
+    return
+  fi
+  local result=()
+  IFS=',' read -ra tokens <<< "$arg"
+  for token in "${tokens[@]}"; do
+    token="${token// /}"
+    if [[ "$token" == *-* && "$token" != qrt ]]; then
+      local from to
+      from="${token%%-*}"
+      to="${token##*-}"
+      # Normalize: bare numbers → q0N
+      [[ "$from" =~ ^[0-9]+$ ]] && from=$(printf "q%02d" "$from")
+      [[ "$to"   =~ ^[0-9]+$ ]] && to=$(printf "q%02d" "$to")
+      local in_range=false
+      for q in "${ALL_QUERIES[@]}"; do
+        [[ "$q" == "$from" ]] && in_range=true
+        $in_range && result+=("$q")
+        [[ "$q" == "$to" ]] && in_range=false
+      done
+    else
+      [[ "$token" =~ ^[0-9]+$ ]] && token=$(printf "q%02d" "$token")
+      result+=("$token")
+    fi
+  done
+  echo "${result[@]}"
+}
+
+QUERIES=($(resolve_queries "$QUERIES_ARG"))
 
 _psql() { psql -d "$DBNAME" -q "$@"; }
 
@@ -61,12 +102,12 @@ PLATFORM_VER="${MBDB_VER} on ${PG_VER}"
 TRIP_COUNT=$(_psql -t -c "SELECT count(*) FROM Trips;" | tr -d ' \n')
 VEH_COUNT=$(_psql  -t -c "SELECT count(*) FROM Vehicles;" | tr -d ' \n')
 
+QUERIES_MSG="${QUERIES_ARG:-all}"
 echo "=== Platform: ${PLATFORM_VER} ==="
 echo "=== Dataset : ${VEH_COUNT} vehicles / ${TRIP_COUNT} trips ==="
-echo "=== Runs    : ${RUNS} per query ==="
+echo "=== Runs    : ${RUNS} per query  (queries: ${QUERIES_MSG}) ==="
 echo ""
 
-QUERIES=(q01 q02 q03 q04 q05 q06 q07 q08 qrt q09 q10 q11 q12 q13 q14 q15 q16 q17)
 TIMEFILE=$(mktemp)
 trap 'rm -f "$TIMEFILE"' EXIT
 
@@ -87,18 +128,39 @@ done
 
 mkdir -p "$(dirname "$OUTPUT")"
 
+# Merge new timings into existing output file (preserving unselected queries)
 python3 - "$TIMEFILE" "$OUTPUT" "$PLATFORM_VER" "$TRIP_COUNT" "$VEH_COUNT" "$RUNS" <<'PYEOF'
-import sys, json, collections, datetime
+import sys, json, collections, datetime, os
 
 timefile, outfile, version, trips, vehicles, runs = \
     sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6])
 
-times = collections.defaultdict(list)
+QUERY_ORDER = ["q01","q02","q03","q04","q05","q06","q07","q08","qrt",
+               "q09","q10","q11","q12","q13","q14","q15","q16","q17"]
+
+# Load existing results to merge into
+existing = {}
+if os.path.exists(outfile):
+    try:
+        with open(outfile) as f:
+            existing = json.load(f).get("queries", {})
+    except Exception:
+        pass
+
+# Override with new timings
+new_times = collections.defaultdict(list)
 with open(timefile) as f:
     for line in f:
         parts = line.strip().split()
         if len(parts) == 2:
-            times[parts[0]].append(int(parts[1]))
+            new_times[parts[0]].append(int(parts[1]))
+existing.update(new_times)
+
+# Re-order by canonical order
+ordered = {q: existing[q] for q in QUERY_ORDER if q in existing}
+for q in existing:
+    if q not in ordered:
+        ordered[q] = existing[q]
 
 result = {
     "platform": "mobilitydb",
@@ -107,9 +169,10 @@ result = {
     "data_trips":    trips,
     "runs":          runs,
     "timestamp":     datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-    "queries":       dict(times),
+    "queries":       ordered,
 }
 with open(outfile, "w") as f:
     json.dump(result, f, indent=2)
+    f.write("\n")
 print(f"\nResults written to {outfile}")
 PYEOF

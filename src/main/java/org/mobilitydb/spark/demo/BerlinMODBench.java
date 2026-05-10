@@ -102,7 +102,9 @@ public final class BerlinMODBench {
 
         System.out.println("=== BerlinMODBench: " + runs + " run(s) per query ===");
 
-        Map<String, List<Long>> timings = new LinkedHashMap<>();
+        // Pre-load any existing results so a partial run can be resumed
+        // without losing previously collected timings.
+        Map<String, List<Long>> timings = loadExistingTimings(outputPath);
         String version = "unknown";
 
         try (MobilitySparkSession ms = MobilitySparkSession.create(spark)) {
@@ -232,12 +234,17 @@ public final class BerlinMODBench {
         sb.append("  \"timestamp\": \"").append(Instant.now().toString()).append("\",\n");
         sb.append("  \"queries\": {\n");
 
+        // Emit in canonical QUERY_ORDER; any extra keys follow at the end.
+        List<String> order = new ArrayList<>(java.util.Arrays.asList(QUERY_ORDER));
+        for (String k : timings.keySet()) { if (!order.contains(k)) order.add(k); }
+
         boolean firstQ = true;
-        for (Map.Entry<String, List<Long>> e : timings.entrySet()) {
+        for (String q : order) {
+            if (!timings.containsKey(q)) continue;
             if (!firstQ) sb.append(",\n");
             firstQ = false;
-            sb.append("    \"").append(e.getKey()).append("\": [");
-            sb.append(e.getValue().stream()
+            sb.append("    \"").append(q).append("\": [");
+            sb.append(timings.get(q).stream()
                     .map(String::valueOf)
                     .collect(Collectors.joining(", ")));
             sb.append("]");
@@ -263,6 +270,40 @@ public final class BerlinMODBench {
 
     private static String escapeJson(String s) {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    /**
+     * Load timings from an existing JSON results file, returning them in
+     * canonical QUERY_ORDER.  Returns an empty map if the file does not exist
+     * or cannot be parsed.
+     */
+    private static Map<String, List<Long>> loadExistingTimings(String outputPath) {
+        Map<String, List<Long>> raw = new LinkedHashMap<>();
+        Path p = Paths.get(outputPath);
+        if (!Files.exists(p)) return raw;
+        try {
+            String json = Files.readString(p);
+            java.util.regex.Pattern qPat =
+                java.util.regex.Pattern.compile("\"(q\\w+)\":\\s*\\[([^\\]]+)\\]");
+            java.util.regex.Matcher m = qPat.matcher(json);
+            while (m.find()) {
+                String key = m.group(1);
+                List<Long> vals = new ArrayList<>();
+                for (String v : m.group(2).split(",")) {
+                    try { vals.add(Long.parseLong(v.trim())); }
+                    catch (NumberFormatException ignored) {}
+                }
+                if (!vals.isEmpty()) raw.put(key, vals);
+            }
+        } catch (IOException e) {
+            System.err.println("  [warn] could not load existing timings: " + e.getMessage());
+        }
+        // Re-order to QUERY_ORDER (LinkedHashMap preserves insertion order)
+        Map<String, List<Long>> ordered = new LinkedHashMap<>();
+        for (String q : QUERY_ORDER) {
+            if (raw.containsKey(q)) ordered.put(q, raw.get(q));
+        }
+        return ordered;
     }
 
     /**
