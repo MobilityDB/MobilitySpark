@@ -117,7 +117,7 @@ public final class BerlinMODUDFs {
                 Pointer bptr = functions.stbox_from_hexwkb(other);
                 if (bptr == null) return null;
                 try {
-                    return functions.overlaps_tpoint_stbox(tptr, bptr);
+                    return functions.overlaps_tspatial_stbox(tptr, bptr);
                 } finally {
                     MeosMemory.free(bptr);
                 }
@@ -131,7 +131,7 @@ public final class BerlinMODUDFs {
     // valueAtTimestamp(trip STRING, instant) → STRING (WKT geometry)
     // Returns the geometry of a tgeompoint at a given instant, as WKT.
     // instant can be a java.sql.Timestamp (Spark TIMESTAMP) or String.
-    // MEOS: tpoint_value_at_timestamptz (JMEOS-1.5 tpoint variant)
+    // MEOS: temporal_value_at_timestamptz (MEOS 1.4 canonical name)
     // ------------------------------------------------------------------
     public static final UDF2<String, Object, String> valueAtTimestamp = (trip, tsArg) -> {
         if (trip == null || tsArg == null) return null;
@@ -141,7 +141,7 @@ public final class BerlinMODUDFs {
         OffsetDateTime odt = parseTs(tsArg);
         if (odt == null) return null;
         Pointer valueOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-        boolean found = functions.tpoint_value_at_timestamptz(tptr, odt, true, valueOut);
+        boolean found = functions.temporal_value_at_timestamptz(tptr, odt, true, valueOut);
         if (!found) return null;
         long addr = valueOut.getLong(0);
         if (addr == 0L) return null;
@@ -293,7 +293,7 @@ public final class BerlinMODUDFs {
             Pointer p2 = functions.temporal_from_hexwkb(t2);
             if (p2 == null) return null;
             try {
-                return functions.adisjoint_tpoint_tpoint(p1, p2) == 1;
+                return functions.adisjoint_tgeo_tgeo(p1, p2) == 1;
             } finally {
                 MeosMemory.free(p2);
             }
