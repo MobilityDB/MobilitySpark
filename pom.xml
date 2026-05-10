@@ -97,10 +97,11 @@
                          meos_finalize() has been called. -->
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
-                    <!-- Pin libmeos.so to the system-installed version so the
-                         correct (thread-safe) build is used, not any stale
-                         copy bundled inside JMEOS-1.4.jar. -->
-                    <argLine>-Djava.library.path=/usr/local/lib</argLine>
+                    <!-- Pin libmeos.so to the version bundled in this repo
+                         (lib/libmeos.so) so the correct API-compatible build is
+                         used. The system /usr/local/lib version may be ahead of
+                         the JMEOS-1.4 API and missing backward-compat aliases. -->
+                    <argLine>-Djava.library.path=${project.basedir}/lib:/usr/local/lib</argLine>
                 </configuration>
             </plugin>
         </plugins>
