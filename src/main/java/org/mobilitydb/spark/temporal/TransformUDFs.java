@@ -190,6 +190,27 @@ public final class TransformUDFs {
             }
         };
 
+    // tintToTfloat(s STRING) → STRING
+    // MEOS: tint_to_tfloat(const Temporal *) → Temporal *
+    public static final UDF1<String, String> tintToTfloat =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tint_to_tfloat(ptr);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
     // ------------------------------------------------------------------
     // Value-domain shifting and scaling (tfloat)
     // ------------------------------------------------------------------
@@ -443,6 +464,8 @@ public final class TransformUDFs {
             }
         };
 
+    private static final OffsetDateTime PG_EPOCH = OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
     // temporalSimplifyMinDist(s STRING, dist DOUBLE) → STRING
     // Removes consecutive instants whose distance is below the threshold.
     // MEOS: temporal_simplify_min_dist(const Temporal *, double dist) → Temporal *
@@ -465,12 +488,66 @@ public final class TransformUDFs {
             }
         };
 
+    // temporalSimplifyMinTdelta(s STRING, durationStr STRING) → STRING
+    // Removes consecutive instants whose time delta is below the threshold.
+    // MEOS: temporal_simplify_min_tdelta(const Temporal *, const Interval *) → Temporal *
+    public static final UDF2<String, String, String> temporalSimplifyMinTdelta =
+        (s, durationStr) -> {
+            if (s == null || durationStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer ivPtr = functions.pg_interval_in(durationStr, -1);
+                if (ivPtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_simplify_min_tdelta(ptr, ivPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(ivPtr);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // temporalTPrecision(s STRING, durationStr STRING) → STRING
+    // Rounds all timestamps to the nearest multiple of the given duration.
+    // MEOS: temporal_tprecision(const Temporal *, const Interval *, TimestampTz origin)
+    public static final UDF2<String, String, String> temporalTPrecision =
+        (s, durationStr) -> {
+            if (s == null || durationStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer ivPtr = functions.pg_interval_in(durationStr, -1);
+                if (ivPtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_tprecision(ptr, ivPtr, PG_EPOCH);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(ivPtr);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
     // temporalTSample(s STRING, durationStr STRING, interpStr STRING) → STRING
     // Re-samples a temporal value at regular time intervals.
     // origin is fixed at 2000-01-01 00:00:00 UTC (MEOS/PG epoch).
     // MEOS: temporal_tsample(const Temporal *, const Interval *, TimestampTz, interpType) → Temporal *
-    private static final OffsetDateTime PG_EPOCH = OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-
     public static final UDF3<String, String, String, String> temporalTSample =
         (s, durationStr, interpStr) -> {
             if (s == null || durationStr == null || interpStr == null) return null;
@@ -543,6 +620,7 @@ public final class TransformUDFs {
         spark.udf().register("temporalSetInterp",     temporalSetInterp,     DataTypes.StringType);
         // Type casting
         spark.udf().register("tfloatToTint",          tfloatToTint,          DataTypes.StringType);
+        spark.udf().register("tintToTfloat",          tintToTfloat,          DataTypes.StringType);
         // Value-domain shifting and scaling
         spark.udf().register("tfloatShiftValue",      tfloatShiftValue,      DataTypes.StringType);
         spark.udf().register("tfloatScaleValue",      tfloatScaleValue,      DataTypes.StringType);
@@ -555,9 +633,11 @@ public final class TransformUDFs {
         spark.udf().register("tpointSetSrid",         tpointSetSrid,         DataTypes.StringType);
         spark.udf().register("tpointRound",           tpointRound,           DataTypes.StringType);
         // Trajectory simplification
-        spark.udf().register("temporalSimplifyDp",      temporalSimplifyDp,      DataTypes.StringType);
-        spark.udf().register("temporalSimplifyMaxDist", temporalSimplifyMaxDist, DataTypes.StringType);
-        spark.udf().register("temporalSimplifyMinDist", temporalSimplifyMinDist, DataTypes.StringType);
+        spark.udf().register("temporalSimplifyDp",         temporalSimplifyDp,         DataTypes.StringType);
+        spark.udf().register("temporalSimplifyMaxDist",    temporalSimplifyMaxDist,    DataTypes.StringType);
+        spark.udf().register("temporalSimplifyMinDist",    temporalSimplifyMinDist,    DataTypes.StringType);
+        spark.udf().register("temporalSimplifyMinTdelta",  temporalSimplifyMinTdelta,  DataTypes.StringType);
+        spark.udf().register("temporalTPrecision",         temporalTPrecision,         DataTypes.StringType);
         // Temporal sampling
         spark.udf().register("temporalTSample", temporalTSample, DataTypes.StringType);
         // Trajectory extraction

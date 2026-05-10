@@ -181,19 +181,182 @@ public final class BoolOpsUDFs {
         };
 
     // ------------------------------------------------------------------
+    // Temporal comparison operators  (temporal × temporal → tbool hex-WKB)
+    //
+    // MEOS: teq/tne/tlt/tle/tgt/tge_temporal_temporal  meos.h
+    // ------------------------------------------------------------------
+
+    public static final UDF2<String, String, String> teqTemporalTemporal =
+        (s1, s2) -> {
+            if (s1 == null || s2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                if (p2 == null) return null;
+                try {
+                    Pointer r = functions.teq_temporal_temporal(p1, p2);
+                    if (r == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                    } finally {
+                        MeosMemory.free(r);
+                    }
+                } finally {
+                    MeosMemory.free(p2);
+                }
+            } finally {
+                MeosMemory.free(p1);
+            }
+        };
+
+    public static final UDF2<String, String, String> tneTemporalTemporal =
+        (s1, s2) -> {
+            if (s1 == null || s2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                if (p2 == null) return null;
+                try {
+                    Pointer r = functions.tne_temporal_temporal(p1, p2);
+                    if (r == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                    } finally {
+                        MeosMemory.free(r);
+                    }
+                } finally {
+                    MeosMemory.free(p2);
+                }
+            } finally {
+                MeosMemory.free(p1);
+            }
+        };
+
+    public static final UDF2<String, String, String> tltTemporalTemporal =
+        (s1, s2) -> {
+            if (s1 == null || s2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                if (p2 == null) return null;
+                try {
+                    Pointer r = functions.tlt_temporal_temporal(p1, p2);
+                    if (r == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                    } finally {
+                        MeosMemory.free(r);
+                    }
+                } finally {
+                    MeosMemory.free(p2);
+                }
+            } finally {
+                MeosMemory.free(p1);
+            }
+        };
+
+    public static final UDF2<String, String, String> tleTemporalTemporal =
+        (s1, s2) -> {
+            if (s1 == null || s2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                if (p2 == null) return null;
+                try {
+                    Pointer r = functions.tle_temporal_temporal(p1, p2);
+                    if (r == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                    } finally {
+                        MeosMemory.free(r);
+                    }
+                } finally {
+                    MeosMemory.free(p2);
+                }
+            } finally {
+                MeosMemory.free(p1);
+            }
+        };
+
+    public static final UDF2<String, String, String> tgtTemporalTemporal =
+        (s1, s2) -> {
+            if (s1 == null || s2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                if (p2 == null) return null;
+                try {
+                    Pointer r = functions.tgt_temporal_temporal(p1, p2);
+                    if (r == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                    } finally {
+                        MeosMemory.free(r);
+                    }
+                } finally {
+                    MeosMemory.free(p2);
+                }
+            } finally {
+                MeosMemory.free(p1);
+            }
+        };
+
+    public static final UDF2<String, String, String> tgeTemporalTemporal =
+        (s1, s2) -> {
+            if (s1 == null || s2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                if (p2 == null) return null;
+                try {
+                    Pointer r = functions.tge_temporal_temporal(p1, p2);
+                    if (r == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                    } finally {
+                        MeosMemory.free(r);
+                    }
+                } finally {
+                    MeosMemory.free(p2);
+                }
+            } finally {
+                MeosMemory.free(p1);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // REGISTRATION
     // ------------------------------------------------------------------
 
     public static void registerAll(SparkSession spark) {
         // tand
-        spark.udf().register("tandBool",       tandBool,       DataTypes.StringType);
-        spark.udf().register("tandBoolTbool",  tandBoolTbool,  DataTypes.StringType);
-        spark.udf().register("tandTboolTbool", tandTboolTbool, DataTypes.StringType);
+        spark.udf().register("tandBool",             tandBool,             DataTypes.StringType);
+        spark.udf().register("tandBoolTbool",        tandBoolTbool,        DataTypes.StringType);
+        spark.udf().register("tandTboolTbool",       tandTboolTbool,       DataTypes.StringType);
         // tor
-        spark.udf().register("torBool",        torBool,        DataTypes.StringType);
-        spark.udf().register("torBoolTbool",   torBoolTbool,   DataTypes.StringType);
-        spark.udf().register("torTboolTbool",  torTboolTbool,  DataTypes.StringType);
+        spark.udf().register("torBool",              torBool,              DataTypes.StringType);
+        spark.udf().register("torBoolTbool",         torBoolTbool,         DataTypes.StringType);
+        spark.udf().register("torTboolTbool",        torTboolTbool,        DataTypes.StringType);
         // tbool accessor
-        spark.udf().register("tboolWhenTrue",  tboolWhenTrue,  DataTypes.StringType);
+        spark.udf().register("tboolWhenTrue",        tboolWhenTrue,        DataTypes.StringType);
+        // temporal comparison operators
+        spark.udf().register("teqTemporalTemporal",  teqTemporalTemporal,  DataTypes.StringType);
+        spark.udf().register("tneTemporalTemporal",  tneTemporalTemporal,  DataTypes.StringType);
+        spark.udf().register("tltTemporalTemporal",  tltTemporalTemporal,  DataTypes.StringType);
+        spark.udf().register("tleTemporalTemporal",  tleTemporalTemporal,  DataTypes.StringType);
+        spark.udf().register("tgtTemporalTemporal",  tgtTemporalTemporal,  DataTypes.StringType);
+        spark.udf().register("tgeTemporalTemporal",  tgeTemporalTemporal,  DataTypes.StringType);
     }
 }
