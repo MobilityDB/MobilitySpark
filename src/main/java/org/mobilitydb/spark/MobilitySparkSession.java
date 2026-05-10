@@ -67,7 +67,7 @@ import static functions.functions.*;
  * and {@link #close()} after (or use try-with-resources).
  *
  * <pre>{@code
- *   SparkSession spark = SparkSession.builder().master("local[*]").getOrCreate();
+ *   SparkSession spark = SparkSession.builder().master("local[2]").getOrCreate();
  *   try (MobilitySparkSession ms = MobilitySparkSession.create(spark)) {
  *       spark.sql("SELECT atTime(trip, instant) FROM trips").show();
  *   }

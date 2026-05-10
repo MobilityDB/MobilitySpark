@@ -44,7 +44,7 @@ public final class N01HelloWorld {
 
     public static void main(String[] args) {
         SparkSession spark = SparkSession.builder()
-                .master("local[*]")
+                .master("local[2]")
                 .appName("MobilitySpark N01 Hello World")
                 .getOrCreate();
         spark.sparkContext().setLogLevel("WARN");
