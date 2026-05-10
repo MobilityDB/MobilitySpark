@@ -205,6 +205,77 @@ public final class SpanAlgebraUDFs {
             return functions.distance_tstzspan_tstzspan(p1, p2);
         };
 
+    // Per-type span distance (each returns the type's natural distance scalar)
+    public static final UDF2<String, String, Integer> intspanDistance =
+        (s1, s2) -> {
+            MeosThread.ensureReady();
+            Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
+            if (p1 == null || p2 == null) return null;
+            return functions.distance_intspan_intspan(p1, p2);
+        };
+    public static final UDF2<String, String, Long> bigintspanDistance =
+        (s1, s2) -> {
+            MeosThread.ensureReady();
+            Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
+            if (p1 == null || p2 == null) return null;
+            return functions.distance_bigintspan_bigintspan(p1, p2);
+        };
+    public static final UDF2<String, String, Double> floatspanDistance =
+        (s1, s2) -> {
+            MeosThread.ensureReady();
+            Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
+            if (p1 == null || p2 == null) return null;
+            return functions.distance_floatspan_floatspan(p1, p2);
+        };
+    public static final UDF2<String, String, Integer> datespanDistance =
+        (s1, s2) -> {
+            MeosThread.ensureReady();
+            Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
+            if (p1 == null || p2 == null) return null;
+            return functions.distance_datespan_datespan(p1, p2);
+        };
+
+    // Span expand: span + delta → expanded span
+    public static final UDF2<String, Integer, String> intspanExpand =
+        (s, v) -> {
+            if (s == null || v == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = spanPtr(s);
+            if (p == null) return null;
+            try {
+                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.intspan_expand(p, v.intValue());
+                if (r == null) return null;
+                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                finally { org.mobilitydb.spark.MeosMemory.free(r); }
+            } finally { org.mobilitydb.spark.MeosMemory.free(p); }
+        };
+    public static final UDF2<String, Long, String> bigintspanExpand =
+        (s, v) -> {
+            if (s == null || v == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = spanPtr(s);
+            if (p == null) return null;
+            try {
+                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.bigintspan_expand(p, v.longValue());
+                if (r == null) return null;
+                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                finally { org.mobilitydb.spark.MeosMemory.free(r); }
+            } finally { org.mobilitydb.spark.MeosMemory.free(p); }
+        };
+    public static final UDF2<String, Double, String> floatspanExpand =
+        (s, v) -> {
+            if (s == null || v == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = spanPtr(s);
+            if (p == null) return null;
+            try {
+                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.floatspan_expand(p, v.doubleValue());
+                if (r == null) return null;
+                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                finally { org.mobilitydb.spark.MeosMemory.free(r); }
+            } finally { org.mobilitydb.spark.MeosMemory.free(p); }
+        };
+
     // ------------------------------------------------------------------
     // Spanset topology predicates  (spanset, span) → Boolean
     //
@@ -614,6 +685,16 @@ public final class SpanAlgebraUDFs {
         spark.udf().register("spanIntersection",         spanIntersection,         DataTypes.StringType);
         spark.udf().register("spanMinus",                spanMinus,                DataTypes.StringType);
         spark.udf().register("tstzspanDistance",         tstzspanDistance,         DataTypes.DoubleType);
+        spark.udf().register("intspanDistance",          intspanDistance,          DataTypes.IntegerType);
+        spark.udf().register("bigintspanDistance",       bigintspanDistance,       DataTypes.LongType);
+        spark.udf().register("floatspanDistance",        floatspanDistance,        DataTypes.DoubleType);
+        spark.udf().register("datespanDistance",         datespanDistance,         DataTypes.IntegerType);
+        spark.udf().register("spanDistance",             floatspanDistance,        DataTypes.DoubleType);
+        spark.udf().register("timeDistance",             tstzspanDistance,         DataTypes.DoubleType);
+        spark.udf().register("intspanExpand",            intspanExpand,            DataTypes.StringType);
+        spark.udf().register("bigintspanExpand",         bigintspanExpand,         DataTypes.StringType);
+        spark.udf().register("floatspanExpand",          floatspanExpand,          DataTypes.StringType);
+        spark.udf().register("expand",                   floatspanExpand,          DataTypes.StringType);
         // Spanset predicates
         spark.udf().register("spansetContainsSpan",      spansetContainsSpan,      DataTypes.BooleanType);
         spark.udf().register("spanContainedInSpanset",   spanContainedInSpanset,   DataTypes.BooleanType);

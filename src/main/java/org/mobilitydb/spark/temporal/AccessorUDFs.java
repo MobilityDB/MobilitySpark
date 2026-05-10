@@ -622,6 +622,15 @@ public final class AccessorUDFs {
         // Type-specific text
         spark.udf().register("ttextStartValue",   ttextStartValue,  DataTypes.StringType);
         spark.udf().register("ttextEndValue",     ttextEndValue,    DataTypes.StringType);
+        // MobilityDB SQL bare-name `getValue` aliases — for an instant temporal,
+        // value-at-instant === start-value. Per-type variants for type safety.
+        spark.udf().register("tintGetValue",       tintStartValue,   DataTypes.IntegerType);
+        spark.udf().register("tfloatGetValue",     tfloatStartValue, DataTypes.DoubleType);
+        spark.udf().register("tboolGetValue",      tboolStartValue,  DataTypes.BooleanType);
+        spark.udf().register("ttextGetValue",      ttextStartValue,  DataTypes.StringType);
+        spark.udf().register("tpointGetValue",     tpointStartValue, DataTypes.StringType);
+        // Bare-name alias defaults to tfloat (most common analytics case)
+        spark.udf().register("getValue",           tfloatStartValue, DataTypes.DoubleType);
         // Value restriction
         spark.udf().register("atMin",             atMin,            DataTypes.StringType);
         spark.udf().register("atMax",             atMax,            DataTypes.StringType);

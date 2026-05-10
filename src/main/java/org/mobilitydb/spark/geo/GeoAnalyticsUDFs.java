@@ -421,5 +421,74 @@ public final class GeoAnalyticsUDFs {
         // tpoint analytics
         spark.udf().register("tpointConvexHull",  tpointConvexHull,  DataTypes.StringType);
         spark.udf().register("tpointExpandSpace", tpointExpandSpace, DataTypes.StringType);
+        // tpoint minus geom + bearing direction
+        spark.udf().register("minusGeometry", minusGeometry, DataTypes.StringType);
+        spark.udf().register("tdirection",    tdirection,    DataTypes.DoubleType);
+        // transformPipeline (PROJ pipeline string)
+        spark.udf().register("transformPipeline",      tpointTransformPipeline,  DataTypes.StringType);
+        spark.udf().register("stboxTransformPipeline", stboxTransformPipeline,   DataTypes.StringType);
     }
+
+    public static final org.apache.spark.sql.api.java.UDF4<String, String, Integer, Boolean, String>
+        tpointTransformPipeline = (trip, pipeline, srid, isForward) -> {
+            if (trip == null || pipeline == null) return null;
+            org.mobilitydb.spark.MeosThread.ensureReady();
+            jnr.ffi.Pointer t = functions.temporal_from_hexwkb(trip);
+            if (t == null) return null;
+            try {
+                jnr.ffi.Pointer r = functions.tpoint_transform_pipeline(t, pipeline,
+                    srid == null ? 0 : srid, isForward == null ? true : isForward);
+                if (r == null) return null;
+                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                finally { org.mobilitydb.spark.MeosMemory.free(r); }
+            } finally { org.mobilitydb.spark.MeosMemory.free(t); }
+        };
+
+    public static final org.apache.spark.sql.api.java.UDF4<String, String, Integer, Boolean, String>
+        stboxTransformPipeline = (stboxHex, pipeline, srid, isForward) -> {
+            if (stboxHex == null || pipeline == null) return null;
+            org.mobilitydb.spark.MeosThread.ensureReady();
+            jnr.ffi.Pointer s = functions.stbox_from_hexwkb(stboxHex);
+            if (s == null) return null;
+            try {
+                jnr.ffi.Pointer r = functions.stbox_transform_pipeline(s, pipeline,
+                    srid == null ? 0 : srid, isForward == null ? true : isForward);
+                if (r == null) return null;
+                try {
+                    jnr.ffi.Pointer sizeOut = jnr.ffi.Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                    return functions.stbox_as_hexwkb(r, (byte) 0, sizeOut);
+                } finally { org.mobilitydb.spark.MeosMemory.free(r); }
+            } finally { org.mobilitydb.spark.MeosMemory.free(s); }
+        };
+
+    // minusGeometry(tpoint, geomWkt) → tpoint with geometry subtracted (or null if total)
+    public static final org.apache.spark.sql.api.java.UDF2<String, String, String> minusGeometry =
+        (trip, geomWkt) -> {
+            if (trip == null || geomWkt == null) return null;
+            org.mobilitydb.spark.MeosThread.ensureReady();
+            jnr.ffi.Pointer t = functions.temporal_from_hexwkb(trip);
+            if (t == null) return null;
+            jnr.ffi.Pointer g = functions.geo_from_text(geomWkt, 0);
+            if (g == null) { org.mobilitydb.spark.MeosMemory.free(t); return null; }
+            try {
+                jnr.ffi.Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.tpoint_minus_geom(t, g);
+                if (r == null) return null;
+                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                finally { org.mobilitydb.spark.MeosMemory.free(r); }
+            } finally { org.mobilitydb.spark.MeosMemory.free(t, g); }
+        };
+
+    // tdirection(tpoint) → bearing in radians, or null if not defined
+    public static final org.apache.spark.sql.api.java.UDF1<String, Double> tdirection =
+        (trip) -> {
+            if (trip == null) return null;
+            org.mobilitydb.spark.MeosThread.ensureReady();
+            jnr.ffi.Pointer t = functions.temporal_from_hexwkb(trip);
+            if (t == null) return null;
+            try {
+                jnr.ffi.Pointer outBuf = jnr.ffi.Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                boolean ok = org.mobilitydb.spark.MeosNative.INSTANCE.tpoint_direction(t, outBuf);
+                return ok ? outBuf.getDouble(0) : null;
+            } finally { org.mobilitydb.spark.MeosMemory.free(t); }
+        };
 }

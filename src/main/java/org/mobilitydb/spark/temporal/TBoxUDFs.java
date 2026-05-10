@@ -411,6 +411,42 @@ public final class TBoxUDFs {
             }
         };
 
+    // tboxExpandFloat(hex STRING, value DOUBLE) → STRING
+    // MEOS: tfloatbox_expand (renamed; not in JMEOS-1.4)
+    public static final UDF2<String, Double, String> tboxExpandFloat =
+        (hex, v) -> {
+            if (hex == null || v == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = tboxPtr(hex);
+            if (p == null) return null;
+            Pointer result = org.mobilitydb.spark.MeosNative.INSTANCE.tfloatbox_expand(p, v);
+            if (result == null) return null;
+            try {
+                return functions.tbox_as_hexwkb(result, (byte) 0,
+                    Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8));
+            } finally {
+                MeosMemory.free(result);
+            }
+        };
+
+    // tboxExpandInt(hex STRING, value INT) → STRING
+    // MEOS: tintbox_expand (renamed; not in JMEOS-1.4)
+    public static final UDF2<String, Integer, String> tboxExpandInt =
+        (hex, v) -> {
+            if (hex == null || v == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = tboxPtr(hex);
+            if (p == null) return null;
+            Pointer result = org.mobilitydb.spark.MeosNative.INSTANCE.tintbox_expand(p, v);
+            if (result == null) return null;
+            try {
+                return functions.tbox_as_hexwkb(result, (byte) 0,
+                    Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8));
+            } finally {
+                MeosMemory.free(result);
+            }
+        };
+
     // tboxShiftScaleTime(hex STRING, shiftStr STRING, scaleStr STRING) → STRING
     // Either shiftStr or scaleStr (but not both) may be null.
     public static final UDF3<String, String, String, String> tboxShiftScaleTime =
@@ -489,10 +525,18 @@ public final class TBoxUDFs {
         spark.udf().register("numspanTimestamptzToTbox", numspanTimestamptzToTbox, DataTypes.StringType);
         // TBox time-dimension transforms
         spark.udf().register("tboxExpandTime",           tboxExpandTime,           DataTypes.StringType);
+        spark.udf().register("tboxExpandFloat",          tboxExpandFloat,          DataTypes.StringType);
+        spark.udf().register("tboxExpandInt",            tboxExpandInt,            DataTypes.StringType);
         spark.udf().register("tboxShiftScaleTime",       tboxShiftScaleTime,       DataTypes.StringType);
         // TBox set operations
         spark.udf().register("intersectionTboxTbox",     intersectionTboxTbox,     DataTypes.StringType);
         spark.udf().register("unionTboxTbox",            unionTboxTbox,            DataTypes.StringType);
+        // MobilityDB SQL bare-name aliases for the same lambdas
+        spark.udf().register("tboxIntersection",         intersectionTboxTbox,     DataTypes.StringType);
+        spark.udf().register("tboxUnion",                unionTboxTbox,            DataTypes.StringType);
+        // expandValue alias — covers float/int dispatch via Object input;
+        // most users will use the typed tboxExpandFloat/tboxExpandInt directly.
+        spark.udf().register("expandValue",              tboxExpandFloat,          DataTypes.StringType);
         // TBox topology predicates (tbox, tbox)
         spark.udf().register("tboxContains",    tboxContains,    DataTypes.BooleanType);
         spark.udf().register("tboxContained",   tboxContained,   DataTypes.BooleanType);

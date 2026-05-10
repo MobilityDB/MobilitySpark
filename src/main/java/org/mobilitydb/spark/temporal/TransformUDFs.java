@@ -1010,5 +1010,80 @@ public final class TransformUDFs {
         spark.udf().register("floatspansetRound",      floatspansetRound,      DataTypes.StringType);
         spark.udf().register("intspansetToFloat",      intspansetToFloat,      DataTypes.StringType);
         spark.udf().register("floatspansetToInt",      floatspansetToInt,      DataTypes.StringType);
+
+        // MobilityDB SQL bare-name aliases for the simplify family
+        spark.udf().register("douglasPeuckerSimplify", temporalSimplifyDp,         DataTypes.StringType);
+        spark.udf().register("maxDistSimplify",        temporalSimplifyMaxDist,    DataTypes.StringType);
+        spark.udf().register("minDistSimplify",        temporalSimplifyMinDist,    DataTypes.StringType);
+        spark.udf().register("minTimeDeltaSimplify",   temporalSimplifyMinTdelta,  DataTypes.StringType);
+        // MobilityDB SQL bare-name aliases for span/spanset type conversions
+        spark.udf().register("intspanset",   floatspansetToInt,  DataTypes.StringType);
+        spark.udf().register("floatspanset", intspansetToFloat,  DataTypes.StringType);
+        // shiftScale alias — most common case is floatspan
+        spark.udf().register("shiftScale", floatspanShiftScale, DataTypes.StringType);
+        // tstzset ↔ dateset conversions
+        spark.udf().register("dateset",  tstzsetToDateset, DataTypes.StringType);
+        spark.udf().register("tstzset",  datesetToTstzset, DataTypes.StringType);
+        // span / spanset constructor aliases
+        // (range/multirange NOT registered — they wrap PG-specific types
+        //  with no Spark equivalent; see feedback_pg_specific_types_oos memory)
+        spark.udf().register("span",      temporalToTstzspan, DataTypes.StringType);
+        spark.udf().register("spanset",   spanToSpanset,      DataTypes.StringType);
     }
+
+    public static final UDF1<String, String> temporalToTstzspan =
+        hex -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.temporal_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.temporal_to_tstzspan(p);
+                if (r == null) return null;
+                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, String> spanToSpanset =
+        hex -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.span_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.span_to_spanset(p);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, String> tstzsetToDateset =
+        hex -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.tstzset_to_dateset(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, String> datesetToTstzset =
+        hex -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.dateset_to_tstzset(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
 }

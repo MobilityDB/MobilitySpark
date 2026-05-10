@@ -185,5 +185,96 @@ public final class TTextUDFs {
         spark.udf().register("tleTtextText", tleTtextText, DataTypes.StringType);
         spark.udf().register("tgtTtextText", tgtTtextText, DataTypes.StringType);
         spark.udf().register("tgeTtextText", tgeTtextText, DataTypes.StringType);
+
+        // ttext concatenation (MEOS textcat_ttext_*)
+        spark.udf().register("ttextCatTtextText", ttextCatTtextText, DataTypes.StringType);
+        spark.udf().register("ttextCatTextTtext", ttextCatTextTtext, DataTypes.StringType);
+        spark.udf().register("ttextCatTtextTtext", ttextCatTtextTtext, DataTypes.StringType);
+        // MobilityDB SQL bare-name alias
+        spark.udf().register("ttextCat", ttextCatTtextTtext, DataTypes.StringType);
+        // textset concatenation
+        spark.udf().register("textsetCatTextsetText", textsetCatTextsetText, DataTypes.StringType);
+        spark.udf().register("textsetCatTextTextset", textsetCatTextTextset, DataTypes.StringType);
+        spark.udf().register("textsetCat",            textsetCatTextsetText, DataTypes.StringType);
     }
+
+    public static final UDF2<String, String, String> textsetCatTextsetText =
+        (setHex, txt) -> {
+            if (setHex == null || txt == null) return null;
+            MeosThread.ensureReady();
+            Pointer s = functions.set_from_hexwkb(setHex);
+            if (s == null) return null;
+            Pointer t = functions.cstring2text(txt);
+            if (t == null) { MeosMemory.free(s); return null; }
+            try {
+                Pointer r = functions.textcat_textset_text(s, t);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(s, t); }
+        };
+
+    public static final UDF2<String, String, String> textsetCatTextTextset =
+        (txt, setHex) -> {
+            if (txt == null || setHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer t = functions.cstring2text(txt);
+            if (t == null) return null;
+            Pointer s = functions.set_from_hexwkb(setHex);
+            if (s == null) { MeosMemory.free(t); return null; }
+            try {
+                Pointer r = functions.textcat_text_textset(t, s);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(t, s); }
+        };
+
+    public static final UDF2<String, String, String> ttextCatTtextText =
+        (ttextHex, txt) -> {
+            if (ttextHex == null || txt == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.temporal_from_hexwkb(ttextHex);
+            if (p == null) return null;
+            Pointer t = functions.cstring2text(txt);
+            if (t == null) { MeosMemory.free(p); return null; }
+            try {
+                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.textcat_ttext_text(p, t);
+                if (r == null) return null;
+                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p, t); }
+        };
+
+    public static final UDF2<String, String, String> ttextCatTextTtext =
+        (txt, ttextHex) -> {
+            if (txt == null || ttextHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer t = functions.cstring2text(txt);
+            if (t == null) return null;
+            Pointer p = functions.temporal_from_hexwkb(ttextHex);
+            if (p == null) { MeosMemory.free(t); return null; }
+            try {
+                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.textcat_text_ttext(t, p);
+                if (r == null) return null;
+                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(t, p); }
+        };
+
+    public static final UDF2<String, String, String> ttextCatTtextTtext =
+        (h1, h2) -> {
+            if (h1 == null || h2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(h1);
+            if (p1 == null) return null;
+            Pointer p2 = functions.temporal_from_hexwkb(h2);
+            if (p2 == null) { MeosMemory.free(p1); return null; }
+            try {
+                Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.textcat_ttext_ttext(p1, p2);
+                if (r == null) return null;
+                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p1, p2); }
+        };
 }
