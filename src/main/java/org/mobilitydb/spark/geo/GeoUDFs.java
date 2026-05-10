@@ -199,6 +199,261 @@ public final class GeoUDFs {
         };
 
     // ------------------------------------------------------------------
+    // eDisjoint(trip STRING, geomWkt STRING) → BOOLEAN
+    //
+    // Returns true if the moving object is ever disjoint from the geometry.
+    //
+    // MEOS: edisjoint_tgeo_geo(const Temporal *, const GSERIALIZED *) → int
+    // ------------------------------------------------------------------
+    public static final UDF2<String, String, Boolean> eDisjoint =
+        (trip, geomWkt) -> {
+            if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer bbox = functions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                MeosMemory.free(bbox);
+                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                if (gptr == null) return null;
+                try {
+                    return functions.edisjoint_tgeo_geo(tptr, gptr) == 1;
+                } finally {
+                    MeosMemory.free(gptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // eTouches(trip STRING, geomWkt STRING) → BOOLEAN
+    //
+    // Returns true if the moving object ever touches (shares boundary with)
+    // the static geometry.
+    //
+    // MEOS: etouches_tgeo_geo(const Temporal *, const GSERIALIZED *) → int
+    // ------------------------------------------------------------------
+    public static final UDF2<String, String, Boolean> eTouches =
+        (trip, geomWkt) -> {
+            if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer bbox = functions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                MeosMemory.free(bbox);
+                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                if (gptr == null) return null;
+                try {
+                    return functions.etouches_tgeo_geo(tptr, gptr) == 1;
+                } finally {
+                    MeosMemory.free(gptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // eCovers(trip STRING, geomWkt STRING) → BOOLEAN
+    //
+    // Returns true if the moving object ever covers the static geometry.
+    //
+    // MEOS: ecovers_tgeo_geo(const Temporal *, const GSERIALIZED *) → int
+    // ------------------------------------------------------------------
+    public static final UDF2<String, String, Boolean> eCovers =
+        (trip, geomWkt) -> {
+            if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer bbox = functions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                MeosMemory.free(bbox);
+                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                if (gptr == null) return null;
+                try {
+                    return functions.ecovers_tgeo_geo(tptr, gptr) == 1;
+                } finally {
+                    MeosMemory.free(gptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // eDisjointTgeoTgeo(trip1 STRING, trip2 STRING) → BOOLEAN
+    // eIntersectsTgeoTgeo(trip1 STRING, trip2 STRING) → BOOLEAN
+    //
+    // MEOS: edisjoint_tgeo_tgeo, eintersects_tgeo_tgeo
+    // ------------------------------------------------------------------
+    public static final UDF2<String, String, Boolean> eDisjointTgeoTgeo =
+        (trip1, trip2) -> {
+            if (trip1 == null || trip2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                if (p2 == null) return null;
+                try {
+                    return functions.edisjoint_tgeo_tgeo(p1, p2) == 1;
+                } finally {
+                    MeosMemory.free(p2);
+                }
+            } finally {
+                MeosMemory.free(p1);
+            }
+        };
+
+    public static final UDF2<String, String, Boolean> eIntersectsTgeoTgeo =
+        (trip1, trip2) -> {
+            if (trip1 == null || trip2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                if (p2 == null) return null;
+                try {
+                    return functions.eintersects_tgeo_tgeo(p1, p2) == 1;
+                } finally {
+                    MeosMemory.free(p2);
+                }
+            } finally {
+                MeosMemory.free(p1);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // aIntersects(trip STRING, geomWkt STRING) → BOOLEAN
+    // aDisjoint(trip STRING, geomWkt STRING) → BOOLEAN
+    //
+    // Returns true if the moving object always intersects / is always
+    // disjoint from the static geometry.
+    //
+    // MEOS: aintersects_tgeo_geo, adisjoint_tgeo_geo
+    // ------------------------------------------------------------------
+    public static final UDF2<String, String, Boolean> aIntersects =
+        (trip, geomWkt) -> {
+            if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer bbox = functions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                MeosMemory.free(bbox);
+                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                if (gptr == null) return null;
+                try {
+                    return functions.aintersects_tgeo_geo(tptr, gptr) == 1;
+                } finally {
+                    MeosMemory.free(gptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    public static final UDF2<String, String, Boolean> aDisjoint =
+        (trip, geomWkt) -> {
+            if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer bbox = functions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                MeosMemory.free(bbox);
+                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                if (gptr == null) return null;
+                try {
+                    return functions.adisjoint_tgeo_geo(tptr, gptr) == 1;
+                } finally {
+                    MeosMemory.free(gptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // aDwithin(trip1 STRING, trip2 STRING, dist DOUBLE) → BOOLEAN
+    // eDwithinGeo(trip STRING, geomWkt STRING, dist DOUBLE) → BOOLEAN
+    // aDwithinGeo(trip STRING, geomWkt STRING, dist DOUBLE) → BOOLEAN
+    //
+    // MEOS: adwithin_tgeo_tgeo, edwithin_tgeo_geo, adwithin_tgeo_geo
+    // ------------------------------------------------------------------
+    public static final UDF3<String, String, Number, Boolean> aDwithin =
+        (trip1, trip2, dist) -> {
+            if (trip1 == null || trip2 == null || dist == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                if (p2 == null) return null;
+                try {
+                    return functions.adwithin_tgeo_tgeo(p1, p2, dist.doubleValue()) == 1;
+                } finally {
+                    MeosMemory.free(p2);
+                }
+            } finally {
+                MeosMemory.free(p1);
+            }
+        };
+
+    public static final UDF3<String, String, Number, Boolean> eDwithinGeo =
+        (trip, geomWkt, dist) -> {
+            if (trip == null || geomWkt == null || dist == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer bbox = functions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                MeosMemory.free(bbox);
+                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                if (gptr == null) return null;
+                try {
+                    return functions.edwithin_tgeo_geo(tptr, gptr, dist.doubleValue()) == 1;
+                } finally {
+                    MeosMemory.free(gptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    public static final UDF3<String, String, Number, Boolean> aDwithinGeo =
+        (trip, geomWkt, dist) -> {
+            if (trip == null || geomWkt == null || dist == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer bbox = functions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                MeosMemory.free(bbox);
+                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                if (gptr == null) return null;
+                try {
+                    return functions.adwithin_tgeo_geo(tptr, gptr, dist.doubleValue()) == 1;
+                } finally {
+                    MeosMemory.free(gptr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // eContains(geomWKT STRING, trip STRING) → BOOLEAN
     //
     // Returns true if the static geometry ever contains the moving object.
@@ -422,9 +677,19 @@ public final class GeoUDFs {
 
     public static void registerAll(org.apache.spark.sql.SparkSession spark) {
         spark.udf().register("eIntersects",             eIntersects,             DataTypes.BooleanType);
+        spark.udf().register("eDisjoint",               eDisjoint,               DataTypes.BooleanType);
+        spark.udf().register("eTouches",                eTouches,                DataTypes.BooleanType);
+        spark.udf().register("eCovers",                 eCovers,                 DataTypes.BooleanType);
         spark.udf().register("eContains",               eContains,               DataTypes.BooleanType);
+        spark.udf().register("eDisjointTgeoTgeo",       eDisjointTgeoTgeo,       DataTypes.BooleanType);
+        spark.udf().register("eIntersectsTgeoTgeo",     eIntersectsTgeoTgeo,     DataTypes.BooleanType);
         spark.udf().register("nearestApproachDistance", nearestApproachDistance, DataTypes.DoubleType);
         spark.udf().register("eDwithin",                eDwithin,                DataTypes.BooleanType);
+        spark.udf().register("eDwithinGeo",             eDwithinGeo,             DataTypes.BooleanType);
+        spark.udf().register("aIntersects",             aIntersects,             DataTypes.BooleanType);
+        spark.udf().register("aDisjoint",               aDisjoint,               DataTypes.BooleanType);
+        spark.udf().register("aDwithin",                aDwithin,                DataTypes.BooleanType);
+        spark.udf().register("aDwithinGeo",             aDwithinGeo,             DataTypes.BooleanType);
         spark.udf().register("tgeompoint",              tgeompoint,              DataTypes.StringType);
         spark.udf().register("trajectory",              trajectory,              DataTypes.StringType);
         spark.udf().register("geomFromText",            geomFromText,            DataTypes.StringType);
