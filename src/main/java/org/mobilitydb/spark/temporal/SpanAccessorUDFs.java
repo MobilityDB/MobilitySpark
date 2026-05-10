@@ -27,9 +27,11 @@ package org.mobilitydb.spark.temporal;
 
 import functions.functions;
 import jnr.ffi.Pointer;
+import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
 
 import java.time.OffsetDateTime;
@@ -243,6 +245,93 @@ public final class SpanAccessorUDFs {
         };
 
     // ------------------------------------------------------------------
+    // Spanset inclusivity flags
+    // ------------------------------------------------------------------
+
+    // spansetLowerInc(hex STRING) → BOOLEAN  (lower bound of the first span)
+    // MEOS: spanset_lower_inc(const SpanSet *) → bool
+    public static final UDF1<String, Boolean> spansetLowerInc =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            return functions.spanset_lower_inc(p);
+        };
+
+    // spansetUpperInc(hex STRING) → BOOLEAN  (upper bound of the last span)
+    // MEOS: spanset_upper_inc(const SpanSet *) → bool
+    public static final UDF1<String, Boolean> spansetUpperInc =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            return functions.spanset_upper_inc(p);
+        };
+
+    // ------------------------------------------------------------------
+    // Span-to-spanset conversion
+    // ------------------------------------------------------------------
+
+    // spanToSpanset(hex STRING) → STRING  (wrap a span in a single-element spanset)
+    // MEOS: span_to_spanset(const Span *) → SpanSet *
+    public static final UDF1<String, String> spanToSpanset =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.span_from_hexwkb(hex);
+            if (p == null) return null;
+            Pointer ss = functions.span_to_spanset(p);
+            if (ss == null) return null;
+            return functions.spanset_as_hexwkb(ss, (byte) 0);
+        };
+
+    // ------------------------------------------------------------------
+    // TstzSpanSet temporal boundary accessors
+    //
+    // MEOS: tstzspanset_lower, tstzspanset_upper,
+    //       tstzspanset_start_timestamptz, tstzspanset_end_timestamptz
+    // All return OffsetDateTime (PG-epoch microseconds via toEpochSecond()).
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, java.sql.Timestamp> tstzspansetLower =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            return odtToTimestamp(functions.tstzspanset_lower(p));
+        };
+
+    public static final UDF1<String, java.sql.Timestamp> tstzspansetUpper =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            return odtToTimestamp(functions.tstzspanset_upper(p));
+        };
+
+    public static final UDF1<String, java.sql.Timestamp> tstzspansetStartTimestamptz =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            return odtToTimestamp(functions.tstzspanset_start_timestamptz(p));
+        };
+
+    public static final UDF1<String, java.sql.Timestamp> tstzspansetEndTimestamptz =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            return odtToTimestamp(functions.tstzspanset_end_timestamptz(p));
+        };
+
+    // ------------------------------------------------------------------
     // Set accessors
     // ------------------------------------------------------------------
 
@@ -270,9 +359,39 @@ public final class SpanAccessorUDFs {
         spark.udf().register("tstzspanUpper",    tstzspanUpper,    DataTypes.TimestampType);
         spark.udf().register("spanLowerInc",     spanLowerInc,     DataTypes.BooleanType);
         spark.udf().register("spanUpperInc",     spanUpperInc,     DataTypes.BooleanType);
-        spark.udf().register("spansetNumSpans",  spansetNumSpans,  DataTypes.IntegerType);
-        spark.udf().register("spansetStartSpan", spansetStartSpan, DataTypes.StringType);
-        spark.udf().register("spansetEndSpan",   spansetEndSpan,   DataTypes.StringType);
-        spark.udf().register("setNumValues",     setNumValues,     DataTypes.IntegerType);
+        spark.udf().register("spansetNumSpans",   spansetNumSpans,   DataTypes.IntegerType);
+        spark.udf().register("spansetStartSpan", spansetStartSpan,  DataTypes.StringType);
+        spark.udf().register("spansetEndSpan",   spansetEndSpan,    DataTypes.StringType);
+        spark.udf().register("spansetLowerInc",  spansetLowerInc,   DataTypes.BooleanType);
+        spark.udf().register("spansetUpperInc",  spansetUpperInc,   DataTypes.BooleanType);
+        spark.udf().register("spanToSpanset",    spanToSpanset,     DataTypes.StringType);
+        spark.udf().register("setNumValues",     setNumValues,      DataTypes.IntegerType);
+        // TstzSpanSet temporal boundary accessors
+        spark.udf().register("tstzspansetLower",             tstzspansetLower,             DataTypes.TimestampType);
+        spark.udf().register("tstzspansetUpper",             tstzspansetUpper,             DataTypes.TimestampType);
+        spark.udf().register("tstzspansetStartTimestamptz",  tstzspansetStartTimestamptz,  DataTypes.TimestampType);
+        spark.udf().register("tstzspansetEndTimestamptz",    tstzspansetEndTimestamptz,    DataTypes.TimestampType);
+        // spanset nth-span accessor
+        spark.udf().register("spansetSpanN", spansetSpanN, DataTypes.StringType);
     }
+
+    // ------------------------------------------------------------------
+    // spanset_span_n(spanset, n) → span hex-WKB  (1-based index)
+    // MEOS: spanset_span_n(SpanSet *, int) → Span * (view — must NOT free)
+    // ------------------------------------------------------------------
+
+    public static final UDF2<String, Integer, String> spansetSpanN =
+        (hex, n) -> {
+            if (hex == null || n == null) return null;
+            MeosThread.ensureReady();
+            Pointer ss = functions.spanset_from_hexwkb(hex);
+            if (ss == null) return null;
+            try {
+                Pointer span = functions.spanset_span_n(ss, n);
+                if (span == null) return null;
+                return functions.span_as_hexwkb(span, (byte) 0);
+            } finally {
+                MeosMemory.free(ss);
+            }
+        };
 }

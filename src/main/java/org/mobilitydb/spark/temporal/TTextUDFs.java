@@ -27,9 +27,11 @@ package org.mobilitydb.spark.temporal;
 
 import functions.functions;
 import jnr.ffi.Pointer;
+import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
 
 /**
@@ -77,9 +79,111 @@ public final class TTextUDFs {
             return functions.temporal_as_hexwkb(r, (byte) 0);
         };
 
+    // ------------------------------------------------------------------
+    // ttext comparison operators  (scalar text vs ttext)
+    //
+    // MEOS: teq/tne/tlt/tle/tgt/tge_text_ttext(text *, Temporal *) → Temporal *
+    //       teq/tne/tlt/tle/tgt/tge_ttext_text(Temporal *, text *) → Temporal *
+    //
+    // text * is created from a String via a dummy single-instant ttext and
+    // ttext_value_n, since text_in is not exposed by JMEOS-1.4.
+    //
+    // Both operators return a tbool hex-WKB (temporal boolean).
+    // ------------------------------------------------------------------
+
+    // Helper: allocate a MEOS text* from a Java String.
+    // Returns {textPtr, dummyTtext}; caller must MeosMemory.free() both.
+    private static Pointer[] makeTextPtr(String val) {
+        Pointer dummy = functions.ttext_in(val + "@2000-01-01 00:00:00+00");
+        if (dummy == null) return null;
+        Pointer textPtr = functions.ttext_value_n(dummy, 1);
+        if (textPtr == null) { MeosMemory.free(dummy); return null; }
+        return new Pointer[]{textPtr, dummy};
+    }
+
+    private static String ttextCompare(String textVal, String ttextHex, java.util.function.BiFunction<Pointer, Pointer, Pointer> fn) {
+        if (textVal == null || ttextHex == null) return null;
+        MeosThread.ensureReady();
+        Pointer[] tp = makeTextPtr(textVal);
+        if (tp == null) return null;
+        Pointer tptr = functions.temporal_from_hexwkb(ttextHex);
+        if (tptr == null) { MeosMemory.free(tp[0]); MeosMemory.free(tp[1]); return null; }
+        try {
+            Pointer result = fn.apply(tp[0], tptr);
+            if (result == null) return null;
+            try { return functions.temporal_as_hexwkb(result, (byte) 0); }
+            finally { MeosMemory.free(result); }
+        } finally {
+            MeosMemory.free(tptr);
+            MeosMemory.free(tp[0]);
+            MeosMemory.free(tp[1]);
+        }
+    }
+
+    private static String ttextCompareRev(String ttextHex, String textVal, java.util.function.BiFunction<Pointer, Pointer, Pointer> fn) {
+        if (ttextHex == null || textVal == null) return null;
+        MeosThread.ensureReady();
+        Pointer tptr = functions.temporal_from_hexwkb(ttextHex);
+        if (tptr == null) return null;
+        Pointer[] tp = makeTextPtr(textVal);
+        if (tp == null) { MeosMemory.free(tptr); return null; }
+        try {
+            Pointer result = fn.apply(tptr, tp[0]);
+            if (result == null) return null;
+            try { return functions.temporal_as_hexwkb(result, (byte) 0); }
+            finally { MeosMemory.free(result); }
+        } finally {
+            MeosMemory.free(tptr);
+            MeosMemory.free(tp[0]);
+            MeosMemory.free(tp[1]);
+        }
+    }
+
+    // text op ttext
+    public static final UDF2<String, String, String> teqTextTtext =
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::teq_text_ttext);
+    public static final UDF2<String, String, String> tneTextTtext =
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::tne_text_ttext);
+    public static final UDF2<String, String, String> tltTextTtext =
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::tlt_text_ttext);
+    public static final UDF2<String, String, String> tleTextTtext =
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::tle_text_ttext);
+    public static final UDF2<String, String, String> tgtTextTtext =
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::tgt_text_ttext);
+    public static final UDF2<String, String, String> tgeTextTtext =
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::tge_text_ttext);
+
+    // ttext op text
+    public static final UDF2<String, String, String> teqTtextText =
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::teq_ttext_text);
+    public static final UDF2<String, String, String> tneTtextText =
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::tne_ttext_text);
+    public static final UDF2<String, String, String> tltTtextText =
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::tlt_ttext_text);
+    public static final UDF2<String, String, String> tleTtextText =
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::tle_ttext_text);
+    public static final UDF2<String, String, String> tgtTtextText =
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::tgt_ttext_text);
+    public static final UDF2<String, String, String> tgeTtextText =
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::tge_ttext_text);
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("ttextUpper",   ttextUpper,   DataTypes.StringType);
         spark.udf().register("ttextLower",   ttextLower,   DataTypes.StringType);
         spark.udf().register("ttextInitcap", ttextInitcap, DataTypes.StringType);
+        // text op ttext comparison operators
+        spark.udf().register("teqTextTtext", teqTextTtext, DataTypes.StringType);
+        spark.udf().register("tneTextTtext", tneTextTtext, DataTypes.StringType);
+        spark.udf().register("tltTextTtext", tltTextTtext, DataTypes.StringType);
+        spark.udf().register("tleTextTtext", tleTextTtext, DataTypes.StringType);
+        spark.udf().register("tgtTextTtext", tgtTextTtext, DataTypes.StringType);
+        spark.udf().register("tgeTextTtext", tgeTextTtext, DataTypes.StringType);
+        // ttext op text comparison operators
+        spark.udf().register("teqTtextText", teqTtextText, DataTypes.StringType);
+        spark.udf().register("tneTtextText", tneTtextText, DataTypes.StringType);
+        spark.udf().register("tltTtextText", tltTtextText, DataTypes.StringType);
+        spark.udf().register("tleTtextText", tleTtextText, DataTypes.StringType);
+        spark.udf().register("tgtTtextText", tgtTtextText, DataTypes.StringType);
+        spark.udf().register("tgeTtextText", tgeTtextText, DataTypes.StringType);
     }
 }

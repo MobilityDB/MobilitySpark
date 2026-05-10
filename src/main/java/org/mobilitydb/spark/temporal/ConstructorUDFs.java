@@ -28,9 +28,11 @@ package org.mobilitydb.spark.temporal;
 import functions.functions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
+import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
 
 /**
@@ -319,6 +321,104 @@ public final class ConstructorUDFs {
             return functions.temporal_as_hexwkb(p, (byte) 0);
         };
 
+    // ------------------------------------------------------------------
+    // Constant temporal constructors  (scalar value + reference temporal)
+    //
+    // Each function creates a temporal that is constant at the given value
+    // over the same time structure as the reference temporal.
+    //
+    // MEOS: tbool_from_base_temp, tint_from_base_temp, tfloat_from_base_temp,
+    //       ttext_from_base_temp  (meos.h)
+    // ------------------------------------------------------------------
+
+    // tboolFromBaseTemp(val BOOLEAN, refHex STRING) → STRING
+    public static final UDF2<Boolean, String, String> tboolFromBaseTemp =
+        (val, refHex) -> {
+            if (val == null || refHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer ref = functions.temporal_from_hexwkb(refHex);
+            if (ref == null) return null;
+            try {
+                Pointer result = functions.tbool_from_base_temp(val, ref);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ref);
+            }
+        };
+
+    // tintFromBaseTemp(val INT, refHex STRING) → STRING
+    public static final UDF2<Integer, String, String> tintFromBaseTemp =
+        (val, refHex) -> {
+            if (val == null || refHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer ref = functions.temporal_from_hexwkb(refHex);
+            if (ref == null) return null;
+            try {
+                Pointer result = functions.tint_from_base_temp(val, ref);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ref);
+            }
+        };
+
+    // tfloatFromBaseTemp(val DOUBLE, refHex STRING) → STRING
+    public static final UDF2<Double, String, String> tfloatFromBaseTemp =
+        (val, refHex) -> {
+            if (val == null || refHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer ref = functions.temporal_from_hexwkb(refHex);
+            if (ref == null) return null;
+            try {
+                Pointer result = functions.tfloat_from_base_temp(val, ref);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ref);
+            }
+        };
+
+    // ttextFromBaseTemp(val STRING, refHex STRING) → STRING
+    // Uses ttext_in + ttext_value_n to materialise a text* from val.
+    public static final UDF2<String, String, String> ttextFromBaseTemp =
+        (val, refHex) -> {
+            if (val == null || refHex == null) return null;
+            MeosThread.ensureReady();
+            // Wrap val in a single-instant ttext so we can extract a text* from it.
+            Pointer dummyTtext = functions.ttext_in(val + "@2000-01-01 00:00:00+00");
+            if (dummyTtext == null) return null;
+            Pointer textPtr = null;
+            Pointer ref = null;
+            Pointer result = null;
+            try {
+                textPtr = functions.ttext_value_n(dummyTtext, 1);
+                if (textPtr == null) return null;
+                ref = functions.temporal_from_hexwkb(refHex);
+                if (ref == null) return null;
+                result = functions.ttext_from_base_temp(textPtr, ref);
+                if (result == null) return null;
+                return functions.temporal_as_hexwkb(result, (byte) 0);
+            } finally {
+                MeosMemory.free(dummyTtext);
+                if (textPtr != null) MeosMemory.free(textPtr);
+                if (ref != null) MeosMemory.free(ref);
+                if (result != null) MeosMemory.free(result);
+            }
+        };
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("tint",                tint,                DataTypes.StringType);
         spark.udf().register("tfloat",              tfloat,              DataTypes.StringType);
@@ -344,5 +444,10 @@ public final class ConstructorUDFs {
         spark.udf().register("ttextFromMfjson",     ttextFromMfjson,     DataTypes.StringType);
         spark.udf().register("tgeompointFromMfjson",tgeompointFromMfjson,DataTypes.StringType);
         spark.udf().register("tgeogpointFromMfjson",tgeogpointFromMfjson,DataTypes.StringType);
+        // Constant temporal constructors
+        spark.udf().register("tboolFromBaseTemp",   tboolFromBaseTemp,   DataTypes.StringType);
+        spark.udf().register("tintFromBaseTemp",    tintFromBaseTemp,    DataTypes.StringType);
+        spark.udf().register("tfloatFromBaseTemp",  tfloatFromBaseTemp,  DataTypes.StringType);
+        spark.udf().register("ttextFromBaseTemp",   ttextFromBaseTemp,   DataTypes.StringType);
     }
 }

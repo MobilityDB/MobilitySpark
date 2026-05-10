@@ -39,6 +39,8 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Spark SQL UDFs for temporal structure and value accessors not covered by
@@ -618,6 +620,34 @@ public final class MoreAccessorUDFs {
             }
         };
 
+    // ttextValueAtTimestamptz(tval STRING, ts TIMESTAMP) → STRING
+    // MEOS: ttext_value_at_timestamptz(temp, t, strict, text **value) → bool
+    //       outBuf holds a text* (MEOS-allocated) — use getPointer(0) then free.
+    public static final UDF2<String, Timestamp, String> ttextValueAtTimestamptz =
+        (tval, ts) -> {
+            if (tval == null || ts == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(tval);
+            if (ptr == null) return null;
+            try {
+                long pgEpochMicros = (ts.getTime() - PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
+                OffsetDateTime odt = OffsetDateTime.ofInstant(
+                    Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
+                Pointer outBuf = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                boolean found = functions.ttext_value_at_timestamptz(ptr, odt, false, outBuf);
+                if (!found) return null;
+                Pointer textPtr = outBuf.getPointer(0);
+                if (textPtr == null) return null;
+                try {
+                    return functions.text_out(textPtr);
+                } finally {
+                    MeosMemory.free(textPtr);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
     public static void registerAll(SparkSession spark) {
         // Subtype
         spark.udf().register("temporalSubtype",  temporalSubtype,  DataTypes.StringType);
@@ -657,5 +687,124 @@ public final class MoreAccessorUDFs {
         spark.udf().register("tboolValueAtTimestamptz",      tboolValueAtTimestamptz,      DataTypes.BooleanType);
         spark.udf().register("tintValueAtTimestamptz",       tintValueAtTimestamptz,       DataTypes.IntegerType);
         spark.udf().register("tfloatValueAtTimestamptz",     tfloatValueAtTimestamptz,     DataTypes.DoubleType);
+        spark.udf().register("ttextValueAtTimestamptz",      ttextValueAtTimestamptz,      DataTypes.StringType);
+        // Array-returning accessors
+        spark.udf().register("temporalTimestamps",   temporalTimestamps,
+            DataTypes.createArrayType(DataTypes.TimestampType));
+        spark.udf().register("tboolValues",          tboolValues,
+            DataTypes.createArrayType(DataTypes.BooleanType));
+        spark.udf().register("tintValues",           tintValues,
+            DataTypes.createArrayType(DataTypes.IntegerType));
+        spark.udf().register("tfloatValues",         tfloatValues,
+            DataTypes.createArrayType(DataTypes.DoubleType));
     }
+
+    // ------------------------------------------------------------------
+    // Array-returning accessors
+    //
+    // temporalTimestamps: temporal_timestamps(temp, sizeOut) → TimestampTz[]
+    // tboolValues:        tbool_values(temp, sizeOut) → bool[]
+    //
+    // MEOS convention: sizeOut is int * (4 bytes); the returned C array is
+    // palloc'd and must be freed after use.
+    // ------------------------------------------------------------------
+
+    private static final long PG_UNIX_OFFSET_MS = 946684800L * 1000L;
+
+    // temporalTimestamps(hex STRING) → ARRAY<TIMESTAMP>
+    // Returns the distinct timestamps at which the temporal has an instant.
+    public static final UDF1<String, List<Timestamp>> temporalTimestamps =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(hex);
+            if (ptr == null) return null;
+            try {
+                Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                Pointer arrPtr = functions.temporal_timestamps(ptr, sizeOut);
+                if (arrPtr == null) return null;
+                int count = sizeOut.getInt(0);
+                List<Timestamp> result = new ArrayList<>(count);
+                for (int i = 0; i < count; i++) {
+                    long pgMicros = arrPtr.getLong((long) i * 8);
+                    result.add(new Timestamp(pgMicros / 1000L + PG_UNIX_OFFSET_MS));
+                }
+                MeosMemory.free(arrPtr);
+                return result;
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tboolValues(hex STRING) → ARRAY<BOOLEAN>
+    // Returns the distinct boolean values present in a tbool.
+    public static final UDF1<String, List<Boolean>> tboolValues =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(hex);
+            if (ptr == null) return null;
+            try {
+                Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                Pointer arrPtr = functions.tbool_values(ptr, sizeOut);
+                if (arrPtr == null) return null;
+                int count = sizeOut.getInt(0);
+                List<Boolean> result = new ArrayList<>(count);
+                for (int i = 0; i < count; i++) {
+                    result.add(arrPtr.getByte(i) != 0);
+                }
+                MeosMemory.free(arrPtr);
+                return result;
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tintValues(hex STRING) → ARRAY<INTEGER>
+    // Returns the distinct integer values present in a tint.
+    public static final UDF1<String, List<Integer>> tintValues =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(hex);
+            if (ptr == null) return null;
+            try {
+                Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                Pointer arrPtr = functions.tint_values(ptr, sizeOut);
+                if (arrPtr == null) return null;
+                int count = sizeOut.getInt(0);
+                List<Integer> result = new ArrayList<>(count);
+                for (int i = 0; i < count; i++) {
+                    result.add(arrPtr.getInt((long) i * 4));
+                }
+                MeosMemory.free(arrPtr);
+                return result;
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tfloatValues(hex STRING) → ARRAY<DOUBLE>
+    // Returns the distinct float values present in a tfloat.
+    public static final UDF1<String, List<Double>> tfloatValues =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(hex);
+            if (ptr == null) return null;
+            try {
+                Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                Pointer arrPtr = functions.tfloat_values(ptr, sizeOut);
+                if (arrPtr == null) return null;
+                int count = sizeOut.getInt(0);
+                List<Double> result = new ArrayList<>(count);
+                for (int i = 0; i < count; i++) {
+                    result.add(arrPtr.getDouble((long) i * 8));
+                }
+                MeosMemory.free(arrPtr);
+                return result;
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
 }

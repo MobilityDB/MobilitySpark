@@ -42,6 +42,7 @@ class BoolOpsUDFsExtTest {
 
     private static String TFLOAT_A;
     private static String TFLOAT_B;
+    private static String TBOOL_HEX;
 
     @BeforeAll
     static void initMeos() {
@@ -52,6 +53,8 @@ class BoolOpsUDFsExtTest {
             tfloat_in("[1.0@2020-01-01, 3.0@2020-01-03]"), (byte) 0);
         TFLOAT_B = temporal_as_hexwkb(
             tfloat_in("[2.0@2020-01-01, 2.0@2020-01-03]"), (byte) 0);
+        TBOOL_HEX = temporal_as_hexwkb(
+            tbool_in("[true@2020-01-01 00:00:00+00, false@2020-01-02 00:00:00+00]"), (byte) 0);
     }
 
     @Test @Order(1)
@@ -102,5 +105,21 @@ class BoolOpsUDFsExtTest {
         assertNull(BoolOpsUDFs.tneTemporalTemporal.call(TFLOAT_A, null));
         assertNull(BoolOpsUDFs.tltTemporalTemporal.call(null, TFLOAT_B));
         assertNull(BoolOpsUDFs.tgeTemporalTemporal.call(null, null));
+    }
+
+    // ------------------------------------------------------------------
+    // tnotTbool
+    // ------------------------------------------------------------------
+
+    @Test @Order(8)
+    void tnotTbool_returns_nonnull_hexwkb() throws Exception {
+        String r = BoolOpsUDFs.tnotTbool.call(TBOOL_HEX);
+        assertNotNull(r, "tnotTbool must return non-null");
+        assertFalse(r.isBlank());
+    }
+
+    @Test @Order(9)
+    void tnotTbool_null_returns_null() throws Exception {
+        assertNull(BoolOpsUDFs.tnotTbool.call(null));
     }
 }
