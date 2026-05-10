@@ -65,6 +65,22 @@ public final class BoolOpsUDFs {
     }
 
     // ------------------------------------------------------------------
+    // tnot: temporal NOT
+    // MEOS: tnot_tbool(const Temporal *) → Temporal *
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, String> tnotTbool =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                return hexOut(functions.tnot_tbool(ptr));
+            } finally { MeosMemory.free(ptr); }
+        };
+
+    // ------------------------------------------------------------------
     // tand: temporal AND
     // MEOS: tand_tbool_bool / tand_bool_tbool / tand_tbool_tbool
     // ------------------------------------------------------------------
@@ -341,6 +357,8 @@ public final class BoolOpsUDFs {
     // ------------------------------------------------------------------
 
     public static void registerAll(SparkSession spark) {
+        // tnot
+        spark.udf().register("tnotTbool",            tnotTbool,            DataTypes.StringType);
         // tand
         spark.udf().register("tandBool",             tandBool,             DataTypes.StringType);
         spark.udf().register("tandBoolTbool",        tandBoolTbool,        DataTypes.StringType);

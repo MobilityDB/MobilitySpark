@@ -33,6 +33,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
+import java.util.function.BiFunction;
 
 /**
  * Spark SQL UDFs for temporal comparisons and ever/always predicate lifting.
@@ -473,6 +474,190 @@ public final class PredicateUDFs {
             return intToBool(functions.always_ge_temporal_temporal(p1, p2));
         };
 
+    // ------------------------------------------------------------------
+    // Scalar-first reversed forms: (int OP tint), (float OP tfloat)
+    // MEOS: always_eq_int_tint(int, Temporal *) → int, etc.
+    // ------------------------------------------------------------------
+
+    public static final UDF2<Integer, String, Boolean> alwaysEqIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_eq_int_tint(v, p)); };
+    public static final UDF2<Integer, String, Boolean> alwaysNeIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ne_int_tint(v, p)); };
+    public static final UDF2<Integer, String, Boolean> alwaysLtIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_lt_int_tint(v, p)); };
+    public static final UDF2<Integer, String, Boolean> alwaysLeIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_le_int_tint(v, p)); };
+    public static final UDF2<Integer, String, Boolean> alwaysGtIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_gt_int_tint(v, p)); };
+    public static final UDF2<Integer, String, Boolean> alwaysGeIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ge_int_tint(v, p)); };
+
+    public static final UDF2<Double, String, Boolean> alwaysEqFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_eq_float_tfloat(v, p)); };
+    public static final UDF2<Double, String, Boolean> alwaysNeFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ne_float_tfloat(v, p)); };
+    public static final UDF2<Double, String, Boolean> alwaysLtFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_lt_float_tfloat(v, p)); };
+    public static final UDF2<Double, String, Boolean> alwaysLeFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_le_float_tfloat(v, p)); };
+    public static final UDF2<Double, String, Boolean> alwaysGtFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_gt_float_tfloat(v, p)); };
+    public static final UDF2<Double, String, Boolean> alwaysGeFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ge_float_tfloat(v, p)); };
+
+    public static final UDF2<Integer, String, Boolean> everEqIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_eq_int_tint(v, p)); };
+    public static final UDF2<Integer, String, Boolean> everNeIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ne_int_tint(v, p)); };
+    public static final UDF2<Integer, String, Boolean> everLtIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_lt_int_tint(v, p)); };
+    public static final UDF2<Integer, String, Boolean> everLeIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_le_int_tint(v, p)); };
+    public static final UDF2<Integer, String, Boolean> everGtIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_gt_int_tint(v, p)); };
+    public static final UDF2<Integer, String, Boolean> everGeIntTint =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ge_int_tint(v, p)); };
+
+    public static final UDF2<Double, String, Boolean> everEqFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_eq_float_tfloat(v, p)); };
+    public static final UDF2<Double, String, Boolean> everNeFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ne_float_tfloat(v, p)); };
+    public static final UDF2<Double, String, Boolean> everLtFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_lt_float_tfloat(v, p)); };
+    public static final UDF2<Double, String, Boolean> everLeFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_le_float_tfloat(v, p)); };
+    public static final UDF2<Double, String, Boolean> everGtFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_gt_float_tfloat(v, p)); };
+    public static final UDF2<Double, String, Boolean> everGeFloatTfloat =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ge_float_tfloat(v, p)); };
+
+    // ------------------------------------------------------------------
+    // tbool × bool predicates (only eq and ne meaningful for booleans)
+    // MEOS: ever_eq_tbool_bool(Temporal *, bool) → int, etc.
+    // ------------------------------------------------------------------
+
+    public static final UDF2<String, Boolean, Boolean> alwaysEqTboolBool =
+        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_eq_tbool_bool(p, v)); };
+    public static final UDF2<String, Boolean, Boolean> alwaysNeTboolBool =
+        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ne_tbool_bool(p, v)); };
+    public static final UDF2<Boolean, String, Boolean> alwaysEqBoolTbool =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_eq_bool_tbool(v, p)); };
+    public static final UDF2<Boolean, String, Boolean> alwaysNeBoolTbool =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ne_bool_tbool(v, p)); };
+
+    public static final UDF2<String, Boolean, Boolean> everEqTboolBool =
+        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_eq_tbool_bool(p, v)); };
+    public static final UDF2<String, Boolean, Boolean> everNeTboolBool =
+        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ne_tbool_bool(p, v)); };
+    public static final UDF2<Boolean, String, Boolean> everEqBoolTbool =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_eq_bool_tbool(v, p)); };
+    public static final UDF2<Boolean, String, Boolean> everNeBoolTbool =
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ne_bool_tbool(v, p)); };
+
+    // ------------------------------------------------------------------
+    // ttext × text predicates
+    // text* is obtained via ttext_in + ttext_value_n (text_in not exposed).
+    // MEOS: always_eq_text_ttext(text *, Temporal *) → int, etc.
+    // ------------------------------------------------------------------
+
+    private static Pointer[] makeTextPtr(String val) {
+        Pointer dummy = functions.ttext_in(val + "@2000-01-01 00:00:00+00");
+        if (dummy == null) return null;
+        Pointer textPtr = functions.ttext_value_n(dummy, 1);
+        if (textPtr == null) { MeosMemory.free(dummy); return null; }
+        return new Pointer[]{textPtr, dummy};
+    }
+
+    private static Boolean textTtextPred(String textVal, String ttextHex,
+            BiFunction<Pointer, Pointer, Integer> fn) {
+        if (textVal == null || ttextHex == null) return null;
+        MeosThread.ensureReady();
+        Pointer[] tp = makeTextPtr(textVal);
+        if (tp == null) return null;
+        Pointer tptr = functions.temporal_from_hexwkb(ttextHex);
+        if (tptr == null) { MeosMemory.free(tp[0]); MeosMemory.free(tp[1]); return null; }
+        try {
+            return intToBool(fn.apply(tp[0], tptr));
+        } finally {
+            MeosMemory.free(tptr);
+            MeosMemory.free(tp[0]);
+            MeosMemory.free(tp[1]);
+        }
+    }
+
+    private static Boolean ttextTextPred(String ttextHex, String textVal,
+            BiFunction<Pointer, Pointer, Integer> fn) {
+        if (ttextHex == null || textVal == null) return null;
+        MeosThread.ensureReady();
+        Pointer tptr = functions.temporal_from_hexwkb(ttextHex);
+        if (tptr == null) return null;
+        Pointer[] tp = makeTextPtr(textVal);
+        if (tp == null) { MeosMemory.free(tptr); return null; }
+        try {
+            return intToBool(fn.apply(tptr, tp[0]));
+        } finally {
+            MeosMemory.free(tptr);
+            MeosMemory.free(tp[0]);
+            MeosMemory.free(tp[1]);
+        }
+    }
+
+    // always: text OP ttext
+    public static final UDF2<String, String, Boolean> alwaysEqTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::always_eq_text_ttext);
+    public static final UDF2<String, String, Boolean> alwaysNeTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::always_ne_text_ttext);
+    public static final UDF2<String, String, Boolean> alwaysLtTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::always_lt_text_ttext);
+    public static final UDF2<String, String, Boolean> alwaysLeTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::always_le_text_ttext);
+    public static final UDF2<String, String, Boolean> alwaysGtTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::always_gt_text_ttext);
+    public static final UDF2<String, String, Boolean> alwaysGeTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::always_ge_text_ttext);
+
+    // always: ttext OP text
+    public static final UDF2<String, String, Boolean> alwaysEqTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::always_eq_ttext_text);
+    public static final UDF2<String, String, Boolean> alwaysNeTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::always_ne_ttext_text);
+    public static final UDF2<String, String, Boolean> alwaysLtTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::always_lt_ttext_text);
+    public static final UDF2<String, String, Boolean> alwaysLeTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::always_le_ttext_text);
+    public static final UDF2<String, String, Boolean> alwaysGtTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::always_gt_ttext_text);
+    public static final UDF2<String, String, Boolean> alwaysGeTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::always_ge_ttext_text);
+
+    // ever: text OP ttext
+    public static final UDF2<String, String, Boolean> everEqTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::ever_eq_text_ttext);
+    public static final UDF2<String, String, Boolean> everNeTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::ever_ne_text_ttext);
+    public static final UDF2<String, String, Boolean> everLtTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::ever_lt_text_ttext);
+    public static final UDF2<String, String, Boolean> everLeTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::ever_le_text_ttext);
+    public static final UDF2<String, String, Boolean> everGtTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::ever_gt_text_ttext);
+    public static final UDF2<String, String, Boolean> everGeTextTtext =
+        (t, s) -> textTtextPred(t, s, functions::ever_ge_text_ttext);
+
+    // ever: ttext OP text
+    public static final UDF2<String, String, Boolean> everEqTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::ever_eq_ttext_text);
+    public static final UDF2<String, String, Boolean> everNeTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::ever_ne_ttext_text);
+    public static final UDF2<String, String, Boolean> everLtTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::ever_lt_ttext_text);
+    public static final UDF2<String, String, Boolean> everLeTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::ever_le_ttext_text);
+    public static final UDF2<String, String, Boolean> everGtTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::ever_gt_ttext_text);
+    public static final UDF2<String, String, Boolean> everGeTtextText =
+        (s, t) -> ttextTextPred(s, t, functions::ever_ge_ttext_text);
+
     // tpointIsSimple(tpoint_hex) → Boolean
     // Returns true if the trajectory has no self-intersections.
     // MEOS: tpoint_is_simple(const Temporal *) → bool
@@ -545,6 +730,65 @@ public final class PredicateUDFs {
         spark.udf().register("alwaysNeTintInt",      alwaysNeTintInt,      DataTypes.BooleanType);
         spark.udf().register("alwaysNeTfloatFloat",  alwaysNeTfloatFloat,  DataTypes.BooleanType);
         spark.udf().register("alwaysNeTemporal",     alwaysNeTemporal,     DataTypes.BooleanType);
+        // scalar-first reversed forms
+        spark.udf().register("alwaysEqIntTint",      alwaysEqIntTint,      DataTypes.BooleanType);
+        spark.udf().register("alwaysNeIntTint",      alwaysNeIntTint,      DataTypes.BooleanType);
+        spark.udf().register("alwaysLtIntTint",      alwaysLtIntTint,      DataTypes.BooleanType);
+        spark.udf().register("alwaysLeIntTint",      alwaysLeIntTint,      DataTypes.BooleanType);
+        spark.udf().register("alwaysGtIntTint",      alwaysGtIntTint,      DataTypes.BooleanType);
+        spark.udf().register("alwaysGeIntTint",      alwaysGeIntTint,      DataTypes.BooleanType);
+        spark.udf().register("alwaysEqFloatTfloat",  alwaysEqFloatTfloat,  DataTypes.BooleanType);
+        spark.udf().register("alwaysNeFloatTfloat",  alwaysNeFloatTfloat,  DataTypes.BooleanType);
+        spark.udf().register("alwaysLtFloatTfloat",  alwaysLtFloatTfloat,  DataTypes.BooleanType);
+        spark.udf().register("alwaysLeFloatTfloat",  alwaysLeFloatTfloat,  DataTypes.BooleanType);
+        spark.udf().register("alwaysGtFloatTfloat",  alwaysGtFloatTfloat,  DataTypes.BooleanType);
+        spark.udf().register("alwaysGeFloatTfloat",  alwaysGeFloatTfloat,  DataTypes.BooleanType);
+        spark.udf().register("everEqIntTint",        everEqIntTint,        DataTypes.BooleanType);
+        spark.udf().register("everNeIntTint",        everNeIntTint,        DataTypes.BooleanType);
+        spark.udf().register("everLtIntTint",        everLtIntTint,        DataTypes.BooleanType);
+        spark.udf().register("everLeIntTint",        everLeIntTint,        DataTypes.BooleanType);
+        spark.udf().register("everGtIntTint",        everGtIntTint,        DataTypes.BooleanType);
+        spark.udf().register("everGeIntTint",        everGeIntTint,        DataTypes.BooleanType);
+        spark.udf().register("everEqFloatTfloat",    everEqFloatTfloat,    DataTypes.BooleanType);
+        spark.udf().register("everNeFloatTfloat",    everNeFloatTfloat,    DataTypes.BooleanType);
+        spark.udf().register("everLtFloatTfloat",    everLtFloatTfloat,    DataTypes.BooleanType);
+        spark.udf().register("everLeFloatTfloat",    everLeFloatTfloat,    DataTypes.BooleanType);
+        spark.udf().register("everGtFloatTfloat",    everGtFloatTfloat,    DataTypes.BooleanType);
+        spark.udf().register("everGeFloatTfloat",    everGeFloatTfloat,    DataTypes.BooleanType);
+        // tbool × bool predicates
+        spark.udf().register("alwaysEqTboolBool",   alwaysEqTboolBool,    DataTypes.BooleanType);
+        spark.udf().register("alwaysNeTboolBool",   alwaysNeTboolBool,    DataTypes.BooleanType);
+        spark.udf().register("alwaysEqBoolTbool",   alwaysEqBoolTbool,    DataTypes.BooleanType);
+        spark.udf().register("alwaysNeBoolTbool",   alwaysNeBoolTbool,    DataTypes.BooleanType);
+        spark.udf().register("everEqTboolBool",     everEqTboolBool,      DataTypes.BooleanType);
+        spark.udf().register("everNeTboolBool",     everNeTboolBool,      DataTypes.BooleanType);
+        spark.udf().register("everEqBoolTbool",     everEqBoolTbool,      DataTypes.BooleanType);
+        spark.udf().register("everNeBoolTbool",     everNeBoolTbool,      DataTypes.BooleanType);
+        // text × ttext predicates
+        spark.udf().register("alwaysEqTextTtext",   alwaysEqTextTtext,    DataTypes.BooleanType);
+        spark.udf().register("alwaysNeTextTtext",   alwaysNeTextTtext,    DataTypes.BooleanType);
+        spark.udf().register("alwaysLtTextTtext",   alwaysLtTextTtext,    DataTypes.BooleanType);
+        spark.udf().register("alwaysLeTextTtext",   alwaysLeTextTtext,    DataTypes.BooleanType);
+        spark.udf().register("alwaysGtTextTtext",   alwaysGtTextTtext,    DataTypes.BooleanType);
+        spark.udf().register("alwaysGeTextTtext",   alwaysGeTextTtext,    DataTypes.BooleanType);
+        spark.udf().register("alwaysEqTtextText",   alwaysEqTtextText,    DataTypes.BooleanType);
+        spark.udf().register("alwaysNeTtextText",   alwaysNeTtextText,    DataTypes.BooleanType);
+        spark.udf().register("alwaysLtTtextText",   alwaysLtTtextText,    DataTypes.BooleanType);
+        spark.udf().register("alwaysLeTtextText",   alwaysLeTtextText,    DataTypes.BooleanType);
+        spark.udf().register("alwaysGtTtextText",   alwaysGtTtextText,    DataTypes.BooleanType);
+        spark.udf().register("alwaysGeTtextText",   alwaysGeTtextText,    DataTypes.BooleanType);
+        spark.udf().register("everEqTextTtext",     everEqTextTtext,      DataTypes.BooleanType);
+        spark.udf().register("everNeTextTtext",     everNeTextTtext,      DataTypes.BooleanType);
+        spark.udf().register("everLtTextTtext",     everLtTextTtext,      DataTypes.BooleanType);
+        spark.udf().register("everLeTextTtext",     everLeTextTtext,      DataTypes.BooleanType);
+        spark.udf().register("everGtTextTtext",     everGtTextTtext,      DataTypes.BooleanType);
+        spark.udf().register("everGeTextTtext",     everGeTextTtext,      DataTypes.BooleanType);
+        spark.udf().register("everEqTtextText",     everEqTtextText,      DataTypes.BooleanType);
+        spark.udf().register("everNeTtextText",     everNeTtextText,      DataTypes.BooleanType);
+        spark.udf().register("everLtTtextText",     everLtTtextText,      DataTypes.BooleanType);
+        spark.udf().register("everLeTtextText",     everLeTtextText,      DataTypes.BooleanType);
+        spark.udf().register("everGtTtextText",     everGtTtextText,      DataTypes.BooleanType);
+        spark.udf().register("everGeTtextText",     everGeTtextText,      DataTypes.BooleanType);
         // tpoint geometry predicate
         spark.udf().register("tpointIsSimple",       tpointIsSimple,       DataTypes.BooleanType);
     }
