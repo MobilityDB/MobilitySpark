@@ -235,6 +235,75 @@ public final class STBoxUDFs {
             return stboxHex(r);
         };
 
+    // ------------------------------------------------------------------
+    // Spatial analytics  (hex-WKB in, scalar out)
+    //
+    // MEOS: stbox_area(box, spheroid)  meos_geo.h
+    //       stbox_perimeter(box, spheroid)  meos_geo.h
+    //       stbox_volume(box)  meos_geo.h
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, Double> stboxArea =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = stboxPtr(hex);
+            if (p == null) return null;
+            return functions.stbox_area(p, false);
+        };
+
+    public static final UDF1<String, Double> stboxPerimeter =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = stboxPtr(hex);
+            if (p == null) return null;
+            return functions.stbox_perimeter(p, false);
+        };
+
+    public static final UDF1<String, Double> stboxVolume =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = stboxPtr(hex);
+            if (p == null) return null;
+            return functions.stbox_volume(p);
+        };
+
+    // stboxIsGeodetic(hex) → Boolean
+    public static final UDF1<String, Boolean> stboxIsGeodetic =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = stboxPtr(hex);
+            if (p == null) return null;
+            return functions.stbox_isgeodetic(p);
+        };
+
+    // stboxToGeo(hex) → WKT of the bounding envelope polygon
+    public static final UDF1<String, String> stboxToGeo =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = stboxPtr(hex);
+            if (p == null) return null;
+            Pointer g = functions.stbox_to_geo(p);
+            if (g == null) return null;
+            return functions.geo_as_text(g, 15);
+        };
+
+    // stboxToTstzspan(hex) → tstzspan hex-WKB
+    public static final UDF1<String, String> stboxToTstzspan =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = stboxPtr(hex);
+            if (p == null) return null;
+            Pointer span = functions.stbox_to_tstzspan(p);
+            if (span == null) return null;
+            return functions.span_as_hexwkb(span, (byte) 0);
+        };
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("stboxHasx",        stboxHasx,        DataTypes.BooleanType);
         spark.udf().register("stboxHast",        stboxHast,        DataTypes.BooleanType);
@@ -252,5 +321,11 @@ public final class STBoxUDFs {
         spark.udf().register("stboxSrid",        stboxSrid,        DataTypes.IntegerType);
         spark.udf().register("stboxExpandSpace", stboxExpandSpace, DataTypes.StringType);
         spark.udf().register("stboxExpandTime",  stboxExpandTime,  DataTypes.StringType);
+        spark.udf().register("stboxArea",        stboxArea,        DataTypes.DoubleType);
+        spark.udf().register("stboxPerimeter",   stboxPerimeter,   DataTypes.DoubleType);
+        spark.udf().register("stboxVolume",      stboxVolume,      DataTypes.DoubleType);
+        spark.udf().register("stboxIsGeodetic",  stboxIsGeodetic,  DataTypes.BooleanType);
+        spark.udf().register("stboxToGeo",       stboxToGeo,       DataTypes.StringType);
+        spark.udf().register("stboxToTstzspan",  stboxToTstzspan,  DataTypes.StringType);
     }
 }

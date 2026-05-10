@@ -169,4 +169,56 @@ class STBoxUDFsTest {
         assertNotNull(expanded, "stboxExpandTime should return a hex-WKB");
         assertFalse(expanded.isBlank());
     }
+
+    @Test @Order(18)
+    void stboxArea_returns_positive() throws Exception {
+        Double area = STBoxUDFs.stboxArea.call(STBOX_XT);
+        assertNotNull(area);
+        assertTrue(area > 0, "Area of a 2×4 box should be positive");
+    }
+
+    @Test @Order(19)
+    void stboxPerimeter_returns_positive() throws Exception {
+        Double perim = STBoxUDFs.stboxPerimeter.call(STBOX_XT);
+        assertNotNull(perim);
+        assertTrue(perim > 0, "Perimeter of a non-degenerate box should be positive");
+    }
+
+    @Test @Order(20)
+    void stboxVolume_returns_value_for_2d_box() throws Exception {
+        Double vol = STBoxUDFs.stboxVolume.call(STBOX_XT);
+        assertNotNull(vol);
+        // MEOS returns -1.0 for a 2D box (no Z component)
+        assertTrue(vol == -1.0 || vol == 0.0, "Expected sentinel for 2D box, got: " + vol);
+    }
+
+    @Test @Order(21)
+    void stboxIsGeodetic_cartesian_box_returns_false() throws Exception {
+        assertFalse(STBoxUDFs.stboxIsGeodetic.call(STBOX_XT));
+    }
+
+    @Test @Order(22)
+    void stboxToGeo_returns_wkt_polygon() throws Exception {
+        String wkt = STBoxUDFs.stboxToGeo.call(STBOX_XT);
+        assertNotNull(wkt);
+        assertTrue(wkt.startsWith("POLYGON") || wkt.startsWith("LINESTRING") || wkt.startsWith("POINT"),
+            "Expected geometry WKT, got: " + wkt);
+    }
+
+    @Test @Order(23)
+    void stboxToTstzspan_returns_span_hex() throws Exception {
+        String spanHex = STBoxUDFs.stboxToTstzspan.call(STBOX_XT);
+        assertNotNull(spanHex);
+        assertFalse(spanHex.isBlank());
+    }
+
+    @Test @Order(24)
+    void stbox_analytics_null_returns_null() throws Exception {
+        assertNull(STBoxUDFs.stboxArea.call(null));
+        assertNull(STBoxUDFs.stboxPerimeter.call(null));
+        assertNull(STBoxUDFs.stboxVolume.call(null));
+        assertNull(STBoxUDFs.stboxIsGeodetic.call(null));
+        assertNull(STBoxUDFs.stboxToGeo.call(null));
+        assertNull(STBoxUDFs.stboxToTstzspan.call(null));
+    }
 }
