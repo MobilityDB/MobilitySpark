@@ -162,6 +162,36 @@ public final class PredicateUDFs {
         };
 
     // ------------------------------------------------------------------
+    // ever_ne predicates: did the temporal value ever differ from the scalar?
+    //
+    // MEOS: ever_ne_tint_int / ever_ne_tfloat_float / ever_ne_temporal_temporal
+    // ------------------------------------------------------------------
+
+    public static final UDF2<String, Integer, Boolean> everNeTintInt =
+        (s, v) -> {
+            MeosThread.ensureReady();
+            Pointer ptr = tempPtr(s);
+            if (ptr == null || v == null) return null;
+            return intToBool(functions.ever_ne_tint_int(ptr, v));
+        };
+
+    public static final UDF2<String, Double, Boolean> everNeTfloatFloat =
+        (s, v) -> {
+            MeosThread.ensureReady();
+            Pointer ptr = tempPtr(s);
+            if (ptr == null || v == null) return null;
+            return intToBool(functions.ever_ne_tfloat_float(ptr, v));
+        };
+
+    public static final UDF2<String, String, Boolean> everNeTemporal =
+        (s1, s2) -> {
+            MeosThread.ensureReady();
+            Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
+            if (p1 == null || p2 == null) return null;
+            return intToBool(functions.ever_ne_temporal_temporal(p1, p2));
+        };
+
+    // ------------------------------------------------------------------
     // ever_lt predicates
     //
     // MEOS: ever_lt_tint_int / ever_lt_tfloat_float / ever_lt_temporal_temporal
@@ -303,6 +333,36 @@ public final class PredicateUDFs {
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
             return intToBool(functions.always_eq_temporal_temporal(p1, p2));
+        };
+
+    // ------------------------------------------------------------------
+    // always_ne predicates
+    //
+    // MEOS: always_ne_tint_int / always_ne_tfloat_float / always_ne_temporal_temporal
+    // ------------------------------------------------------------------
+
+    public static final UDF2<String, Integer, Boolean> alwaysNeTintInt =
+        (s, v) -> {
+            MeosThread.ensureReady();
+            Pointer ptr = tempPtr(s);
+            if (ptr == null || v == null) return null;
+            return intToBool(functions.always_ne_tint_int(ptr, v));
+        };
+
+    public static final UDF2<String, Double, Boolean> alwaysNeTfloatFloat =
+        (s, v) -> {
+            MeosThread.ensureReady();
+            Pointer ptr = tempPtr(s);
+            if (ptr == null || v == null) return null;
+            return intToBool(functions.always_ne_tfloat_float(ptr, v));
+        };
+
+    public static final UDF2<String, String, Boolean> alwaysNeTemporal =
+        (s1, s2) -> {
+            MeosThread.ensureReady();
+            Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
+            if (p1 == null || p2 == null) return null;
+            return intToBool(functions.always_ne_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -457,6 +517,10 @@ public final class PredicateUDFs {
         spark.udf().register("everGeTintInt",        everGeTintInt,        DataTypes.BooleanType);
         spark.udf().register("everGeTfloatFloat",    everGeTfloatFloat,    DataTypes.BooleanType);
         spark.udf().register("everGeTemporal",       everGeTemporal,       DataTypes.BooleanType);
+        // ever_ne
+        spark.udf().register("everNeTintInt",        everNeTintInt,        DataTypes.BooleanType);
+        spark.udf().register("everNeTfloatFloat",    everNeTfloatFloat,    DataTypes.BooleanType);
+        spark.udf().register("everNeTemporal",       everNeTemporal,       DataTypes.BooleanType);
         // always_eq
         spark.udf().register("alwaysEqTintInt",      alwaysEqTintInt,      DataTypes.BooleanType);
         spark.udf().register("alwaysEqTfloatFloat",  alwaysEqTfloatFloat,  DataTypes.BooleanType);
@@ -477,6 +541,10 @@ public final class PredicateUDFs {
         spark.udf().register("alwaysGeTintInt",      alwaysGeTintInt,      DataTypes.BooleanType);
         spark.udf().register("alwaysGeTfloatFloat",  alwaysGeTfloatFloat,  DataTypes.BooleanType);
         spark.udf().register("alwaysGeTemporal",     alwaysGeTemporal,     DataTypes.BooleanType);
+        // always_ne
+        spark.udf().register("alwaysNeTintInt",      alwaysNeTintInt,      DataTypes.BooleanType);
+        spark.udf().register("alwaysNeTfloatFloat",  alwaysNeTfloatFloat,  DataTypes.BooleanType);
+        spark.udf().register("alwaysNeTemporal",     alwaysNeTemporal,     DataTypes.BooleanType);
         // tpoint geometry predicate
         spark.udf().register("tpointIsSimple",       tpointIsSimple,       DataTypes.BooleanType);
     }
