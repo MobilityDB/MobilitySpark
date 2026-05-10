@@ -35,6 +35,8 @@ import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Spark SQL UDFs for span, spanset, and set bound/count accessors.
@@ -344,6 +346,240 @@ public final class SpanAccessorUDFs {
             return functions.set_num_values(p);
         };
 
+    // ------------------------------------------------------------------
+    // intset value accessors
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, Integer> intsetStartValue =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try { return functions.intset_start_value(p); }
+            finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, Integer> intsetEndValue =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try { return functions.intset_end_value(p); }
+            finally { MeosMemory.free(p); }
+        };
+
+    // intset_values(Set *) → int *  (palloc'd int32 array, count via set_num_values)
+    public static final UDF1<String, List<Integer>> intsetValues =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int n = functions.set_num_values(p);
+                Pointer arr = functions.intset_values(p);
+                if (arr == null) return null;
+                try {
+                    List<Integer> result = new ArrayList<>(n);
+                    for (int i = 0; i < n; i++) result.add(arr.getInt((long) i * 4));
+                    return result;
+                } finally { MeosMemory.free(arr); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // floatset value accessors
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, Double> floatsetStartValue =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try { return functions.floatset_start_value(p); }
+            finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, Double> floatsetEndValue =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try { return functions.floatset_end_value(p); }
+            finally { MeosMemory.free(p); }
+        };
+
+    // floatset_values(Set *) → double *
+    public static final UDF1<String, List<Double>> floatsetValues =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int n = functions.set_num_values(p);
+                Pointer arr = functions.floatset_values(p);
+                if (arr == null) return null;
+                try {
+                    List<Double> result = new ArrayList<>(n);
+                    for (int i = 0; i < n; i++) result.add(arr.getDouble((long) i * 8));
+                    return result;
+                } finally { MeosMemory.free(arr); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // dateset value accessors  (int32 = days from PG epoch 2000-01-01)
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, java.sql.Date> datesetStartValue =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int days = functions.dateset_start_value(p);
+                return new java.sql.Date((days + PG_UNIX_OFFSET_DAYS) * 86400000L);
+            } finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, java.sql.Date> datesetEndValue =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int days = functions.dateset_end_value(p);
+                return new java.sql.Date((days + PG_UNIX_OFFSET_DAYS) * 86400000L);
+            } finally { MeosMemory.free(p); }
+        };
+
+    // dateset_values(Set *) → int *  (int32 days from PG epoch per element)
+    public static final UDF1<String, List<java.sql.Date>> datesetValues =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int n = functions.set_num_values(p);
+                Pointer arr = functions.dateset_values(p);
+                if (arr == null) return null;
+                try {
+                    List<java.sql.Date> result = new ArrayList<>(n);
+                    for (int i = 0; i < n; i++) {
+                        int days = arr.getInt((long) i * 4);
+                        result.add(new java.sql.Date((days + PG_UNIX_OFFSET_DAYS) * 86400000L));
+                    }
+                    return result;
+                } finally { MeosMemory.free(arr); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // tstzset value accessors
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, java.sql.Timestamp> tstzsetStartValue =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try { return odtToTimestamp(functions.tstzset_start_value(p)); }
+            finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, java.sql.Timestamp> tstzsetEndValue =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try { return odtToTimestamp(functions.tstzset_end_value(p)); }
+            finally { MeosMemory.free(p); }
+        };
+
+    // tstzset_values(Set *) → int64 * (PG-epoch microseconds per element)
+    public static final UDF1<String, List<java.sql.Timestamp>> tstzsetValues =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int n = functions.set_num_values(p);
+                Pointer arr = functions.tstzset_values(p);
+                if (arr == null) return null;
+                try {
+                    List<java.sql.Timestamp> result = new ArrayList<>(n);
+                    for (int i = 0; i < n; i++) {
+                        long pgMicros = arr.getLong((long) i * 8);
+                        result.add(new java.sql.Timestamp(pgMicros / 1000L + PG_UNIX_OFFSET_MS));
+                    }
+                    return result;
+                } finally { MeosMemory.free(arr); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // textset value accessors  (text * elements → String via text_out)
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, String> textsetStartValue =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer textPtr = functions.textset_start_value(p);
+                if (textPtr == null) return null;
+                return functions.text_out(textPtr);
+            } finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, String> textsetEndValue =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer textPtr = functions.textset_end_value(p);
+                if (textPtr == null) return null;
+                return functions.text_out(textPtr);
+            } finally { MeosMemory.free(p); }
+        };
+
+    // textset_values(Set *) → text **  (pointer array; elements are views — do NOT free)
+    public static final UDF1<String, List<String>> textsetValues =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int n = functions.set_num_values(p);
+                Pointer arr = functions.textset_values(p);
+                if (arr == null) return null;
+                try {
+                    List<String> result = new ArrayList<>(n);
+                    for (int i = 0; i < n; i++) {
+                        Pointer textPtr = arr.getPointer((long) i * 8);
+                        if (textPtr != null) result.add(functions.text_out(textPtr));
+                    }
+                    return result;
+                } finally { MeosMemory.free(arr); }
+            } finally { MeosMemory.free(p); }
+        };
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("intspanLower",     intspanLower,     DataTypes.IntegerType);
         spark.udf().register("intspanUpper",     intspanUpper,     DataTypes.IntegerType);
@@ -365,7 +601,32 @@ public final class SpanAccessorUDFs {
         spark.udf().register("spansetLowerInc",  spansetLowerInc,   DataTypes.BooleanType);
         spark.udf().register("spansetUpperInc",  spansetUpperInc,   DataTypes.BooleanType);
         spark.udf().register("spanToSpanset",    spanToSpanset,     DataTypes.StringType);
-        spark.udf().register("setNumValues",     setNumValues,      DataTypes.IntegerType);
+        spark.udf().register("setNumValues",      setNumValues,      DataTypes.IntegerType);
+        // intset value accessors
+        spark.udf().register("intsetStartValue", intsetStartValue,  DataTypes.IntegerType);
+        spark.udf().register("intsetEndValue",   intsetEndValue,    DataTypes.IntegerType);
+        spark.udf().register("intsetValues",     intsetValues,
+            DataTypes.createArrayType(DataTypes.IntegerType));
+        // floatset value accessors
+        spark.udf().register("floatsetStartValue", floatsetStartValue, DataTypes.DoubleType);
+        spark.udf().register("floatsetEndValue",   floatsetEndValue,   DataTypes.DoubleType);
+        spark.udf().register("floatsetValues",     floatsetValues,
+            DataTypes.createArrayType(DataTypes.DoubleType));
+        // dateset value accessors
+        spark.udf().register("datesetStartValue", datesetStartValue, DataTypes.DateType);
+        spark.udf().register("datesetEndValue",   datesetEndValue,   DataTypes.DateType);
+        spark.udf().register("datesetValues",     datesetValues,
+            DataTypes.createArrayType(DataTypes.DateType));
+        // tstzset value accessors
+        spark.udf().register("tstzsetStartValue", tstzsetStartValue, DataTypes.TimestampType);
+        spark.udf().register("tstzsetEndValue",   tstzsetEndValue,   DataTypes.TimestampType);
+        spark.udf().register("tstzsetValues",     tstzsetValues,
+            DataTypes.createArrayType(DataTypes.TimestampType));
+        // textset value accessors
+        spark.udf().register("textsetStartValue", textsetStartValue, DataTypes.StringType);
+        spark.udf().register("textsetEndValue",   textsetEndValue,   DataTypes.StringType);
+        spark.udf().register("textsetValues",     textsetValues,
+            DataTypes.createArrayType(DataTypes.StringType));
         // TstzSpanSet temporal boundary accessors
         spark.udf().register("tstzspansetLower",             tstzspansetLower,             DataTypes.TimestampType);
         spark.udf().register("tstzspansetUpper",             tstzspansetUpper,             DataTypes.TimestampType);

@@ -697,6 +697,14 @@ public final class MoreAccessorUDFs {
             DataTypes.createArrayType(DataTypes.IntegerType));
         spark.udf().register("tfloatValues",         tfloatValues,
             DataTypes.createArrayType(DataTypes.DoubleType));
+        spark.udf().register("temporalInstants",     temporalInstants,
+            DataTypes.createArrayType(DataTypes.StringType));
+        spark.udf().register("temporalSequences",    temporalSequences,
+            DataTypes.createArrayType(DataTypes.StringType));
+        spark.udf().register("temporalSegments",     temporalSegments,
+            DataTypes.createArrayType(DataTypes.StringType));
+        spark.udf().register("ttextValues",          ttextValues,
+            DataTypes.createArrayType(DataTypes.StringType));
     }
 
     // ------------------------------------------------------------------
@@ -800,6 +808,86 @@ public final class MoreAccessorUDFs {
                 List<Double> result = new ArrayList<>(count);
                 for (int i = 0; i < count; i++) {
                     result.add(arrPtr.getDouble((long) i * 8));
+                }
+                MeosMemory.free(arrPtr);
+                return result;
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // temporal_instants / temporal_sequences / temporal_segments
+    //
+    // Each function returns a Temporal** (array of Temporal* view pointers).
+    // The array itself is palloc'd and must be freed; the elements are views
+    // into the original temporal and must NOT be freed.
+    //
+    // MEOS: temporal_instants(Temporal *, int *count) → TInstant **
+    //       temporal_sequences(Temporal *, int *count) → TSequence **
+    //       temporal_segments(Temporal *, int *count) → TSequence **
+    // ------------------------------------------------------------------
+
+    private static List<String> temporalPtrArray(String hex,
+            java.util.function.BiFunction<Pointer, Pointer, Pointer> fn) {
+        if (hex == null) return null;
+        MeosThread.ensureReady();
+        Pointer ptr = functions.temporal_from_hexwkb(hex);
+        if (ptr == null) return null;
+        try {
+            Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+            Pointer arrPtr = fn.apply(ptr, sizeOut);
+            if (arrPtr == null) return null;
+            int count = sizeOut.getInt(0);
+            List<String> result = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                Pointer elem = arrPtr.getPointer((long) i * 8);
+                if (elem != null) {
+                    String h = functions.temporal_as_hexwkb(elem, (byte) 0);
+                    if (h != null) result.add(h);
+                }
+            }
+            MeosMemory.free(arrPtr);
+            return result;
+        } finally {
+            MeosMemory.free(ptr);
+        }
+    }
+
+    // temporalInstants(hex STRING) → ARRAY<STRING>
+    // Returns each instant of the temporal value as a hex-WKB string.
+    public static final UDF1<String, List<String>> temporalInstants =
+        (hex) -> temporalPtrArray(hex, functions::temporal_instants);
+
+    // temporalSequences(hex STRING) → ARRAY<STRING>
+    // Returns each sequence of a TSequenceSet as hex-WKB strings.
+    public static final UDF1<String, List<String>> temporalSequences =
+        (hex) -> temporalPtrArray(hex, functions::temporal_sequences);
+
+    // temporalSegments(hex STRING) → ARRAY<STRING>
+    // Returns each linear segment of the temporal value as hex-WKB strings.
+    public static final UDF1<String, List<String>> temporalSegments =
+        (hex) -> temporalPtrArray(hex, functions::temporal_segments);
+
+    // ttextValues(hex STRING) → ARRAY<STRING>
+    // Returns the distinct text values of a ttext as Strings.
+    // MEOS: ttext_values(const Temporal *, int *count) → text **
+    // Elements are text* pointers; read via text_out; free the outer array.
+    public static final UDF1<String, List<String>> ttextValues =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(hex);
+            if (ptr == null) return null;
+            try {
+                Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                Pointer arrPtr = functions.ttext_values(ptr, sizeOut);
+                if (arrPtr == null) return null;
+                int count = sizeOut.getInt(0);
+                List<String> result = new ArrayList<>(count);
+                for (int i = 0; i < count; i++) {
+                    Pointer textPtr = arrPtr.getPointer((long) i * 8);
+                    if (textPtr != null) result.add(functions.text_out(textPtr));
                 }
                 MeosMemory.free(arrPtr);
                 return result;
