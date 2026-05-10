@@ -85,11 +85,28 @@ echo "=== Running BerlinMODBench (${RUNS} runs/query, queries=${QUERIES_MSG}) on
 # --driver-memory 6g: each BerlinMOD trip row is ~36 KB hex-WKB; cross-join queries (Q2, Q4)
 # hold ~1 GB of trip strings in heap simultaneously.  A 6 g heap gives the GC enough headroom
 # to avoid spilling to off-heap and prevents WSL2 OOM kills when queries run back-to-back.
+#
+# --conf spark.sql.autoBroadcastJoinThreshold=200m: BerlinMOD's small dimension
+# tables (Vehicles, QueryPoints, QueryRegions, QueryInstants, QueryPeriods,
+# QueryLicences) are all under 200 KB; broadcasting them is always profitable
+# but the default 10 MB threshold occasionally falls back to shuffle when
+# Catalyst's size estimate is conservative (e.g. on a cached relational plan).
+# 200 m makes broadcast the deterministic choice for these dim tables.
+#
+# --conf spark.sql.adaptive.enabled=true / .skewJoin.enabled: Adaptive Query
+# Execution can convert sort-merge joins to broadcast joins at runtime once
+# actual table sizes are known, and rebalance skewed join keys.  Useful for
+# Q10/Q11/Q12 where one side of a Trips×Trips Cartesian-style join has a
+# small materialised intermediate (e.g. WITH Temp AS (...)).
 "$SPARK_SUBMIT" \
   --class org.mobilitydb.spark.demo.BerlinMODBench \
   --master "local[2]" \
   --driver-memory 6g \
   --conf "spark.driver.extraJavaOptions=-Djava.library.path=${LIBMEOS_DIR} -Dlog4j.logger.org.apache=WARN" \
+  --conf "spark.sql.autoBroadcastJoinThreshold=200m" \
+  --conf "spark.sql.adaptive.enabled=true" \
+  --conf "spark.sql.adaptive.skewJoin.enabled=true" \
+  --conf "spark.sql.adaptive.coalescePartitions.enabled=true" \
   "$JAR" \
   "$DATADIR" \
   "$OUTPUT" \

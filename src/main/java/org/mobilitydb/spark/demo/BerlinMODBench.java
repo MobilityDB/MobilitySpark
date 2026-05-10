@@ -114,6 +114,27 @@ public final class BerlinMODBench {
             // Load and cache all tables — loading time is NOT in the query timings
             System.out.println("=== Loading data from: " + dataDir + " ===");
             BerlinMODDemo.loadFromCsvPublic(spark, dataDir);
+
+            // Stage-2: materialise the th3index column on Trips at load time.
+            // Each trip's tgeompoint is converted to a temporal H3 cell sequence
+            // at TH3INDEX_RESOLUTION (default 7 ≈ 5 km cells).  The trip_h3 column
+            // is used by preprocessForSpark to inject a cheap cell-membership
+            // prefilter before the expensive eIntersects / eDwithin / NAD calls
+            // on cross-join queries (BerlinMOD Q4/Q11/Q12/Q14, point-side).
+            //
+            // Disabled when berlinmod.bench.th3index.disable=true (so before-vs-
+            // after measurement is reproducible without a rebuild).
+            if (!"true".equals(System.getProperty("berlinmod.bench.th3index.disable"))) {
+                int res = Integer.getInteger("berlinmod.bench.th3index.resolution",
+                                             org.mobilitydb.spark.h3.Th3IndexUDFs.DEFAULT_RESOLUTION);
+                System.out.println("=== Materialising trip_h3 column (resolution " + res + ") ===");
+                spark.sql(
+                    "CREATE OR REPLACE TEMPORARY VIEW Trips AS " +
+                    "SELECT *, tgeompointToTh3Index(trip, " + res + ") AS trip_h3 " +
+                    "FROM Trips"
+                );
+            }
+
             spark.catalog().cacheTable("Vehicles");
             spark.catalog().cacheTable("Trips");
             spark.catalog().cacheTable("QueryLicences");
@@ -192,6 +213,8 @@ public final class BerlinMODBench {
      *   <li>{@code expr && expr2} → {@code bboxOverlaps(expr, expr2)} (per line)</li>
      *   <li>{@code ::numeric} → removed (Spark ROUND accepts DOUBLE directly)</li>
      *   <li>{@code ST_Contains(} → {@code geomContains(}</li>
+     *   <li>th3index prefilter injection for {@code eIntersects(t.<col>, p.<col>)}
+     *       on point geometries — see {@link #injectTh3IndexPrefilter}.</li>
      * </ol>
      */
     private static String preprocessForSpark(String sql) {
@@ -210,7 +233,47 @@ public final class BerlinMODBench {
         // 4. Replace PostGIS ST_Contains with the registered geomContains UDF.
         sql = sql.replace("ST_Contains(", "geomContains(");
 
+        // 5. Inject th3index cell-membership prefilter for eIntersects(t.<col>, q.<col>).
+        //    The unmodified eIntersects predicate stays in place — Catalyst short-
+        //    circuits the AND so the cheap cell-membership test runs first and
+        //    eIntersects only on candidates that pass.
+        sql = injectTh3IndexPrefilter(sql);
+
         return sql;
+    }
+
+    /**
+     * Inject {@code everEqH3IndexTh3Index(geomToH3Cell(<rhs>, <res>), <lhs.trip_h3>) AND}
+     * before any {@code eIntersects(<lhs>, <rhs>)} call where {@code <lhs>} is a qualified
+     * column reference (matches BerlinMOD's <tt>t.trip</tt> shape).
+     *
+     * For BerlinMOD the lhs is always a tgeompoint trip column, the rhs is a query
+     * point (Q4) or polygon (Q2).  The {@code geomToH3Cell} UDF handles both — for
+     * a polygon it falls back to the centroid (over-approximating the candidate set).
+     * Catalyst's AND short-circuit means the prefilter is the dominant cost, not the
+     * full eIntersects.
+     *
+     * Disabled by setting {@code -Dberlinmod.bench.th3index.disable=true} on the
+     * driver — useful for before-vs-after measurement without a rebuild.
+     */
+    private static String injectTh3IndexPrefilter(String sql) {
+        if ("true".equals(System.getProperty("berlinmod.bench.th3index.disable"))) {
+            return sql;
+        }
+        int res = Integer.getInteger("berlinmod.bench.th3index.resolution",
+                                     org.mobilitydb.spark.h3.Th3IndexUDFs.DEFAULT_RESOLUTION);
+        // Match eIntersects(<alias.col>, <alias.col>) — both sides qualified.
+        // Inject the prefilter on the FIRST argument's th3index column.
+        // Pattern: eIntersects(\1.\2, \3.\4)  →
+        //          (everEqH3IndexTh3Index(geomToH3Cell(\3.\4, R), \1.trip_h3) AND eIntersects(\1.\2, \3.\4))
+        // COALESCE wrapper: when geomToH3Cell returns NULL (non-POINT geometry,
+        // or a row outside the prefilter's coverage), the prefilter is bypassed
+        // — all candidates pass to the exact eIntersects.  Correctness preserved.
+        return sql.replaceAll(
+            "eIntersects\\((\\w+)\\.(\\w+),\\s*(\\w+)\\.(\\w+)\\)",
+            "(COALESCE(everEqH3IndexTh3Index(geomToH3Cell($3.$4, " + res
+                + "), $1.trip_h3), TRUE) AND eIntersects($1.$2, $3.$4))"
+        );
     }
 
     /** Write a JSON result file compatible with report.py. */
