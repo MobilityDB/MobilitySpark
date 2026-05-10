@@ -34,6 +34,11 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
 /**
  * Spark SQL UDFs for restricting temporal values by value or timestamp set.
  *
@@ -300,6 +305,30 @@ public final class RestrictionUDFs {
             }
         };
 
+    // temporalDeleteTimestamptz(s STRING, ts TIMESTAMP) → STRING
+    // MEOS: temporal_delete_timestamptz(const Temporal *, TimestampTz, bool connect) → Temporal *
+    public static final UDF2<String, Timestamp, String> temporalDeleteTimestamptz =
+        (s, ts) -> {
+            if (s == null || ts == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                long pgEpochMicros = (ts.getTime() - 946684800L * 1000L) * 1000L;
+                OffsetDateTime odt = OffsetDateTime.ofInstant(
+                    Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
+                Pointer result = functions.temporal_delete_timestamptz(tptr, odt, false);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
     // ------------------------------------------------------------------
     // Value restriction: tfloat
     // ------------------------------------------------------------------
@@ -356,6 +385,27 @@ public final class RestrictionUDFs {
             if (tptr == null) return null;
             try {
                 Pointer result = functions.tint_at_value(tptr, value);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // tintMinusValue(s STRING, value INT) → STRING
+    // MEOS: tint_minus_value(const Temporal *, int) → Temporal *
+    public static final UDF2<String, Integer, String> tintMinusValue =
+        (s, value) -> {
+            if (s == null || value == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer result = functions.tint_minus_value(tptr, value);
                 if (result == null) return null;
                 try {
                     return functions.temporal_as_hexwkb(result, (byte) 0);
@@ -875,11 +925,13 @@ public final class RestrictionUDFs {
         // Delete operations
         spark.udf().register("temporalDeleteTstzspan",    temporalDeleteTstzspan,    DataTypes.StringType);
         spark.udf().register("temporalDeleteTstzspanset", temporalDeleteTstzspanset, DataTypes.StringType);
-        spark.udf().register("temporalDeleteTstzset",     temporalDeleteTstzset,     DataTypes.StringType);
+        spark.udf().register("temporalDeleteTstzset",         temporalDeleteTstzset,         DataTypes.StringType);
+        spark.udf().register("temporalDeleteTimestamptz",     temporalDeleteTimestamptz,     DataTypes.StringType);
         // Value restriction: tfloat / tint
         spark.udf().register("tfloatAtValue",   tfloatAtValue,   DataTypes.StringType);
         spark.udf().register("tfloatMinusValue", tfloatMinusValue, DataTypes.StringType);
-        spark.udf().register("tintAtValue",     tintAtValue,     DataTypes.StringType);
+        spark.udf().register("tintAtValue",      tintAtValue,      DataTypes.StringType);
+        spark.udf().register("tintMinusValue",  tintMinusValue,   DataTypes.StringType);
         // Value-range restriction: tnumber
         spark.udf().register("tnumberAtSpan",      tnumberAtSpan,      DataTypes.StringType);
         spark.udf().register("tnumberMinusSpan",   tnumberMinusSpan,   DataTypes.StringType);
