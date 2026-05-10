@@ -34,6 +34,10 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.api.java.UDF3;
+import org.apache.spark.sql.api.java.UDF4;
+import org.apache.spark.sql.api.java.UDF5;
+import org.apache.spark.sql.api.java.UDF6;
+import org.apache.spark.sql.api.java.UDF7;
 import org.apache.spark.sql.types.DataTypes;
 
 import java.time.Instant;
@@ -496,6 +500,18 @@ public final class STBoxUDFs {
         // STBox set operations
         spark.udf().register("intersectionStboxStbox", intersectionStboxStbox, DataTypes.StringType);
         spark.udf().register("unionStboxStbox",        unionStboxStbox,        DataTypes.StringType);
+        // MobilityDB SQL bare-name aliases for the same lambdas
+        spark.udf().register("stboxIntersection",      intersectionStboxStbox, DataTypes.StringType);
+        spark.udf().register("stboxUnion",             unionStboxStbox,        DataTypes.StringType);
+        // Typed STBox constructors
+        spark.udf().register("stboxX",      stboxX,      DataTypes.StringType);
+        spark.udf().register("stboxT",      stboxT,      DataTypes.StringType);
+        spark.udf().register("stboxXT",     stboxXT,     DataTypes.StringType);
+        spark.udf().register("stboxZ",      stboxZ,      DataTypes.StringType);
+        spark.udf().register("stboxZT",     stboxZT,     DataTypes.StringType);
+        spark.udf().register("geodstboxZ",  geodstboxZ,  DataTypes.StringType);
+        spark.udf().register("geodstboxT",  geodstboxT,  DataTypes.StringType);
+        spark.udf().register("geodstboxZT", geodstboxZT, DataTypes.StringType);
         // STBox topology predicates (stbox, stbox)
         spark.udf().register("stboxContains",    stboxContains,    DataTypes.BooleanType);
         spark.udf().register("stboxContained",   stboxContained,   DataTypes.BooleanType);
@@ -599,4 +615,81 @@ public final class STBoxUDFs {
         (h1, h2) -> stboxBoolOp(h1, h2, functions::overafter_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxAdjacent =
         (h1, h2) -> stboxBoolOp(h1, h2, functions::adjacent_stbox_stbox);
+
+    // ------------------------------------------------------------------
+    // Typed STBox constructors — delegate to stbox_make with the correct
+    // hasx/hasz/geodetic/srid flags. tstzspan input is hex-WKB.
+    // MEOS: stbox_make(hasx, hasz, geodetic, srid, xmin, ymin, zmin, xmax,
+    //                  ymax, zmax, periodPtr) → STBox*
+    // ------------------------------------------------------------------
+
+    private static String stboxMakeHelper(boolean hasx, boolean hasz, boolean geodetic, int srid,
+            double xmin, double ymin, double zmin, double xmax, double ymax, double zmax,
+            String tstzspanHex) {
+        MeosThread.ensureReady();
+        Pointer period = (tstzspanHex == null) ? null : functions.span_from_hexwkb(tstzspanHex);
+        try {
+            Pointer p = functions.stbox_make(hasx, hasz, geodetic, srid,
+                xmin, ymin, zmin, xmax, ymax, zmax, period);
+            if (p == null) return null;
+            try {
+                Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                return functions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
+            } finally { MeosMemory.free(p); }
+        } finally { if (period != null) MeosMemory.free(period); }
+    }
+
+    // stboxX(xmin, ymin, xmax, ymax) — 2D spatial box, no time, no geodetic
+    public static final UDF4<Double, Double, Double, Double, String> stboxX =
+        (xmin, ymin, xmax, ymax) -> {
+            if (xmin == null || ymin == null || xmax == null || ymax == null) return null;
+            return stboxMakeHelper(true, false, false, 0, xmin, ymin, 0, xmax, ymax, 0, null);
+        };
+
+    // stboxT(tstzspanHex) — time-only box
+    public static final UDF1<String, String> stboxT =
+        tstzspanHex -> {
+            if (tstzspanHex == null) return null;
+            return stboxMakeHelper(false, false, false, 0, 0, 0, 0, 0, 0, 0, tstzspanHex);
+        };
+
+    // stboxXT(xmin, ymin, xmax, ymax, tstzspanHex)
+    public static final UDF5<Double, Double, Double, Double, String, String> stboxXT =
+        (xmin, ymin, xmax, ymax, tstzspanHex) -> {
+            if (xmin == null || ymin == null || xmax == null || ymax == null || tstzspanHex == null) return null;
+            return stboxMakeHelper(true, false, false, 0, xmin, ymin, 0, xmax, ymax, 0, tstzspanHex);
+        };
+
+    // stboxZ(xmin, ymin, zmin, xmax, ymax, zmax) — 3D spatial box
+    public static final UDF6<Double, Double, Double, Double, Double, Double, String> stboxZ =
+        (xmin, ymin, zmin, xmax, ymax, zmax) -> {
+            if (xmin == null || ymin == null || zmin == null || xmax == null || ymax == null || zmax == null) return null;
+            return stboxMakeHelper(true, true, false, 0, xmin, ymin, zmin, xmax, ymax, zmax, null);
+        };
+
+    // stboxZT(xmin, ymin, zmin, xmax, ymax, zmax, tstzspanHex) — 3D + time
+    public static final UDF7<Double, Double, Double, Double, Double, Double, String, String> stboxZT =
+        (xmin, ymin, zmin, xmax, ymax, zmax, tstzspanHex) -> {
+            if (xmin == null || ymin == null || zmin == null || xmax == null || ymax == null || zmax == null || tstzspanHex == null) return null;
+            return stboxMakeHelper(true, true, false, 0, xmin, ymin, zmin, xmax, ymax, zmax, tstzspanHex);
+        };
+
+    // Geodetic variants — geodetic=true, default SRID 4326
+    public static final UDF6<Double, Double, Double, Double, Double, Double, String> geodstboxZ =
+        (xmin, ymin, zmin, xmax, ymax, zmax) -> {
+            if (xmin == null || ymin == null || zmin == null || xmax == null || ymax == null || zmax == null) return null;
+            return stboxMakeHelper(true, true, true, 4326, xmin, ymin, zmin, xmax, ymax, zmax, null);
+        };
+
+    public static final UDF1<String, String> geodstboxT =
+        tstzspanHex -> {
+            if (tstzspanHex == null) return null;
+            return stboxMakeHelper(false, false, true, 4326, 0, 0, 0, 0, 0, 0, tstzspanHex);
+        };
+
+    public static final UDF7<Double, Double, Double, Double, Double, Double, String, String> geodstboxZT =
+        (xmin, ymin, zmin, xmax, ymax, zmax, tstzspanHex) -> {
+            if (xmin == null || ymin == null || zmin == null || xmax == null || ymax == null || zmax == null || tstzspanHex == null) return null;
+            return stboxMakeHelper(true, true, true, 4326, xmin, ymin, zmin, xmax, ymax, zmax, tstzspanHex);
+        };
 }

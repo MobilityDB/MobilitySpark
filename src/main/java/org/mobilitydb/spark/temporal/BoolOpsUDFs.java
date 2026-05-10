@@ -376,5 +376,10 @@ public final class BoolOpsUDFs {
         spark.udf().register("tleTemporalTemporal",  tleTemporalTemporal,  DataTypes.StringType);
         spark.udf().register("tgtTemporalTemporal",  tgtTemporalTemporal,  DataTypes.StringType);
         spark.udf().register("tgeTemporalTemporal",  tgeTemporalTemporal,  DataTypes.StringType);
+
+        // MobilityDB SQL bare-name aliases for tbool boolops
+        spark.udf().register("tboolNot", tnotTbool,        DataTypes.StringType);
+        spark.udf().register("tboolAnd", tandTboolTbool,   DataTypes.StringType);
+        spark.udf().register("tboolOr",  torTboolTbool,    DataTypes.StringType);
     }
 }

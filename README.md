@@ -25,9 +25,10 @@ ULB is an OGC Associate Member and member of the OGC Moving Feature Standard Wor
 - **Java 21** (OpenJDK or Temurin)
 - **Apache Maven 3.8+**
 - **Apache Spark 3.5** (provided at runtime; not needed to compile)
-- **JMEOS 1.3** — bundled in `libs/JMEOS-1.3.jar`
-  (from [MobilityDB/JMEOS PR #9](https://github.com/MobilityDB/JMEOS/pull/9);
-  includes `libmeos.so` for Linux)
+- **JMEOS 1.4** — bundled in `libs/JMEOS-1.4.jar`
+  (the Java binding for MEOS 1.4; includes `libmeos.so` for Linux).
+  A small `MeosNative.java` supplement covers ~70 MEOS-1.4-renamed
+  symbols not yet in the released JAR.
 
 ---
 
@@ -70,15 +71,28 @@ try (MobilitySparkSession ms = MobilitySparkSession.create(spark)) {
 
 ### 3.2. Available UDFs
 
+MobilitySpark covers **100% of MobilityDB's active addressable SQL surface**
+(858/858 functions) — the same audit methodology runs against MobilityDuck
+to keep both bindings in lockstep. See
+[`docs/parity-100.md`](docs/parity-100.md) for the achievement note,
+[`docs/parity-status.md`](docs/parity-status.md) for the per-section
+coverage report (regenerable via `python3 scripts/parity-audit.py`),
+and the comprehensive UDF inventory in [PR #5](https://github.com/MobilityDB/MobilitySpark/pull/5).
+
+A small sample (every UDF group in MobilityDB has a Spark equivalent):
+
 | UDF | Signature | Description |
 |-----|-----------|-------------|
 | `atTime` | `(STRING, TIMESTAMP) → STRING` | Restrict tgeompoint to a timestamp |
 | `eIntersects` | `(STRING, STRING) → BOOLEAN` | Ever intersects a geometry |
 | `nearestApproachDistance` | `(STRING, STRING) → DOUBLE` | Min distance at any common instant |
 | `eDwithin` | `(STRING, STRING, DOUBLE) → BOOLEAN` | Ever within given distance |
+| `spaceTimeTiles` | `(STRING, DOUBLE×3, STRING, STRING, TIMESTAMP, BOOLEAN) → ARRAY<STRING>` | Multidimensional tiling for parallel partitioning |
+| `tfloatSeqSetGaps` | `(ARRAY<STRING>, STRING, DOUBLE, STRING) → STRING` | Build a tfloat sequence-set with gap detection |
 
 All tgeompoint values are stored as **hex-WKB strings** (output of `temporal_as_hexwkb`).
 Geometry values are **hex-EWKB strings** (output of `geo_as_hexewkb`).
+Set / span / spanset / tbox / stbox values follow the same hex-encoding convention.
 
 ### 3.3. Portable SQL (BerlinMOD benchmark)
 

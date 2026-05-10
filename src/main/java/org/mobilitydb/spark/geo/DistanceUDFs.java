@@ -28,6 +28,7 @@ package org.mobilitydb.spark.geo;
 import functions.functions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
+import org.mobilitydb.spark.MeosNative;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF2;
@@ -179,11 +180,190 @@ public final class DistanceUDFs {
             }
         };
 
+    // ------------------------------------------------------------------
+    // Nearest approach distance (NAD) — returns Double (null on failure)
+    // MEOS returns DBL_MAX when the inputs never approach; map to null.
+    // ------------------------------------------------------------------
+
+    // nadTgeoGeo(trip STRING, geomWkt STRING) → DOUBLE
+    // MEOS: nad_tgeo_geo(const Temporal *, const GSERIALIZED *) → double
+    public static final UDF2<String, String, Double> nadTgeoGeo =
+        (trip, geomWkt) -> {
+            if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+            if (gsptr == null) { MeosMemory.free(tptr); return null; }
+            try {
+                double d = MeosNative.INSTANCE.nad_tgeo_geo(tptr, gsptr);
+                return d == Double.MAX_VALUE ? null : d;
+            } finally {
+                MeosMemory.free(tptr);
+                MeosMemory.free(gsptr);
+            }
+        };
+
+    // nadTgeoStbox(trip STRING, stboxHex STRING) → DOUBLE
+    // MEOS: nad_tgeo_stbox(const Temporal *, const STBox *) → double
+    public static final UDF2<String, String, Double> nadTgeoStbox =
+        (trip, stboxHex) -> {
+            if (trip == null || stboxHex == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            Pointer sptr = functions.stbox_from_hexwkb(stboxHex);
+            if (sptr == null) { MeosMemory.free(tptr); return null; }
+            try {
+                double d = MeosNative.INSTANCE.nad_tgeo_stbox(tptr, sptr);
+                return d == Double.MAX_VALUE ? null : d;
+            } finally {
+                MeosMemory.free(tptr);
+                MeosMemory.free(sptr);
+            }
+        };
+
+    // nadTgeoTgeo(trip1 STRING, trip2 STRING) → DOUBLE
+    // MEOS: nad_tgeo_tgeo(const Temporal *, const Temporal *) → double
+    public static final UDF2<String, String, Double> nadTgeoTgeo =
+        (trip1, trip2) -> {
+            if (trip1 == null || trip2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            if (p1 == null) return null;
+            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            if (p2 == null) { MeosMemory.free(p1); return null; }
+            try {
+                double d = MeosNative.INSTANCE.nad_tgeo_tgeo(p1, p2);
+                return d == Double.MAX_VALUE ? null : d;
+            } finally {
+                MeosMemory.free(p1);
+                MeosMemory.free(p2);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Nearest approach instant (NAI) — returns hex-WKB TInstant (STRING)
+    // ------------------------------------------------------------------
+
+    // naiTgeoGeo(trip STRING, geomWkt STRING) → STRING  (TInstant hex-WKB)
+    // MEOS: nai_tgeo_geo(const Temporal *, const GSERIALIZED *) → TInstant *
+    public static final UDF2<String, String, String> naiTgeoGeo =
+        (trip, geomWkt) -> {
+            if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+            if (gsptr == null) { MeosMemory.free(tptr); return null; }
+            try {
+                Pointer r = MeosNative.INSTANCE.nai_tgeo_geo(tptr, gsptr);
+                if (r == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                } finally {
+                    MeosMemory.free(r);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+                MeosMemory.free(gsptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Shortest line — returns geometry (WKT) of the closest-approach segment
+    // ------------------------------------------------------------------
+
+    // shortestLineTgeoGeo(trip STRING, geomWkt STRING) → STRING  (WKT geometry)
+    // MEOS: shortestline_tgeo_geo(const Temporal *, const GSERIALIZED *) → GSERIALIZED *
+    public static final UDF2<String, String, String> shortestLineTgeoGeo =
+        (trip, geomWkt) -> {
+            if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+            if (gsptr == null) { MeosMemory.free(tptr); return null; }
+            try {
+                Pointer r = MeosNative.INSTANCE.shortestline_tgeo_geo(tptr, gsptr);
+                if (r == null) return null;
+                try {
+                    return functions.geo_as_text(r, 6);
+                } finally {
+                    MeosMemory.free(r);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+                MeosMemory.free(gsptr);
+            }
+        };
+
+    // shortestLineTgeoTgeo(trip1 STRING, trip2 STRING) → STRING  (WKT geometry)
+    // MEOS: shortestline_tgeo_tgeo(const Temporal *, const Temporal *) → GSERIALIZED *
+    public static final UDF2<String, String, String> shortestLineTgeoTgeo =
+        (trip1, trip2) -> {
+            if (trip1 == null || trip2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            if (p1 == null) return null;
+            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            if (p2 == null) { MeosMemory.free(p1); return null; }
+            try {
+                Pointer r = functions.shortestline_tgeo_tgeo(p1, p2);
+                if (r == null) return null;
+                try {
+                    return functions.geo_as_text(r, 6);
+                } finally {
+                    MeosMemory.free(r);
+                }
+            } finally {
+                MeosMemory.free(p1);
+                MeosMemory.free(p2);
+            }
+        };
+
+    // naiTgeoTgeo(trip1 STRING, trip2 STRING) → STRING  (TInstant hex-WKB)
+    // MEOS: nai_tgeo_tgeo(const Temporal *, const Temporal *) → TInstant *
+    public static final UDF2<String, String, String> naiTgeoTgeo =
+        (trip1, trip2) -> {
+            if (trip1 == null || trip2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            if (p1 == null) return null;
+            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            if (p2 == null) { MeosMemory.free(p1); return null; }
+            try {
+                Pointer r = MeosNative.INSTANCE.nai_tgeo_tgeo(p1, p2);
+                if (r == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                } finally {
+                    MeosMemory.free(r);
+                }
+            } finally {
+                MeosMemory.free(p1);
+                MeosMemory.free(p2);
+            }
+        };
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("tdistanceTgeoGeo",       tdistanceTgeoGeo,       DataTypes.StringType);
         spark.udf().register("tdistanceTgeoTgeo",      tdistanceTgeoTgeo,      DataTypes.StringType);
         spark.udf().register("tdistanceTfloatFloat",   tdistanceTfloatFloat,   DataTypes.StringType);
         spark.udf().register("tdistanceTintInt",       tdistanceTintInt,       DataTypes.StringType);
         spark.udf().register("tdistanceTnumberTnumber", tdistanceTnumberTnumber, DataTypes.StringType);
+
+        spark.udf().register("nadTgeoGeo",           nadTgeoGeo,           DataTypes.DoubleType);
+        spark.udf().register("nadTgeoStbox",          nadTgeoStbox,          DataTypes.DoubleType);
+        spark.udf().register("nadTgeoTgeo",           nadTgeoTgeo,           DataTypes.DoubleType);
+        spark.udf().register("naiTgeoGeo",            naiTgeoGeo,            DataTypes.StringType);
+        spark.udf().register("naiTgeoTgeo",           naiTgeoTgeo,           DataTypes.StringType);
+        spark.udf().register("shortestLineTgeoGeo",   shortestLineTgeoGeo,   DataTypes.StringType);
+        spark.udf().register("shortestLineTgeoTgeo",  shortestLineTgeoTgeo,  DataTypes.StringType);
+
+        // MobilityDB SQL bare-name aliases
+        spark.udf().register("nearestApproachDistance", nadTgeoGeo,  DataTypes.DoubleType);
+        spark.udf().register("nearestApproachInstant",  naiTgeoGeo,  DataTypes.StringType);
+        spark.udf().register("shortestLine",            shortestLineTgeoGeo, DataTypes.StringType);
     }
 }

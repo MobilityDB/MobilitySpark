@@ -677,6 +677,32 @@ public final class GeoUDFs {
         };
 
     // ------------------------------------------------------------------
+    // tpointTransform(trip STRING, srid INTEGER) → STRING
+    //
+    // Reprojects all instants of the temporal point to a different CRS.
+    //
+    // MEOS: tspatial_transform(const Temporal *, int srid) → Temporal *
+    // ------------------------------------------------------------------
+    public static final UDF2<String, Integer, String> tpointTransform =
+        (trip, srid) -> {
+            if (trip == null || srid == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            try {
+                Pointer result = functions.tspatial_transform(tptr, srid);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // tpointAsText(trip STRING, precision INTEGER) → STRING
     //
     // Returns WKT for each instant of the temporal point.
@@ -848,6 +874,7 @@ public final class GeoUDFs {
         spark.udf().register("stops",                  stops,                  DataTypes.StringType);
         spark.udf().register("isSimple",               isSimple,               DataTypes.BooleanType);
         spark.udf().register("shortestLine",           shortestLine,           DataTypes.StringType);
+        spark.udf().register("tpointTransform",         tpointTransform,         DataTypes.StringType);
         spark.udf().register("tpointAsText",           tpointAsText,           DataTypes.StringType);
         spark.udf().register("tpointAsEWKT",           tpointAsEWKT,           DataTypes.StringType);
         spark.udf().register("tpointSRID",             tpointSRID,             DataTypes.IntegerType);

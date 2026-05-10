@@ -125,5 +125,67 @@ public final class SimilarityUDFs {
         spark.udf().register("frechetDistance",    frechetDistance,    DataTypes.DoubleType);
         spark.udf().register("dynamicTimeWarp",    dynamicTimeWarp,    DataTypes.DoubleType);
         spark.udf().register("hausdorffDistance",  hausdorffDistance,  DataTypes.DoubleType);
+        // MobilityDB SQL bare-name alias for dynamicTimeWarp
+        spark.udf().register("dynTimeWarpDistance", dynamicTimeWarp,   DataTypes.DoubleType);
+        // Similarity paths — return array of "i,j" pairs as Strings
+        spark.udf().register("dynTimeWarpPath",   dynTimeWarpPath,   DataTypes.createArrayType(DataTypes.StringType));
+        spark.udf().register("frechetDistancePath", frechetDistancePath, DataTypes.createArrayType(DataTypes.StringType));
     }
+
+    // dynTimeWarpPath / frechetDistancePath: return array of "i,j" pairs
+
+    public static final org.apache.spark.sql.api.java.UDF2<String, String, String[]> dynTimeWarpPath =
+        (h1, h2) -> {
+            if (h1 == null || h2 == null) return null;
+            org.mobilitydb.spark.MeosThread.ensureReady();
+            jnr.ffi.Pointer p1 = functions.temporal_from_hexwkb(h1);
+            if (p1 == null) return null;
+            jnr.ffi.Pointer p2 = functions.temporal_from_hexwkb(h2);
+            if (p2 == null) { org.mobilitydb.spark.MeosMemory.free(p1); return null; }
+            try {
+                jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
+                jnr.ffi.Pointer countOut = rt.getMemoryManager().allocateDirect(4);
+                jnr.ffi.Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE
+                    .temporal_dyntimewarp_path(p1, p2, countOut);
+                if (arr == null) return null;
+                try {
+                    int n = countOut.getInt(0);
+                    String[] out = new String[n];
+                    for (int i = 0; i < n; i++) {
+                        // Match = {int i, int j} — 8 bytes each
+                        int mi = arr.getInt(i * 8L);
+                        int mj = arr.getInt(i * 8L + 4);
+                        out[i] = mi + "," + mj;
+                    }
+                    return out;
+                } finally { org.mobilitydb.spark.MeosMemory.free(arr); }
+            } finally { org.mobilitydb.spark.MeosMemory.free(p1, p2); }
+        };
+
+    public static final org.apache.spark.sql.api.java.UDF2<String, String, String[]> frechetDistancePath =
+        (h1, h2) -> {
+            if (h1 == null || h2 == null) return null;
+            org.mobilitydb.spark.MeosThread.ensureReady();
+            jnr.ffi.Pointer p1 = functions.temporal_from_hexwkb(h1);
+            if (p1 == null) return null;
+            jnr.ffi.Pointer p2 = functions.temporal_from_hexwkb(h2);
+            if (p2 == null) { org.mobilitydb.spark.MeosMemory.free(p1); return null; }
+            try {
+                jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
+                jnr.ffi.Pointer countOut = rt.getMemoryManager().allocateDirect(4);
+                jnr.ffi.Pointer arr = org.mobilitydb.spark.MeosNative.INSTANCE
+                    .temporal_frechet_path(p1, p2, countOut);
+                if (arr == null) return null;
+                try {
+                    int n = countOut.getInt(0);
+                    String[] out = new String[n];
+                    for (int i = 0; i < n; i++) {
+                        int mi = arr.getInt(i * 8L);
+                        int mj = arr.getInt(i * 8L + 4);
+                        out[i] = mi + "," + mj;
+                    }
+                    return out;
+                } finally { org.mobilitydb.spark.MeosMemory.free(arr); }
+            } finally { org.mobilitydb.spark.MeosMemory.free(p1, p2); }
+        };
 }

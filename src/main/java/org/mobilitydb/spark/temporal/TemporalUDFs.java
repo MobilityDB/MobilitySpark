@@ -343,5 +343,9 @@ public final class TemporalUDFs {
         spark.udf().register("tintOut",           tintOut,           DataTypes.StringType);
         spark.udf().register("tfloatOut",         tfloatOut,         DataTypes.StringType);
         spark.udf().register("ttextOut",          ttextOut,          DataTypes.StringType);
+
+        // MobilityDB SQL bare-name aliases for temporal-instant accessors
+        // (work for any single-instant temporal value)
+        spark.udf().register("getTimestamp",      startTimestamp,    DataTypes.TimestampType);
     }
 }
