@@ -46,6 +46,7 @@ import org.mobilitydb.spark.temporal.SpanUDFs;
 import org.mobilitydb.spark.temporal.AggregateUDAFs;
 import org.mobilitydb.spark.temporal.MoreAccessorUDFs;
 import org.mobilitydb.spark.temporal.RestrictionUDFs;
+import org.mobilitydb.spark.temporal.TBoxUDFs;
 import org.mobilitydb.spark.temporal.TTextUDFs;
 import org.mobilitydb.spark.temporal.TemporalUDFs;
 import org.mobilitydb.spark.temporal.TransformUDFs;
@@ -95,6 +96,7 @@ public final class MobilitySparkSession implements AutoCloseable {
         SpanAlgebraUDFs.registerAll(spark);
         AnalyticsUDFs.registerAll(spark);
         PredicateUDFs.registerAll(spark);
+        TBoxUDFs.registerAll(spark);
         TTextUDFs.registerAll(spark);
         STBoxUDFs.registerAll(spark);
         PosOpsUDFs.registerAll(spark);
