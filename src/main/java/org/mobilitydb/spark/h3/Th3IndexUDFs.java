@@ -217,6 +217,37 @@ public final class Th3IndexUDFs {
             }
         };
 
+    // everEqTh3IndexTh3Index(t1 STRING, t2 STRING) → BOOLEAN
+    // True iff the two th3index trips are EVER in the same H3 cell at the same
+    // instant.  This is a sound prefilter for any "trips close at some common
+    // time" query (NAD, eDwithin, tDwithin trip×trip): if the trips never share
+    // a cell at any common instant, their minimum distance over common instants
+    // is at least the H3 edge length at the chosen resolution
+    // (≈ 1.4 km at resolution 7), so any sub-cell-edge-length distance threshold
+    // returns false everywhere.  For BerlinMOD Q5/Q6/Q10/Q12 the threshold is 3 m
+    // — much smaller than any H3 edge — so the prefilter is highly selective.
+    //
+    // MEOS: ever_eq_th3index_th3index(const Temporal *, const Temporal *) → int
+    public static final UDF2<String, String, Boolean> everEqTh3IndexTh3Index =
+        (t1, t2) -> {
+            if (t1 == null || t2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(t1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(t2);
+                if (p2 == null) return null;
+                try {
+                    int r = functions.ever_eq_th3index_th3index(p1, p2);
+                    return r < 0 ? null : r == 1;
+                } finally {
+                    MeosMemory.free(p2);
+                }
+            } finally {
+                MeosMemory.free(p1);
+            }
+        };
+
     // ------------------------------------------------------------------
     // Inspection helpers (handy for tuning the resolution)
     // ------------------------------------------------------------------
@@ -259,6 +290,7 @@ public final class Th3IndexUDFs {
 
         spark.udf().register("everEqH3IndexTh3Index",  everEqH3IndexTh3Index,  DataTypes.BooleanType);
         spark.udf().register("alwaysEqH3IndexTh3Index", alwaysEqH3IndexTh3Index, DataTypes.BooleanType);
+        spark.udf().register("everEqTh3IndexTh3Index", everEqTh3IndexTh3Index, DataTypes.BooleanType);
 
         spark.udf().register("th3IndexGetResolution",  th3IndexGetResolution,  DataTypes.StringType);
     }

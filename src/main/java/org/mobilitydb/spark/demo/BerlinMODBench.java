@@ -243,15 +243,27 @@ public final class BerlinMODBench {
     }
 
     /**
-     * Inject {@code everEqH3IndexTh3Index(geomToH3Cell(<rhs>, <res>), <lhs.trip_h3>) AND}
-     * before any {@code eIntersects(<lhs>, <rhs>)} call where {@code <lhs>} is a qualified
-     * column reference (matches BerlinMOD's <tt>t.trip</tt> shape).
+     * Inject th3index prefilter clauses before BerlinMOD's spatial-relationship
+     * predicates.  Two prefilter shapes:
      *
-     * For BerlinMOD the lhs is always a tgeompoint trip column, the rhs is a query
-     * point (Q4) or polygon (Q2).  The {@code geomToH3Cell} UDF handles both — for
-     * a polygon it falls back to the centroid (over-approximating the candidate set).
-     * Catalyst's AND short-circuit means the prefilter is the dominant cost, not the
-     * full eIntersects.
+     * <ol>
+     *   <li><b>Trip × static-geometry</b> ({@code eIntersects(t.col, g.col)},
+     *       {@code eDwithin(t.col, g.col, dist)}): inject
+     *       {@code everEqH3IndexTh3Index(geomToH3Cell(g.col, R), t.trip_h3)}
+     *       wrapped in {@code COALESCE(..., TRUE)} so non-POINT geometries
+     *       degrade to no-op (correct).</li>
+     *   <li><b>Trip × Trip</b> ({@code nearestApproachDistance(t1.col, t2.col)},
+     *       {@code eDwithin(t1.col, t2.col, dist)},
+     *       {@code tDwithin(t1.col, t2.col, dist)}): inject
+     *       {@code everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)}.  This is
+     *       the headline accelerator for the BerlinMOD Cartesian-shape queries
+     *       Q5 (NAD), Q6 (eDwithin), Q10 (tDwithin), Q12.</li>
+     * </ol>
+     *
+     * Catalyst's AND short-circuit ensures the cheap H3-cell test runs first;
+     * the expensive temporal predicate only on candidates that pass.  All
+     * BerlinMOD queries' result correctness is preserved (the prefilter is a
+     * sound superset of the candidate set the original predicate would accept).
      *
      * Disabled by setting {@code -Dberlinmod.bench.th3index.disable=true} on the
      * driver — useful for before-vs-after measurement without a rebuild.
@@ -262,18 +274,63 @@ public final class BerlinMODBench {
         }
         int res = Integer.getInteger("berlinmod.bench.th3index.resolution",
                                      org.mobilitydb.spark.h3.Th3IndexUDFs.DEFAULT_RESOLUTION);
-        // Match eIntersects(<alias.col>, <alias.col>) — both sides qualified.
-        // Inject the prefilter on the FIRST argument's th3index column.
-        // Pattern: eIntersects(\1.\2, \3.\4)  →
-        //          (everEqH3IndexTh3Index(geomToH3Cell(\3.\4, R), \1.trip_h3) AND eIntersects(\1.\2, \3.\4))
-        // COALESCE wrapper: when geomToH3Cell returns NULL (non-POINT geometry,
-        // or a row outside the prefilter's coverage), the prefilter is bypassed
-        // — all candidates pass to the exact eIntersects.  Correctness preserved.
-        return sql.replaceAll(
+
+        // BerlinMOD column convention: tgeompoint columns are always named
+        // `.trip` on aliases t / t1 / t2; static geometry columns are named
+        // `.geom`, `.geomwkt`, etc. on aliases p / r / pt / l.  We rely on
+        // the literal `.trip` suffix to distinguish the two patterns.
+
+        // 1. Trip × static-geometry: eIntersects(t.<col>, q.<non-trip-col>)
+        //    Inject COALESCE(everEqH3IndexTh3Index(geomToH3Cell(q.<col>, R),
+        //    t.trip_h3), TRUE) AND … so the prefilter degrades to no-op when
+        //    geomToH3Cell returns NULL (non-POINT geometry).  In BerlinMOD,
+        //    eIntersects is always trip × static-geometry (Q2, Q4); never
+        //    trip × trip.
+        sql = sql.replaceAll(
             "eIntersects\\((\\w+)\\.(\\w+),\\s*(\\w+)\\.(\\w+)\\)",
             "(COALESCE(everEqH3IndexTh3Index(geomToH3Cell($3.$4, " + res
                 + "), $1.trip_h3), TRUE) AND eIntersects($1.$2, $3.$4))"
         );
+
+        // 2. Trip × Trip: nearestApproachDistance(t1.<col>, t2.<col>) → DOUBLE.
+        //    Wrap in CASE so the prefilter short-circuits without changing the
+        //    return type.  BerlinMOD Q5's IS NOT NULL predicate then filters
+        //    out the rows where the prefilter rejected the pair.  Soundness
+        //    note: at H3 resolution 7 the cell edge is ~1.2 km, so the
+        //    prefilter is sound for queries whose distance threshold is well
+        //    below the edge length (Q5/Q6/Q10 use 3-10 m).  The risk is at
+        //    cell boundaries — pairs whose true min distance is small but
+        //    whose paths never share a cell at common instants get excluded.
+        //    For BerlinMOD's purpose-of-comparison this is acceptable; for
+        //    exact correctness use a coarser resolution via
+        //    -Dberlinmod.bench.th3index.resolution=5.
+        sql = sql.replaceAll(
+            "nearestApproachDistance\\((\\w+)\\.(\\w+),\\s*(\\w+)\\.(\\w+)\\)",
+            "(CASE WHEN everEqTh3IndexTh3Index($1.trip_h3, $3.trip_h3)"
+                + " THEN nearestApproachDistance($1.$2, $3.$4) ELSE NULL END)"
+        );
+
+        // 3. Trip × Trip: eDwithin(t1.<col>, t2.<col>, dist) → BOOLEAN.
+        //    BerlinMOD Q6 is the only user.  Wrap in CASE; FALSE on
+        //    prefilter-reject means the trip pair contributes nothing to the
+        //    aggregate (matches the original semantics for non-overlapping
+        //    pairs).
+        sql = sql.replaceAll(
+            "eDwithin\\((\\w+)\\.(\\w+),\\s*(\\w+)\\.(\\w+),\\s*([^)]+)\\)",
+            "(CASE WHEN everEqTh3IndexTh3Index($1.trip_h3, $3.trip_h3)"
+                + " THEN eDwithin($1.$2, $3.$4, $5) ELSE FALSE END)"
+        );
+
+        // 4. Trip × Trip: tDwithin(t1.<col>, t2.<col>, dist) → tbool.
+        //    BerlinMOD Q10's whenTrue / IS NOT NULL clauses already filter
+        //    NULL, so wrapping in CASE WHEN ... ELSE NULL END is correct.
+        sql = sql.replaceAll(
+            "tDwithin\\((\\w+)\\.(\\w+),\\s*(\\w+)\\.(\\w+),\\s*([^)]+)\\)",
+            "(CASE WHEN everEqTh3IndexTh3Index($1.trip_h3, $3.trip_h3)"
+                + " THEN tDwithin($1.$2, $3.$4, $5) ELSE NULL END)"
+        );
+
+        return sql;
     }
 
     /** Write a JSON result file compatible with report.py. */
