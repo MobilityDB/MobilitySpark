@@ -197,6 +197,27 @@ public final class AnalyticsUDFs {
             }
         };
 
+    // tnumberTrend(tnumber_hex) → tfloat hex-WKB
+    // MEOS: tnumber_trend(const Temporal *) → Temporal *
+    public static final UDF1<String, String> tnumberTrend =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer r = functions.tnumber_trend(ptr);
+                if (r == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                } finally {
+                    MeosMemory.free(r);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
     // ------------------------------------------------------------------
     // tpoint spatial analytics  (hex-WKB in, scalar/hex out)
     // ------------------------------------------------------------------
@@ -280,6 +301,7 @@ public final class AnalyticsUDFs {
         spark.udf().register("tfloatRadians",     tfloatRadians,    DataTypes.StringType);
         spark.udf().register("tnumberIntegral",   tnumberIntegral,  DataTypes.DoubleType);
         spark.udf().register("tnumberTwavg",      tnumberTwavg,     DataTypes.DoubleType);
+        spark.udf().register("tnumberTrend",      tnumberTrend,     DataTypes.StringType);
         spark.udf().register("tpointLength",      tpointLength,     DataTypes.DoubleType);
         spark.udf().register("tpointSpeed",       tpointSpeed,      DataTypes.StringType);
         spark.udf().register("tpointAzimuth",     tpointAzimuth,    DataTypes.StringType);

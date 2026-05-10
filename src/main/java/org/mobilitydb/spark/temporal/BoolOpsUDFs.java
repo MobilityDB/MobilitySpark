@@ -30,6 +30,7 @@ import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
 
@@ -154,6 +155,32 @@ public final class BoolOpsUDFs {
         };
 
     // ------------------------------------------------------------------
+    // Temporal boolean accessor
+    // ------------------------------------------------------------------
+
+    // tboolWhenTrue(tbool_hex) → tstzspanset hex-WKB
+    // Returns the periods when the tbool is true.
+    // MEOS: tbool_when_true(const Temporal *) → SpanSet *
+    public static final UDF1<String, String> tboolWhenTrue =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer r = functions.tbool_when_true(ptr);
+                if (r == null) return null;
+                try {
+                    return functions.spanset_as_hexwkb(r, (byte) 0);
+                } finally {
+                    MeosMemory.free(r);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // REGISTRATION
     // ------------------------------------------------------------------
 
@@ -166,5 +193,7 @@ public final class BoolOpsUDFs {
         spark.udf().register("torBool",        torBool,        DataTypes.StringType);
         spark.udf().register("torBoolTbool",   torBoolTbool,   DataTypes.StringType);
         spark.udf().register("torTboolTbool",  torTboolTbool,  DataTypes.StringType);
+        // tbool accessor
+        spark.udf().register("tboolWhenTrue",  tboolWhenTrue,  DataTypes.StringType);
     }
 }

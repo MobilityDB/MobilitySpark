@@ -113,6 +113,45 @@ public final class MathUDFs {
         };
 
     // ------------------------------------------------------------------
+    // Transcendental functions (tfloat → tfloat)
+    //
+    // MEOS: tfloat_exp / tfloat_ln / tfloat_log10
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, String> tfloatExp =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                return hexOut(functions.tfloat_exp(ptr));
+            } finally { MeosMemory.free(ptr); }
+        };
+
+    public static final UDF1<String, String> tfloatLn =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                return hexOut(functions.tfloat_ln(ptr));
+            } finally { MeosMemory.free(ptr); }
+        };
+
+    public static final UDF1<String, String> tfloatLog10 =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                return hexOut(functions.tfloat_log10(ptr));
+            } finally { MeosMemory.free(ptr); }
+        };
+
+    // ------------------------------------------------------------------
     // Scalar arithmetic: tint OP int  (hex-WKB in, int scalar, hex-WKB out)
     //
     // MEOS: add_tint_int / sub_tint_int / mult_tint_int / div_tint_int
@@ -291,6 +330,10 @@ public final class MathUDFs {
         spark.udf().register("tnumberDeltaValue",        tnumberDeltaValue,        DataTypes.StringType);
         spark.udf().register("tnumberAngularDifference", tnumberAngularDifference, DataTypes.StringType);
         spark.udf().register("tpointAngularDifference",  tpointAngularDifference,  DataTypes.StringType);
+        // transcendental
+        spark.udf().register("tfloatExp",                tfloatExp,                DataTypes.StringType);
+        spark.udf().register("tfloatLn",                 tfloatLn,                 DataTypes.StringType);
+        spark.udf().register("tfloatLog10",              tfloatLog10,              DataTypes.StringType);
         // tint + scalar
         spark.udf().register("addTintInt",               addTintInt,               DataTypes.StringType);
         spark.udf().register("subTintInt",               subTintInt,               DataTypes.StringType);
