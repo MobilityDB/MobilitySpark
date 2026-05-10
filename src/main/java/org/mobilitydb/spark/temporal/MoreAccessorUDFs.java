@@ -27,6 +27,7 @@ package org.mobilitydb.spark.temporal;
 
 import functions.functions;
 import jnr.ffi.Pointer;
+import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
@@ -35,6 +36,9 @@ import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
 
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 /**
  * Spark SQL UDFs for temporal structure and value accessors not covered by
@@ -526,6 +530,73 @@ public final class MoreAccessorUDFs {
             }
         };
 
+    // ------------------------------------------------------------------
+    // value_at_timestamptz: retrieve value at a given instant
+    //
+    // MEOS: tbool_value_at_timestamptz / tint_value_at_timestamptz /
+    //       tfloat_value_at_timestamptz (output-pointer pattern)
+    // ------------------------------------------------------------------
+
+    // tboolValueAtTimestamptz(tval STRING, ts TIMESTAMP) → BOOLEAN
+    public static final UDF2<String, Timestamp, Boolean> tboolValueAtTimestamptz =
+        (tval, ts) -> {
+            if (tval == null || ts == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(tval);
+            if (ptr == null) return null;
+            try {
+                long pgEpochMicros = (ts.getTime() - PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
+                OffsetDateTime odt = OffsetDateTime.ofInstant(
+                    Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
+                Pointer outVal = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(1);
+                boolean found = functions.tbool_value_at_timestamptz(ptr, odt, false, outVal);
+                if (!found) return null;
+                return outVal.getByte(0) != 0;
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tintValueAtTimestamptz(tval STRING, ts TIMESTAMP) → INT
+    public static final UDF2<String, Timestamp, Integer> tintValueAtTimestamptz =
+        (tval, ts) -> {
+            if (tval == null || ts == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(tval);
+            if (ptr == null) return null;
+            try {
+                long pgEpochMicros = (ts.getTime() - PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
+                OffsetDateTime odt = OffsetDateTime.ofInstant(
+                    Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
+                Pointer outVal = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
+                boolean found = functions.tint_value_at_timestamptz(ptr, odt, false, outVal);
+                if (!found) return null;
+                return outVal.getInt(0);
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tfloatValueAtTimestamptz(tval STRING, ts TIMESTAMP) → DOUBLE
+    public static final UDF2<String, Timestamp, Double> tfloatValueAtTimestamptz =
+        (tval, ts) -> {
+            if (tval == null || ts == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(tval);
+            if (ptr == null) return null;
+            try {
+                long pgEpochMicros = (ts.getTime() - PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
+                OffsetDateTime odt = OffsetDateTime.ofInstant(
+                    Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
+                Pointer outVal = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                boolean found = functions.tfloat_value_at_timestamptz(ptr, odt, false, outVal);
+                if (!found) return null;
+                return outVal.getDouble(0);
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
     public static void registerAll(SparkSession spark) {
         // Subtype
         spark.udf().register("temporalSubtype",  temporalSubtype,  DataTypes.StringType);
@@ -557,8 +628,12 @@ public final class MoreAccessorUDFs {
         spark.udf().register("ttextMaxValue",    ttextMaxValue,    DataTypes.StringType);
         spark.udf().register("ttextValueN",      ttextValueN,      DataTypes.StringType);
         // tpoint accessors
-        spark.udf().register("tpointSrid",       tpointSrid,       DataTypes.IntegerType);
-        spark.udf().register("tpointValueN",     tpointValueN,     DataTypes.StringType);
-        spark.udf().register("tpointConvexHull", tpointConvexHull, DataTypes.StringType);
+        spark.udf().register("tpointSrid",                   tpointSrid,                   DataTypes.IntegerType);
+        spark.udf().register("tpointValueN",                 tpointValueN,                 DataTypes.StringType);
+        spark.udf().register("tpointConvexHull",             tpointConvexHull,             DataTypes.StringType);
+        // value_at_timestamptz
+        spark.udf().register("tboolValueAtTimestamptz",      tboolValueAtTimestamptz,      DataTypes.BooleanType);
+        spark.udf().register("tintValueAtTimestamptz",       tintValueAtTimestamptz,       DataTypes.IntegerType);
+        spark.udf().register("tfloatValueAtTimestamptz",     tfloatValueAtTimestamptz,     DataTypes.DoubleType);
     }
 }
