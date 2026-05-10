@@ -249,13 +249,99 @@ public final class TemporalUDFs {
             }
         };
 
+    // ------------------------------------------------------------------
+    // MFJSON output  (hex-WKB in → JSON string out)
+    //
+    // MEOS: temporal_as_mfjson(temp, withbbox, flags, precision, srs)
+    //       flags=0 → WKT geometry (not EWKT), precision controls decimal places
+    // ------------------------------------------------------------------
+
+    public static final UDF2<String, Integer, String> temporalAsMfjson =
+        (trip, precision) -> {
+            if (trip == null) return null;
+            MeosThread.ensureReady();
+            int prec = (precision == null) ? 6 : precision;
+            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            if (ptr == null) return null;
+            try {
+                return functions.temporal_as_mfjson(ptr, false, 0, prec, null);
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Text output  (hex-WKB in → WKT-like text string out)
+    //
+    // MEOS: tbool_out, tint_out, tfloat_out (with precision), ttext_out
+    // These mirror the PostgreSQL temporal type output functions.
+    // ------------------------------------------------------------------
+
+    public static final UDF1<String, String> tboolOut =
+        (tbool) -> {
+            if (tbool == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(tbool);
+            if (ptr == null) return null;
+            try {
+                return functions.tbool_out(ptr);
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    public static final UDF1<String, String> tintOut =
+        (tint) -> {
+            if (tint == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(tint);
+            if (ptr == null) return null;
+            try {
+                return functions.tint_out(ptr);
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    public static final UDF2<String, Integer, String> tfloatOut =
+        (tfloat, precision) -> {
+            if (tfloat == null) return null;
+            MeosThread.ensureReady();
+            int prec = (precision == null) ? 6 : precision;
+            Pointer ptr = functions.temporal_from_hexwkb(tfloat);
+            if (ptr == null) return null;
+            try {
+                return functions.tfloat_out(ptr, prec);
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    public static final UDF1<String, String> ttextOut =
+        (ttext) -> {
+            if (ttext == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(ttext);
+            if (ptr == null) return null;
+            try {
+                return functions.ttext_out(ptr);
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
     public static void registerAll(org.apache.spark.sql.SparkSession spark) {
-        spark.udf().register("atTime",          atTime,          DataTypes.StringType);
-        spark.udf().register("startTimestamp",   startTimestamp,  DataTypes.TimestampType);
-        spark.udf().register("endTimestamp",     endTimestamp,    DataTypes.TimestampType);
-        spark.udf().register("numInstants",      numInstants,     DataTypes.IntegerType);
-        spark.udf().register("speed",            speed,           DataTypes.StringType);
-        spark.udf().register("atGeometry",       atGeometry,      DataTypes.StringType);
-        spark.udf().register("asHexWKB",         asHexWKB,        DataTypes.StringType);
+        spark.udf().register("atTime",            atTime,            DataTypes.StringType);
+        spark.udf().register("startTimestamp",    startTimestamp,    DataTypes.TimestampType);
+        spark.udf().register("endTimestamp",      endTimestamp,      DataTypes.TimestampType);
+        spark.udf().register("numInstants",       numInstants,       DataTypes.IntegerType);
+        spark.udf().register("speed",             speed,             DataTypes.StringType);
+        spark.udf().register("atGeometry",        atGeometry,        DataTypes.StringType);
+        spark.udf().register("asHexWKB",          asHexWKB,          DataTypes.StringType);
+        spark.udf().register("temporalAsMfjson",  temporalAsMfjson,  DataTypes.StringType);
+        spark.udf().register("tboolOut",          tboolOut,          DataTypes.StringType);
+        spark.udf().register("tintOut",           tintOut,           DataTypes.StringType);
+        spark.udf().register("tfloatOut",         tfloatOut,         DataTypes.StringType);
+        spark.udf().register("ttextOut",          ttextOut,          DataTypes.StringType);
     }
 }

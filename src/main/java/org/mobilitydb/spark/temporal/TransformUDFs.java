@@ -212,6 +212,71 @@ public final class TransformUDFs {
         };
 
     // ------------------------------------------------------------------
+    // Value-domain shifting and scaling (tint)
+    //
+    // MEOS: tint_shift_value(temp, shift)       meos.h
+    //       tint_scale_value(temp, width)        meos.h
+    //       tint_shift_scale_value(temp, s, w)   meos.h
+    // ------------------------------------------------------------------
+
+    public static final UDF2<String, Integer, String> tintShiftValue =
+        (s, shift) -> {
+            if (s == null || shift == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tint_shift_value(ptr, shift);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    public static final UDF2<String, Integer, String> tintScaleValue =
+        (s, width) -> {
+            if (s == null || width == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tint_scale_value(ptr, width);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    public static final UDF3<String, Integer, Integer, String> tintShiftScaleValue =
+        (s, shift, width) -> {
+            if (s == null || shift == null || width == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tint_shift_scale_value(ptr, shift, width);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // Value-domain shifting and scaling (tfloat)
     // ------------------------------------------------------------------
 
@@ -621,6 +686,10 @@ public final class TransformUDFs {
         // Type casting
         spark.udf().register("tfloatToTint",          tfloatToTint,          DataTypes.StringType);
         spark.udf().register("tintToTfloat",          tintToTfloat,          DataTypes.StringType);
+        // tint value-domain shifting and scaling
+        spark.udf().register("tintShiftValue",        tintShiftValue,        DataTypes.StringType);
+        spark.udf().register("tintScaleValue",        tintScaleValue,        DataTypes.StringType);
+        spark.udf().register("tintShiftScaleValue",   tintShiftScaleValue,   DataTypes.StringType);
         // Value-domain shifting and scaling
         spark.udf().register("tfloatShiftValue",      tfloatShiftValue,      DataTypes.StringType);
         spark.udf().register("tfloatScaleValue",      tfloatScaleValue,      DataTypes.StringType);
