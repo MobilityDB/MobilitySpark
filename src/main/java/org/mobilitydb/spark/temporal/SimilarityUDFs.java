@@ -94,11 +94,36 @@ public final class SimilarityUDFs {
         };
 
     // ------------------------------------------------------------------
+    // hausdorffDistance(t1 STRING, t2 STRING) → DOUBLE
+    //
+    // Hausdorff distance between two temporal trajectories.
+    // Returns null when the inputs have incompatible types or no instants.
+    //
+    // MEOS: temporal_hausdorff_distance(const Temporal *, const Temporal *) → double
+    // ------------------------------------------------------------------
+    public static final UDF2<String, String, Double> hausdorffDistance =
+        (s1, s2) -> {
+            if (s1 == null || s2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            if (p1 == null) return null;
+            try {
+                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                if (p2 == null) return null;
+                try {
+                    double d = functions.temporal_hausdorff_distance(p1, p2);
+                    return (d == Double.MAX_VALUE) ? null : d;
+                } finally { MeosMemory.free(p2); }
+            } finally { MeosMemory.free(p1); }
+        };
+
+    // ------------------------------------------------------------------
     // REGISTRATION
     // ------------------------------------------------------------------
 
     public static void registerAll(SparkSession spark) {
-        spark.udf().register("frechetDistance",  frechetDistance,  DataTypes.DoubleType);
-        spark.udf().register("dynamicTimeWarp",  dynamicTimeWarp,  DataTypes.DoubleType);
+        spark.udf().register("frechetDistance",    frechetDistance,    DataTypes.DoubleType);
+        spark.udf().register("dynamicTimeWarp",    dynamicTimeWarp,    DataTypes.DoubleType);
+        spark.udf().register("hausdorffDistance",  hausdorffDistance,  DataTypes.DoubleType);
     }
 }

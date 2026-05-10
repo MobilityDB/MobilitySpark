@@ -30,6 +30,7 @@ import jnr.ffi.Pointer;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.*;
 import org.apache.spark.sql.types.DataTypes;
+import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 
 /**
@@ -299,6 +300,33 @@ public final class GeoAnalyticsUDFs {
         };
 
     // ------------------------------------------------------------------
+    // geoSame(wkt1 STRING, wkt2 STRING) → BOOLEAN
+    //
+    // Returns true if two geometries are exactly equal (same type, coordinates,
+    // and SRID).
+    //
+    // MEOS: geo_same(const GSERIALIZED *, const GSERIALIZED *) → bool
+    // ------------------------------------------------------------------
+    public static final UDF2<String, String, Boolean> geoSame =
+        (wkt1, wkt2) -> {
+            if (wkt1 == null || wkt2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer g1 = functions.geo_from_text(wkt1, 0);
+            if (g1 == null) return null;
+            try {
+                Pointer g2 = functions.geo_from_text(wkt2, 0);
+                if (g2 == null) return null;
+                try {
+                    return functions.geo_same(g1, g2);
+                } finally {
+                    MeosMemory.free(g2);
+                }
+            } finally {
+                MeosMemory.free(g1);
+            }
+        };
+
+    // ------------------------------------------------------------------
     // REGISTRATION
     // ------------------------------------------------------------------
 
@@ -324,5 +352,7 @@ public final class GeoAnalyticsUDFs {
         spark.udf().register("bearing",          bearing,          DataTypes.StringType);
         // spatial aggregate
         spark.udf().register("twCentroid",       twCentroid,       DataTypes.StringType);
+        // geometry equality
+        spark.udf().register("geoSame",          geoSame,          DataTypes.BooleanType);
     }
 }

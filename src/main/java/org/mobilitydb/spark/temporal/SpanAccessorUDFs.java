@@ -634,6 +634,13 @@ public final class SpanAccessorUDFs {
         spark.udf().register("tstzspansetEndTimestamptz",    tstzspansetEndTimestamptz,    DataTypes.TimestampType);
         // spanset nth-span accessor
         spark.udf().register("spansetSpanN", spansetSpanN, DataTypes.StringType);
+        // intspanset / floatspanset bound accessors
+        spark.udf().register("intspansetLower",    intspansetLower,    DataTypes.IntegerType);
+        spark.udf().register("intspansetUpper",    intspansetUpper,    DataTypes.IntegerType);
+        spark.udf().register("intspansetWidth",    intspansetWidth,    DataTypes.IntegerType);
+        spark.udf().register("floatspansetLower",  floatspansetLower,  DataTypes.DoubleType);
+        spark.udf().register("floatspansetUpper",  floatspansetUpper,  DataTypes.DoubleType);
+        spark.udf().register("floatspansetWidth",  floatspansetWidth,  DataTypes.DoubleType);
         // tstzspanset extra accessors
         spark.udf().register("tstzspansetNumTimestamps", tstzspansetNumTimestamps, DataTypes.IntegerType);
         spark.udf().register("tstzspansetTimestamps",    tstzspansetTimestamps,
@@ -642,6 +649,92 @@ public final class SpanAccessorUDFs {
     }
 
     // ------------------------------------------------------------------
+    // ------------------------------------------------------------------
+    // intspanset / floatspanset bound accessors
+    // ------------------------------------------------------------------
+
+    // intspansetLower(hex STRING) → INTEGER
+    // MEOS: intspanset_lower(const SpanSet *) → int
+    public static final UDF1<String, Integer> intspansetLower =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try { return functions.intspanset_lower(p); }
+            finally { MeosMemory.free(p); }
+        };
+
+    // intspansetUpper(hex STRING) → INTEGER
+    // MEOS: intspanset_upper(const SpanSet *) → int
+    public static final UDF1<String, Integer> intspansetUpper =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try { return functions.intspanset_upper(p); }
+            finally { MeosMemory.free(p); }
+        };
+
+    // intspansetWidth(hex STRING, ignoreGaps BOOLEAN) → INTEGER
+    // MEOS: intspanset_width(const SpanSet *, bool) → int
+    public static final UDF2<String, Boolean, Integer> intspansetWidth =
+        (hex, ignoreGaps) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                return functions.intspanset_width(p, ignoreGaps != null && ignoreGaps);
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetLower(hex STRING) → DOUBLE
+    // Workaround: floatspanset_lower in MEOS uses Float8GetDatum (wrong direction),
+    // so we extract the first span and use floatspan_lower which is correct.
+    public static final UDF1<String, Double> floatspansetLower =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer firstSpan = functions.spanset_start_span(p);
+                if (firstSpan == null) return null;
+                return functions.floatspan_lower(firstSpan);
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetUpper(hex STRING) → DOUBLE
+    // Workaround: same Float8GetDatum bug as floatspanset_lower.
+    // Uses spanset_end_span + floatspan_upper instead.
+    public static final UDF1<String, Double> floatspansetUpper =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer lastSpan = functions.spanset_end_span(p);
+                if (lastSpan == null) return null;
+                return functions.floatspan_upper(lastSpan);
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetWidth(hex STRING, ignoreGaps BOOLEAN) → DOUBLE
+    // MEOS: floatspanset_width(const SpanSet *, bool) → double
+    public static final UDF2<String, Boolean, Double> floatspansetWidth =
+        (hex, ignoreGaps) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                return functions.floatspanset_width(p, ignoreGaps != null && ignoreGaps);
+            } finally { MeosMemory.free(p); }
+        };
+
     // ------------------------------------------------------------------
     // tstzspanset extra accessors
     // ------------------------------------------------------------------

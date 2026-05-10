@@ -34,7 +34,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for MoreAccessorUDFs value_at_timestamptz UDFs:
- *   tboolValueAtTimestamptz, tintValueAtTimestamptz, tfloatValueAtTimestamptz.
+ *   tboolValueAtTimestamptz, tintValueAtTimestamptz, tfloatValueAtTimestamptz,
+ *   ttextValueAtTimestamptz.
  *
  * Timestamps are created as Spark java.sql.Timestamp (Unix-epoch ms).
  * The UDFs convert them to PG-epoch µs internally before calling MEOS.
@@ -47,6 +48,7 @@ class MoreAccessorUDFsExtTest {
     private static String TBOOL_SEQ;
     private static String TINT_SEQ;
     private static String TFLOAT_SEQ;
+    private static String TTEXT_SEQ;
 
     // Timestamps inside the sequences (2020-01-01 00:00:00 UTC = Unix 1577836800 s)
     private static Timestamp TS_START;
@@ -66,6 +68,9 @@ class MoreAccessorUDFsExtTest {
             (byte) 0);
         TFLOAT_SEQ = temporal_as_hexwkb(
             tfloat_in("[1.0@2020-01-01 00:00:00+00, 3.0@2020-01-03 00:00:00+00]"),
+            (byte) 0);
+        TTEXT_SEQ = temporal_as_hexwkb(
+            ttext_in("Interp=Step;[hello@2020-01-01 00:00:00+00, hello@2020-01-03 00:00:00+00]"),
             (byte) 0);
 
         TS_START   = new Timestamp(1577836800L * 1000L);  // 2020-01-01 00:00:00 UTC
@@ -139,5 +144,28 @@ class MoreAccessorUDFsExtTest {
     void tfloatValueAtTimestamptz_null_returns_null() throws Exception {
         assertNull(MoreAccessorUDFs.tfloatValueAtTimestamptz.call(null, TS_START));
         assertNull(MoreAccessorUDFs.tfloatValueAtTimestamptz.call(TFLOAT_SEQ, null));
+    }
+
+    // ------------------------------------------------------------------
+    // ttextValueAtTimestamptz
+    // ------------------------------------------------------------------
+
+    @Test @Order(10)
+    void ttextValueAtTimestamptz_at_start_returns_correct_value() throws Exception {
+        String r = MoreAccessorUDFs.ttextValueAtTimestamptz.call(TTEXT_SEQ, TS_START);
+        assertNotNull(r, "Value at start timestamp must be non-null");
+        assertEquals("\"hello\"", r, "ttext value at t0 must be '\"hello\"'");
+    }
+
+    @Test @Order(11)
+    void ttextValueAtTimestamptz_outside_range_returns_null() throws Exception {
+        String r = MoreAccessorUDFs.ttextValueAtTimestamptz.call(TTEXT_SEQ, TS_OUTSIDE);
+        assertNull(r, "Value outside sequence range must be null");
+    }
+
+    @Test @Order(12)
+    void ttextValueAtTimestamptz_null_returns_null() throws Exception {
+        assertNull(MoreAccessorUDFs.ttextValueAtTimestamptz.call(null, TS_START));
+        assertNull(MoreAccessorUDFs.ttextValueAtTimestamptz.call(TTEXT_SEQ, null));
     }
 }
