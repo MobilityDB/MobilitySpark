@@ -27,8 +27,10 @@ package org.mobilitydb.spark.temporal;
 
 import functions.functions;
 import jnr.ffi.Pointer;
+import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
 
@@ -411,6 +413,22 @@ public final class PredicateUDFs {
             return intToBool(functions.always_ge_temporal_temporal(p1, p2));
         };
 
+    // tpointIsSimple(tpoint_hex) → Boolean
+    // Returns true if the trajectory has no self-intersections.
+    // MEOS: tpoint_is_simple(const Temporal *) → bool
+    public static final UDF1<String, Boolean> tpointIsSimple =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                return functions.tpoint_is_simple(ptr);
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
     public static void registerAll(SparkSession spark) {
         // Temporal order comparisons
         spark.udf().register("temporalEq",           temporalEq,           DataTypes.BooleanType);
@@ -459,5 +477,7 @@ public final class PredicateUDFs {
         spark.udf().register("alwaysGeTintInt",      alwaysGeTintInt,      DataTypes.BooleanType);
         spark.udf().register("alwaysGeTfloatFloat",  alwaysGeTfloatFloat,  DataTypes.BooleanType);
         spark.udf().register("alwaysGeTemporal",     alwaysGeTemporal,     DataTypes.BooleanType);
+        // tpoint geometry predicate
+        spark.udf().register("tpointIsSimple",       tpointIsSimple,       DataTypes.BooleanType);
     }
 }
