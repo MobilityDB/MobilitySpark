@@ -96,7 +96,9 @@ public final class MobilitySparkSession implements AutoCloseable {
     public static MobilitySparkSession create(SparkSession spark) {
         meos_initialize();
         meos_initialize_timezone("UTC");
-        meos_initialize_noexit_error_handler();
+        // The noexit error handler exists only on some MEOS branches; let
+        // MeosThread handle the reflective install on first ensureReady().
+        MeosThread.ensureReady();
         registerSpatialRefSys();
         TemporalUDFs.registerAll(spark);
         SpanUDFs.registerAll(spark);

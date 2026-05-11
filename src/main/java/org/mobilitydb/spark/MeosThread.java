@@ -52,7 +52,19 @@ public final class MeosThread {
     private static final ThreadLocal<Boolean> MEOS_READY = ThreadLocal.withInitial(() -> {
         functions.meos_initialize();
         functions.meos_initialize_timezone("UTC");
-        functions.meos_initialize_noexit_error_handler();
+        // The noexit error handler was previously installed here to keep MEOS
+        // errors from calling exit() and tearing down the JVM. The symbol
+        // exists only on some MEOS branches; calling it via reflection so the
+        // jar links cleanly against either flavour.
+        try {
+            functions.class
+                .getMethod("meos_initialize_noexit_error_handler")
+                .invoke(null);
+        } catch (NoSuchMethodException ignored) {
+            // libmeos lacks the helper — fall back to MEOS's default handler.
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
         return Boolean.TRUE;
     });
 

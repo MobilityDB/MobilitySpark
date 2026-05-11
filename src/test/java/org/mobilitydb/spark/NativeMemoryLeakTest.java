@@ -34,6 +34,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+import functions.functions;
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -79,7 +80,15 @@ class NativeMemoryLeakTest {
     static void initMeos() {
         meos_initialize();
         meos_initialize_timezone("UTC");
-        meos_initialize_noexit_error_handler();
+        // noexit handler exists only on some MEOS branches
+        try {
+            functions.class
+                .getMethod("meos_initialize_noexit_error_handler")
+                .invoke(null);
+        } catch (NoSuchMethodException ignored) {
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
         TRIP_HEX = temporal_as_hexwkb(
             tgeompoint_in("[POINT(0.0 0.0)@2020-01-01 00:00:00+00, POINT(0.1 0.0)@2020-01-01 01:00:00+00]"),
             (byte) 0);
