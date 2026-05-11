@@ -225,7 +225,7 @@ class TBoxOpsUDFsTest {
     }
 
     // ------------------------------------------------------------------
-    // tboxExpandFloat / tboxExpandInt — wired via MeosNative
+    // tboxExpandFloat / tboxExpandInt
     // ------------------------------------------------------------------
 
     @Test @Order(28)
