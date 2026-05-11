@@ -47,16 +47,17 @@ consistent gap inventories.
 | `TileUDFs` | **multidimensional tiling for parallel processing** — `spaceTiles`, `spaceTimeTiles`, `timeTiles`, `valueTiles`, `valueTimeTiles`, `*Boxes`, `*Split`, single-tile `getValueTile` / `getValueTimeTile` / `getTBoxTimeTile` / `getSpaceTile` / `getSpaceTimeTile`, `geoMeasure`, `asMVTGeom`, `makeSimple` |
 | `SeqSetGapsUDFs` | `tbool` / `tint` / `tfloat` / `ttext` / `tgeompoint` / `tgeogpoint` / `tgeometry` / `tgeographySeqSetGaps` — closes the long-standing user request from [MobilityDB issue #187](https://github.com/MobilityDB/MobilityDB/issues/187) |
 
-### Supplementary JNR-FFI interface (`MeosNative.java`)
+### JNR-FFI surface
 
-`MeosNative.java` now binds only **10 MEOS private-header symbols** that
-use `Datum` / `MeosType` parameters not lowered by the JMEOS generator
-(`mobilitydb_version`, `mobilitydb_full_version`, `temporal_values_p`,
-`set_make_free`, `temptype_basetype`, `temporal_mem_size`,
-`tnumber_value_split`, `tnumber_value_time_split`,
-`tnumber_value_time_boxes`, `tbox_get_value_time_tile`). All other
-former-MeosNative bindings are now provided directly by
-`functions.functions.*` after the JMEOS regen against MEOS 1.4
+All MEOS symbols MobilitySpark calls are provided by `functions.functions.*`
+in JMEOS 1.4. The earlier supplementary `MeosNative.java` was removed once
+the JMEOS generator gained `Datum → long` and `MeosType → int` lowering
+and the 10 private-header residuals (`mobilitydb_version`,
+`mobilitydb_full_version`, `temporal_values_p`, `set_make_free`,
+`temptype_basetype`, `temporal_mem_size`, `tnumber_value_split`,
+`tnumber_value_time_split`, `tnumber_value_time_boxes`,
+`tbox_get_value_time_tile`) were appended to the amalgamated MEOS
+header consumed by the generator
 ([JMEOS PR #15](https://github.com/MobilityDB/JMEOS/pull/15)).
 
 ---

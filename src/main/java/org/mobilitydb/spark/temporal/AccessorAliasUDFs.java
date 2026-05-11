@@ -748,13 +748,13 @@ public final class AccessorAliasUDFs {
     public static final org.apache.spark.sql.api.java.UDF0<String> mobilitydbVersion =
         () -> {
             MeosThread.ensureReady();
-            return org.mobilitydb.spark.MeosNative.INSTANCE.mobilitydb_version();
+            return functions.mobilitydb_version();
         };
 
     public static final org.apache.spark.sql.api.java.UDF0<String> mobilitydbFullVersion =
         () -> {
             MeosThread.ensureReady();
-            return org.mobilitydb.spark.MeosNative.INSTANCE.mobilitydb_full_version();
+            return functions.mobilitydb_full_version();
         };
 
     // ------------------------------------------------------------------
@@ -778,14 +778,13 @@ public final class AccessorAliasUDFs {
             if (t == null) return null;
             try {
                 int temptype = t.getByte(4) & 0xff;
-                int basetype = org.mobilitydb.spark.MeosNative.INSTANCE.temptype_basetype(temptype);
+                int basetype = functions.temptype_basetype(temptype);
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer values = org.mobilitydb.spark.MeosNative.INSTANCE.temporal_values_p(t, countOut);
+                Pointer values = functions.temporal_values_p(t, countOut);
                 if (values == null) return null;
                 int count = countOut.getInt(0);
-                Pointer s = org.mobilitydb.spark.MeosNative.INSTANCE
-                    .set_make_free(values, count, basetype, false);
+                Pointer s = functions.set_make_free(values, count, basetype, false);
                 if (s == null) return null;
                 try { return functions.set_as_hexwkb(s, (byte) 0); }
                 finally { MeosMemory.free(s); }

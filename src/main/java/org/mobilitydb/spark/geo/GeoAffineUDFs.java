@@ -29,7 +29,6 @@ import functions.functions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
-import org.mobilitydb.spark.MeosNative;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF2;
@@ -45,7 +44,7 @@ import org.apache.spark.sql.types.DataTypes;
  *
  * MobilityDB SQL composes these from MEOS's single tgeo_affine(Temporal*,
  * AFFINE*) primitive. We build the AFFINE struct in direct memory and call
- * tgeo_affine via MeosNative.
+ * tgeo_affine
  *
  * AFFINE layout (96 bytes, all doubles):
  *   afac bfac cfac    — row 0 spatial coefficients

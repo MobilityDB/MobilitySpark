@@ -28,7 +28,6 @@ package org.mobilitydb.spark.geo;
 import functions.functions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
-import org.mobilitydb.spark.MeosNative;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF2;

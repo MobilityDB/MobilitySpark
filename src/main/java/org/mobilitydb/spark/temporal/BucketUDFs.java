@@ -26,7 +26,6 @@
 package org.mobilitydb.spark.temporal;
 
 import functions.functions;
-import org.mobilitydb.spark.MeosNative;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF3;

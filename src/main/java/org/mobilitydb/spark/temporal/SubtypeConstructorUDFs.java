@@ -211,7 +211,7 @@ public final class SubtypeConstructorUDFs {
             MeosThread.ensureReady();
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            try { return org.mobilitydb.spark.MeosNative.INSTANCE.temporal_mem_size(p); }
+            try { return functions.temporal_mem_size(p); }
             finally { MeosMemory.free(p); }
         };
 

@@ -29,7 +29,6 @@ import functions.functions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
-import org.mobilitydb.spark.MeosNative;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF1;
@@ -214,7 +213,7 @@ public final class TileUDFs {
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = MeosNative.INSTANCE.tnumber_value_time_boxes(
+                Pointer arr = functions.MeosLibrary.meos.tnumber_value_time_boxes(
                     t, Double.doubleToLongBits(vsize), iv,
                     Double.doubleToLongBits(vorigin), pgEpoch(torigin), countOut);
                 if (arr == null) return null;
@@ -241,7 +240,7 @@ public final class TileUDFs {
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
-                Pointer arr = MeosNative.INSTANCE.tnumber_value_time_boxes(
+                Pointer arr = functions.MeosLibrary.meos.tnumber_value_time_boxes(
                     t, vsize.longValue(), iv, vorigin.longValue(), pgEpoch(torigin), countOut);
                 if (arr == null) return null;
                 try {
@@ -689,7 +688,7 @@ public final class TileUDFs {
             Pointer countOut = rt.getMemoryManager().allocateDirect(4);
             Pointer vBinsOut = rt.getMemoryManager().allocateDirect(8);
             Pointer tBinsOut = rt.getMemoryManager().allocateDirect(8);
-            Pointer arr = MeosNative.INSTANCE.tnumber_value_time_split(t, vsize, iv, vorigin, pgEpoch(torigin),
+            Pointer arr = functions.MeosLibrary.meos.tnumber_value_time_split(t, vsize, iv, vorigin, pgEpoch(torigin),
                 vBinsOut, tBinsOut, countOut);
             if (arr == null) return null;
             try {
@@ -721,7 +720,7 @@ public final class TileUDFs {
             jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
             Pointer countOut = rt.getMemoryManager().allocateDirect(4);
             Pointer binsOut  = rt.getMemoryManager().allocateDirect(8);
-            Pointer arr = MeosNative.INSTANCE.tnumber_value_split(t, vsize, vorigin, binsOut, countOut);
+            Pointer arr = functions.MeosLibrary.meos.tnumber_value_split(t, vsize, vorigin, binsOut, countOut);
             if (arr == null) return null;
             try {
                 int n = countOut.getInt(0);
@@ -757,7 +756,7 @@ public final class TileUDFs {
         getValueTileFloat = (v, vsize, vorigin) -> {
             if (v == null || vsize == null || vorigin == null) return null;
             MeosThread.ensureReady();
-            Pointer r = MeosNative.INSTANCE.tbox_get_value_time_tile(
+            Pointer r = functions.MeosLibrary.meos.tbox_get_value_time_tile(
                 Double.doubleToLongBits(v), 0L,
                 Double.doubleToLongBits(vsize), null,
                 Double.doubleToLongBits(vorigin), 0L,
@@ -777,7 +776,7 @@ public final class TileUDFs {
             Pointer iv = functions.pg_interval_in(intervalStr, -1);
             if (iv == null) return null;
             try {
-                Pointer r = MeosNative.INSTANCE.tbox_get_value_time_tile(
+                Pointer r = functions.MeosLibrary.meos.tbox_get_value_time_tile(
                     0L, pgEpoch(t),
                     0L, iv,
                     0L, pgEpoch(torigin),
@@ -800,7 +799,7 @@ public final class TileUDFs {
             Pointer iv = functions.pg_interval_in(intervalStr, -1);
             if (iv == null) return null;
             try {
-                Pointer r = MeosNative.INSTANCE.tbox_get_value_time_tile(
+                Pointer r = functions.MeosLibrary.meos.tbox_get_value_time_tile(
                     Double.doubleToLongBits(v), pgEpoch(t),
                     Double.doubleToLongBits(vsize), iv,
                     Double.doubleToLongBits(vorigin), pgEpoch(torigin),
