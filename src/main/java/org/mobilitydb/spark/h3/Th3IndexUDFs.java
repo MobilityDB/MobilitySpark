@@ -774,6 +774,56 @@ public final class Th3IndexUDFs {
             }
         };
 
+    /**
+     * geoToH3IndexSet(geomWkt, resolution) → STRING (hex-WKB h3indexset).
+     *
+     * Cross-platform spatial prefilter source for polygon-side queries
+     * (BerlinMOD Q2 et al.).  Handles every WKT geometry type — POINT,
+     * LINESTRING, POLYGON, MULTI*, GEOMETRYCOLLECTION — via the public
+     * MEOS kernel geo_to_h3index_set (MobilityDB PR #938).
+     */
+    public static final UDF2<String, Integer, String> geoToH3IndexSet =
+        (geomWkt, resolution) -> {
+            if (geomWkt == null || resolution == null) return null;
+            MeosThread.ensureReady();
+            Pointer gs = functions.geo_from_text(geomWkt, 0);
+            if (gs == null) return null;
+            try {
+                Pointer set = functions.geo_to_h3index_set(gs, resolution);
+                return setHex(set);
+            } finally {
+                MeosMemory.free(gs);
+            }
+        };
+
+    /**
+     * everIntersectsH3IndexSetTh3Index(cellSetHex, th3idx) → BOOLEAN.
+     *
+     * Returns TRUE iff the trip's th3index sequence ever lies in any cell
+     * of the candidate set.  Pair with geoToH3IndexSet to prefilter
+     * polygon-side cross-join queries.  Wraps
+     * ever_eq_anyof_h3indexset_th3index (MobilityDB PR #938).
+     */
+    public static final UDF2<String, String, Boolean> everIntersectsH3IndexSetTh3Index =
+        (cellSetHex, th3idx) -> {
+            if (cellSetHex == null || th3idx == null) return null;
+            MeosThread.ensureReady();
+            Pointer cells = functions.set_from_hexwkb(cellSetHex);
+            if (cells == null) return null;
+            try {
+                Pointer t = functions.temporal_from_hexwkb(th3idx);
+                if (t == null) return null;
+                try {
+                    int r = functions.ever_eq_anyof_h3indexset_th3index(cells, t);
+                    return r < 0 ? null : r == 1;
+                } finally {
+                    MeosMemory.free(t);
+                }
+            } finally {
+                MeosMemory.free(cells);
+            }
+        };
+
     // ==================================================================
     // Directed edges — meos_h3.h
     // ==================================================================
@@ -1037,6 +1087,9 @@ public final class Th3IndexUDFs {
         spark.udf().register("th3IndexToTgeompoint",  th3IndexToTgeompoint,  DataTypes.StringType);
         spark.udf().register("th3IndexCellToBoundary", th3IndexCellToBoundary, DataTypes.StringType);
         spark.udf().register("geomToH3Cell",          geomToH3Cell,          DataTypes.LongType);
+        spark.udf().register("geoToH3IndexSet",       geoToH3IndexSet,       DataTypes.StringType);
+        spark.udf().register("everIntersectsH3IndexSetTh3Index",
+                             everIntersectsH3IndexSetTh3Index,                DataTypes.BooleanType);
 
         // Directed edges
         spark.udf().register("th3IndexAreNeighborCells",        th3IndexAreNeighborCells,
