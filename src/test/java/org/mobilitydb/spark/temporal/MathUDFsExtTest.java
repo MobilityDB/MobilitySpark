@@ -98,10 +98,11 @@ class MathUDFsExtTest {
     }
 
     @Test @Order(5)
-    void tnumberTrend_tint_returns_nonnull() throws Exception {
+    void tnumberTrend_tint_step_returns_null() throws Exception {
+        // tnumber_trend requires linear interpolation; tint sequences default
+        // to step interpolation, so MEOS validates and returns NULL.
         String r = AnalyticsUDFs.tnumberTrend.call(TINT_SEQ);
-        assertNotNull(r);
-        assertFalse(r.isBlank());
+        assertNull(r);
     }
 
     // ------------------------------------------------------------------
