@@ -26,17 +26,16 @@
 package org.mobilitydb.spark;
 
 import functions.functions;
-import jnr.ffi.LibraryLoader;
-import jnr.ffi.Pointer;
 import org.apache.spark.sql.api.java.*;
 
 /**
  * Per-thread MEOS initialisation for Spark executor threads.
  *
- * In Spark's multi-threaded executor model every task thread must initialise
- * MEOS independently because session_timezone and the timezone cache are
- * thread-local inside libmeos.  The ThreadLocal in MEOS_READY ensures
- * initialisation runs exactly once per native thread.
+ * In Spark's multi-threaded executor model every task thread initialises
+ * MEOS independently.  meos_initialize() sets up the per-thread MEOS state
+ * (session_timezone, timezone cache, GEOS context, PROJ context, GSL RNGs,
+ * errno).  The ThreadLocal in MEOS_READY runs initialisation exactly once
+ * per native thread.
  *
  * Usage — two patterns:
  *
@@ -51,48 +50,13 @@ public final class MeosThread {
 
     private MeosThread() {}
 
-    /**
-     * Minimal JNR binding to libgeos_c.so for the per-thread initGEOS call.
-     *
-     * MEOS spatial functions (eIntersects, eContains, ST_*) call into GEOS
-     * through liblwgeom.  GEOS's C API requires `initGEOS(noticeFunc,
-     * errorFunc)` to be invoked on every thread that will use the library
-     * — without it the first GEOS call raises "context handle is
-     * uninitialized, call initGEOS" and aborts the process.  MEOS's
-     * internal spatial helpers call initGEOS lazily on the first GEOS
-     * touch, but Spark's multi-thread executor races multiple task
-     * threads through that initialiser concurrently and corrupts the
-     * global GEOS state.  Pre-initialising per Spark task thread here
-     * serialises the initialisation through the per-thread `MEOS_READY`
-     * `ThreadLocal` and avoids the race.
-     */
-    public interface LibGeosC {
-        /**
-         * GEOS 3.x thread-safe initialiser.  Returns an opaque
-         * GEOSContextHandle_t and stores it in TLS so subsequent
-         * reentrant calls find it via thread-local lookup.  Without
-         * this call, the first reentrant GEOS function on the thread
-         * raises "context handle is uninitialized, call initGEOS"
-         * (which is misleading — the modern fix is GEOS_init_r,
-         * not the legacy initGEOS).
-         */
-        Pointer GEOS_init_r();
-        void    GEOS_finish_r(Pointer handle);
-    }
-    private static final LibGeosC GEOS =
-        LibraryLoader.create(LibGeosC.class).load("geos_c");
-
     private static final ThreadLocal<Boolean> MEOS_READY = ThreadLocal.withInitial(() -> {
         functions.meos_initialize();
         functions.meos_initialize_timezone("UTC");
-        // Install the no-exit handler so MEOS errors do not call exit() and
-        // tear down the JVM. Mainline MEOS (post PR #939) exports this symbol.
+        // The no-exit handler logs MEOS errors and sets meos_errno without
+        // calling exit(), so a MEOS error inside a Spark task does not tear
+        // down the JVM.
         functions.meos_initialize_noexit_error_handler();
-        // Initialise GEOS for this thread.  MEOS's per-thread spatial
-        // helpers expect an initialised GEOS thread-local context;
-        // without this call, the first spatial UDF on this thread
-        // crashes the JVM with "context handle is uninitialized".
-        GEOS.GEOS_init_r();
         return Boolean.TRUE;
     });
 
