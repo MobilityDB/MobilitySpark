@@ -360,8 +360,10 @@ public final class DistanceUDFs {
         spark.udf().register("shortestLineTgeoGeo",   shortestLineTgeoGeo,   DataTypes.StringType);
         spark.udf().register("shortestLineTgeoTgeo",  shortestLineTgeoTgeo,  DataTypes.StringType);
 
-        // MobilityDB SQL bare-name aliases
-        spark.udf().register("nearestApproachDistance", nadTgeoGeo,  DataTypes.DoubleType);
+        // MobilityDB SQL bare-name aliases.  GeoUDFs registers the tgeo×tgeo
+        // form of nearestApproachDistance under the bare name "nearestApproachDistance"
+        // — the form Q5 of the BerlinMOD R-queries calls.  The tgeo×geometry
+        // form stays callable under its explicit "nadTgeoGeo" name.
         spark.udf().register("nearestApproachInstant",  naiTgeoGeo,  DataTypes.StringType);
         spark.udf().register("shortestLine",            shortestLineTgeoGeo, DataTypes.StringType);
     }
