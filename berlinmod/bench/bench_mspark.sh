@@ -85,6 +85,16 @@ echo "=== Running BerlinMODBench (${RUNS} runs/query, queries=${QUERIES_MSG}) on
 # --driver-memory 6g: each BerlinMOD trip row is ~36 KB hex-WKB; cross-join queries (Q2, Q4)
 # hold ~1 GB of trip strings in heap simultaneously.  A 6 g heap gives the GC enough headroom
 # to avoid spilling to off-heap and prevents WSL2 OOM kills when queries run back-to-back.
+# libh3 preload: the H3 prefilter MEOS symbols are bound into libmeos.so
+# but the libmeos.so binary on the host may not declare libh3 in DT_NEEDED.
+# Preload libh3 so the JVM loader resolves degsToRads / radsToDegs at
+# library-load time.  Override with LIBH3=/path/to/other-libh3.so if the
+# system path differs.
+LIBH3="${LIBH3:-/usr/lib/x86_64-linux-gnu/libh3.so}"
+if [[ -f "$LIBH3" ]]; then
+  export LD_PRELOAD="${LIBH3}${LD_PRELOAD:+:${LD_PRELOAD}}"
+fi
+
 "$SPARK_SUBMIT" \
   --class org.mobilitydb.spark.demo.BerlinMODBench \
   --master "${SPARK_MASTER:-local[4]}" \
