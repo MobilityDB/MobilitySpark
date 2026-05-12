@@ -87,7 +87,7 @@ echo "=== Running BerlinMODBench (${RUNS} runs/query, queries=${QUERIES_MSG}) on
 # to avoid spilling to off-heap and prevents WSL2 OOM kills when queries run back-to-back.
 "$SPARK_SUBMIT" \
   --class org.mobilitydb.spark.demo.BerlinMODBench \
-  --master "local[2]" \
+  --master "${SPARK_MASTER:-local[4]}" \
   --driver-memory 6g \
   --conf "spark.driver.extraJavaOptions=-Djava.library.path=${LIBMEOS_DIR} -Dlog4j.logger.org.apache=WARN" \
   "$JAR" \
