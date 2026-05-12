@@ -101,6 +101,7 @@ public final class MobilitySparkSession implements AutoCloseable {
         TemporalUDFs.registerAll(spark);
         SpanUDFs.registerAll(spark);
         GeoUDFs.registerAll(spark);
+        org.mobilitydb.spark.h3.Th3IndexPrefilterUDFs.registerAll(spark);
         GeoAnalyticsUDFs.registerAll(spark);
         StaticGeoUDFs.registerAll(spark);
         DistanceUDFs.registerAll(spark);
