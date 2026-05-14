@@ -346,6 +346,58 @@ public final class DistanceUDFs {
             }
         };
 
+    // ------------------------------------------------------------------
+    // Minimum spatial distance (MobilityDB PR #1007)
+    //   minDistance({tgeo,geo},{tgeo,geo}) → double
+    // Per-pair scalar.  For the GROUP-BY-over-cross-join shape that the
+    // canonical Q5 expresses, wrap with the built-in MIN aggregate:
+    //
+    //   SELECT MIN(minDistance(t1.trip, t2.trip)) FROM ... GROUP BY ...
+    //
+    // The (tgeo, geo) overload reuses the NAD kernel — NAD reduces to
+    // spatial-min when one argument has no time dimension. The (tgeo,
+    // tgeo) overload calls the threshold-aware kernel with DBL_MAX so
+    // every call computes the exact per-pair minimum; the kernel still
+    // benefits from the outer STBox lower-bound prune.
+    // ------------------------------------------------------------------
+
+    // minDistance(trip STRING, geomWkt STRING) → DOUBLE
+    public static final UDF2<String, String, Double> minDistanceTgeoGeo =
+        (trip, geomWkt) -> {
+            if (trip == null || geomWkt == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            if (tptr == null) return null;
+            Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+            if (gsptr == null) { MeosMemory.free(tptr); return null; }
+            try {
+                double d = MeosNative.INSTANCE.nad_tgeo_geo(tptr, gsptr);
+                return d == Double.MAX_VALUE ? null : d;
+            } finally {
+                MeosMemory.free(tptr);
+                MeosMemory.free(gsptr);
+            }
+        };
+
+    // minDistance(trip1 STRING, trip2 STRING) → DOUBLE
+    public static final UDF2<String, String, Double> minDistanceTgeoTgeo =
+        (trip1, trip2) -> {
+            if (trip1 == null || trip2 == null) return null;
+            MeosThread.ensureReady();
+            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            if (p1 == null) return null;
+            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            if (p2 == null) { MeosMemory.free(p1); return null; }
+            try {
+                double d = MeosNative.INSTANCE.mindistance_tgeo_tgeo(
+                    p1, p2, Double.MAX_VALUE);
+                return d == Double.MAX_VALUE ? null : d;
+            } finally {
+                MeosMemory.free(p1);
+                MeosMemory.free(p2);
+            }
+        };
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("tdistanceTgeoGeo",       tdistanceTgeoGeo,       DataTypes.StringType);
         spark.udf().register("tdistanceTgeoTgeo",      tdistanceTgeoTgeo,      DataTypes.StringType);
@@ -361,9 +413,13 @@ public final class DistanceUDFs {
         spark.udf().register("shortestLineTgeoGeo",   shortestLineTgeoGeo,   DataTypes.StringType);
         spark.udf().register("shortestLineTgeoTgeo",  shortestLineTgeoTgeo,  DataTypes.StringType);
 
+        spark.udf().register("minDistanceTgeoGeo",    minDistanceTgeoGeo,    DataTypes.DoubleType);
+        spark.udf().register("minDistanceTgeoTgeo",   minDistanceTgeoTgeo,   DataTypes.DoubleType);
+
         // MobilityDB SQL bare-name aliases
         spark.udf().register("nearestApproachDistance", nadTgeoGeo,  DataTypes.DoubleType);
         spark.udf().register("nearestApproachInstant",  naiTgeoGeo,  DataTypes.StringType);
         spark.udf().register("shortestLine",            shortestLineTgeoGeo, DataTypes.StringType);
+        spark.udf().register("minDistance",             minDistanceTgeoTgeo, DataTypes.DoubleType);
     }
 }

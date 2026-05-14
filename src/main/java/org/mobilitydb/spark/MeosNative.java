@@ -310,6 +310,25 @@ public final class MeosNative {
         boolean contained_tspatial_stbox(Pointer tspatial, Pointer stbox);
         boolean overlaps_tspatial_stbox(Pointer tspatial, Pointer stbox);
         boolean same_tspatial_stbox(Pointer tspatial, Pointer stbox);
+
+        // ----------------------------------------------------------------
+        // Exact spatial-minimum distance (MobilityDB PR #1007) — returns
+        // double, DBL_MAX on failure. Threshold-aware: caller passes the
+        // running min (DBL_MAX for an unbounded first call) and the
+        // kernel short-circuits any pair whose lower bound already meets
+        // or exceeds it.  Distinct from `nad_tgeo_tgeo` which is the
+        // time-synchronous (NAD) variant.
+        // ----------------------------------------------------------------
+
+        double mindistance_tgeo_tgeo(Pointer temporal1, Pointer temporal2,
+                                     double threshold);
+
+        // Array form: minimum spatial distance over all pairs from two
+        // temporal-geo arrays. Pairs are visited in bbox-distance order
+        // and iteration short-circuits once the running min provably
+        // dominates every remaining pair's lower bound.
+        double tgeoarr_tgeoarr_mindist(Pointer arr1, int count1,
+                                       Pointer arr2, int count2);
     }
 
     public static final Lib INSTANCE;
