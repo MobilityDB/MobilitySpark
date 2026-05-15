@@ -136,7 +136,12 @@ public final class MobilitySparkSession implements AutoCloseable {
         RestrictionUDFs.registerAll(spark);
         TransformUDFs.registerAll(spark);
         AggregateUDAFs.registerAll(spark);
-        org.mobilitydb.spark.h3.Th3IndexUDFs.registerAll(spark);
+        // Th3IndexUDFs.registerAll(spark) — temporarily disabled while the
+        // th3index / h3index bindings are absent from JMEOS 1.4.  Gated on
+        // MobilityDB PR #944 (th3index consolidated) + a subsequent JMEOS
+        // regen exposing the public h3 surface.  The class file is kept in
+        // source under src/main/java/org/mobilitydb/spark/h3/ but excluded
+        // from compilation via maven-compiler-plugin in pom.xml.
         return new MobilitySparkSession();
     }
 

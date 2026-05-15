@@ -505,6 +505,9 @@ public final class AccessorUDFs {
     // ------------------------------------------------------------------
 
     // appendInstant(trip STRING, instantHex STRING) → STRING
+    // MEOS 1.4: temporal_append_tinstant(Temporal *, const TInstant *,
+    //     interpType interp, double maxdist, const Interval *maxt, bool expand)
+    // interp=INTERP_NONE(0) inherits from the receiving temporal.
     public static final UDF2<String, String, String> appendInstant =
         (trip, instantHex) -> {
             if (trip == null || instantHex == null) return null;
@@ -512,7 +515,7 @@ public final class AccessorUDFs {
             Pointer tptr = functions.temporal_from_hexwkb(trip);
             Pointer iptr = functions.temporal_from_hexwkb(instantHex);
             if (tptr == null || iptr == null) return null;
-            Pointer r = functions.temporal_append_tinstant(tptr, iptr, 0.0, null, false);
+            Pointer r = functions.temporal_append_tinstant(tptr, iptr, 0, 0.0, null, false);
             if (r == null) return null;
             return functions.temporal_as_hexwkb(r, (byte) 0);
         };
