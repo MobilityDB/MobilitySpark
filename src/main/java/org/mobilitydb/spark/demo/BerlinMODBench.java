@@ -145,12 +145,18 @@ public final class BerlinMODBench {
                 String selectCols = java.util.Arrays.stream(cols)
                     .filter(c -> !"trip_h3".equalsIgnoreCase(c))
                     .collect(Collectors.joining(", "));
+                // Materialise via a Dataset rather than CREATE OR REPLACE
+                // TEMPORARY VIEW Trips AS SELECT ... FROM Trips: the latter
+                // trips Spark's checkCyclicViewReference (the new view names
+                // itself in its own definition) and aborts with
+                // RECURSIVE_VIEW. Reading the current Trips into a Dataset
+                // first resolves the source plan, then the registration
+                // replaces the view atomically with the materialised result.
                 spark.sql(
-                    "CREATE OR REPLACE TEMPORARY VIEW Trips AS " +
                     "SELECT " + selectCols + ", " +
                     "       tgeompointToTh3Index(trip, " + res + ") AS trip_h3 " +
                     "FROM Trips"
-                );
+                ).createOrReplaceTempView("Trips");
             }
 
             spark.catalog().cacheTable("Vehicles");
