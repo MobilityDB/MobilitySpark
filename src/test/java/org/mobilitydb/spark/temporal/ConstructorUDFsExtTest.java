@@ -55,6 +55,14 @@ class ConstructorUDFsExtTest {
     static void initMeos() {
         meos_initialize();
         meos_initialize_timezone("UTC");
+        // Install the no-exit error handler, exactly as
+        // MobilitySparkSession.create() does. Without it the MEOS default
+        // handler calls exit() on any error, which kills the surefire fork
+        // ("forked VM terminated ... System.exit called?") with no JVM
+        // crash dump. An MFJSON round-trip that errors on the runner's
+        // json-c build must surface as a recoverable null, not a fork
+        // kill.
+        meos_initialize_noexit_error_handler();
 
         Pointer tbool = tbool_in("[true@2020-01-01 00:00:00+00, false@2020-01-02 00:00:00+00]");
         TBOOL_MFJSON = temporal_as_mfjson(tbool, false, 0, 6, null);
