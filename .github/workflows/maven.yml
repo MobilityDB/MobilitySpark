@@ -71,8 +71,12 @@ jobs:
           for f in $(find . -path '*/surefire-reports/*' \( -name '*.dump' -o -name '*.dumpstream' -o -name '*-jvmRun*.dump' \) 2>/dev/null); do
             echo "----- $f -----"; cat "$f" 2>/dev/null || true
           done
-          echo "===== ConstructorUDFsExtTest surefire report ====="
+          echo "===== ConstructorUDFsExtTest surefire report + stdout ====="
           cat target/surefire-reports/*ConstructorUDFsExtTest*.txt 2>/dev/null || true
+          cat target/surefire-reports/*ConstructorUDFsExtTest*-output.txt 2>/dev/null || true
+          grep -rh 'DIAG ' target/surefire-reports/ 2>/dev/null || true
+          echo "===== proj resolution ====="
+          (echo "PROJ_DATA=$PROJ_DATA PROJ_LIB=$PROJ_LIB"; dpkg -l libproj25 proj-data 2>/dev/null | tail -3; find /usr -name 'proj.db' 2>/dev/null; ) || true
           echo "===== runner locale + json-c ====="
           locale 2>/dev/null || true
           dpkg -l 'libjson-c*' 2>/dev/null | tail -3 || true
