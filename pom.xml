@@ -102,6 +102,18 @@
                          used. The system /usr/local/lib version may be ahead of
                          the JMEOS-1.4 API and missing backward-compat aliases. -->
                     <argLine>-Djava.library.path=${project.basedir}/lib:/usr/local/lib</argLine>
+                    <!-- Run the fork IPC over a dedicated process pipe instead
+                         of multiplexing it over the fork's stdout/stderr. The
+                         th3index libmeos occasionally writes diagnostics
+                         directly to the native stderr file descriptor during
+                         MEOS init; with the default stream-multiplexed channel
+                         that corrupts surefire's encoded protocol and the fork
+                         is reported as "terminated without saying goodbye".
+                         The pipe channel is immune to native FD writes. -->
+                    <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
+                    <!-- Send test stdout/stderr to per-class report files so a
+                         native write can never reach the IPC stream. -->
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
                 </configuration>
             </plugin>
         </plugins>
