@@ -98,10 +98,13 @@ class MathUDFsExtTest {
     }
 
     @Test @Order(5)
-    void tnumberTrend_tint_returns_nonnull() throws Exception {
+    void tnumberTrend_tint_returns_null() throws Exception {
+        // tnumber_trend is a linear-regression slope and requires linear
+        // interpolation. A tint is always step-interpolated (MEOS forbids
+        // linear integer temporals), so the trend is undefined and the UDF
+        // returns null. Asserting non-null here was incorrect.
         String r = AnalyticsUDFs.tnumberTrend.call(TINT_SEQ);
-        assertNotNull(r);
-        assertFalse(r.isBlank());
+        assertNull(r);
     }
 
     // ------------------------------------------------------------------
