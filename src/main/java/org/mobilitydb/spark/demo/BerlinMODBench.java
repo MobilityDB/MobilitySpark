@@ -137,16 +137,9 @@ public final class BerlinMODBench {
             // it first so we can rematerialise at our chosen resolution — this
             // guarantees a consistent resolution across all three platforms
             // regardless of how the CSV was produced.
-            // th3index materialisation is gated on MobilityDB PR #944 +
-            // a JMEOS regen exposing the h3 public surface — see the
-            // companion comment in MobilitySparkSession.java.  Default
-            // resolution 7 (~1.2 km cells) mirrors the value previously
-            // held in Th3IndexUDFs.DEFAULT_RESOLUTION.  This block is a
-            // no-op unless berlinmod.bench.th3index.enable=true is set
-            // AND the tgeompointToTh3Index UDF is registered (currently
-            // unavailable post-regen).
-            if ("true".equals(System.getProperty("berlinmod.bench.th3index.enable"))) {
-                int res = Integer.getInteger("berlinmod.bench.th3index.resolution", 7);
+            if (!"true".equals(System.getProperty("berlinmod.bench.th3index.disable"))) {
+                int res = Integer.getInteger("berlinmod.bench.th3index.resolution",
+                                             org.mobilitydb.spark.h3.Th3IndexUDFs.DEFAULT_RESOLUTION);
                 System.out.println("=== Materialising trip_h3 column (resolution " + res + ") ===");
                 String[] cols = spark.table("Trips").schema().fieldNames();
                 String selectCols = java.util.Arrays.stream(cols)

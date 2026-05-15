@@ -60,26 +60,6 @@
 
     <build>
         <plugins>
-            <!-- Exclude org/mobilitydb/spark/h3/** from compilation: the
-                 Th3IndexUDFs class depends on th3index / h3index bindings
-                 that are not yet exposed in JMEOS 1.4 (regenned against
-                 MEOS 1.4 master).  These bindings are gated on MobilityDB
-                 PR #944 (th3index consolidated) landing, followed by a
-                 JMEOS regen that picks up the new public surface.  Until
-                 then the file remains in source for the eventual reactivation
-                 PR but is excluded from the build so the rest of the
-                 MobilitySpark surface (incl. minDistance UDFs) can compile
-                 against JMEOS 1.4. -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <excludes>
-                        <exclude>org/mobilitydb/spark/h3/**</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
             <!-- Produce a fat jar that includes jnr-ffi + JMEOS -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
