@@ -43,6 +43,20 @@ jobs:
           cp "$GITHUB_WORKSPACE/lib/libmeos.so" /tmp/libmeos/libmeos.so
           echo "LD_LIBRARY_PATH=/tmp/libmeos" >> "$GITHUB_ENV"
 
+      - name: Provide the MEOS spatial_ref_sys table
+        run: |
+          # libmeos resolves SRID metadata (geodetic recognition for
+          # tgeogpoint, transforms) from its built-in default path
+          # /usr/local/share/spatial_ref_sys.csv. The vendored .so ships
+          # without that data file, so geography input fails with
+          # MEOS_ERR_INVALID_ARG. Fetch the canonical table to the default
+          # path, as a runtime data dependency rather than a vendored blob.
+          sudo mkdir -p /usr/local/share
+          sudo curl -fsSL \
+            https://raw.githubusercontent.com/MobilityDB/MobilityDB/master/meos/src/geo/spatial_ref_sys.csv \
+            -o /usr/local/share/spatial_ref_sys.csv
+          test -s /usr/local/share/spatial_ref_sys.csv
+
       - name: Install JMEOS 1.4 to local Maven repository
         run: |
           mvn install:install-file \
@@ -71,16 +85,10 @@ jobs:
           for f in $(find . -path '*/surefire-reports/*' \( -name '*.dump' -o -name '*.dumpstream' -o -name '*-jvmRun*.dump' \) 2>/dev/null); do
             echo "----- $f -----"; cat "$f" 2>/dev/null || true
           done
-          echo "===== ConstructorUDFsExtTest surefire report + stdout ====="
-          cat target/surefire-reports/*ConstructorUDFsExtTest*.txt 2>/dev/null || true
-          cat target/surefire-reports/*ConstructorUDFsExtTest*-output.txt 2>/dev/null || true
-          grep -rh 'DIAG ' target/surefire-reports/ 2>/dev/null || true
-          echo "===== proj resolution ====="
-          (echo "PROJ_DATA=$PROJ_DATA PROJ_LIB=$PROJ_LIB"; dpkg -l libproj25 proj-data 2>/dev/null | tail -3; find /usr -name 'proj.db' 2>/dev/null; ) || true
-          echo "===== runner locale + json-c ====="
-          locale 2>/dev/null || true
-          dpkg -l 'libjson-c*' 2>/dev/null | tail -3 || true
-          ldd lib/libmeos.so 2>/dev/null | grep -Ei 'json|geos|proj|gsl|h3|not found' || true
+          echo "===== surefire reports + test stdout ====="
+          for f in $(find target/surefire-reports -name '*.txt' 2>/dev/null); do
+            echo "----- $f -----"; cat "$f" 2>/dev/null || true
+          done
 
       - name: Package (fat jar)
         run: mvn -B package -DskipTests

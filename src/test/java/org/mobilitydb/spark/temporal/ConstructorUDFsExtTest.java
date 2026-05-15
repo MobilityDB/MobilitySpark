@@ -82,11 +82,7 @@ class ConstructorUDFsExtTest {
 
         Pointer tgeogpoint = tgeogpoint_in(
             "[POINT(4.35 50.85)@2020-01-01 00:00:00+00, POINT(4.36 50.86)@2020-01-01 01:00:00+00]");
-        meos_errno_reset();
         TGEOGPOINT_MFJSON = temporal_as_mfjson(tgeogpoint, false, 0, 6, null);
-        System.out.println("DIAG tgeogpoint: in=" + (tgeogpoint != null)
-            + " mfjson=" + (TGEOGPOINT_MFJSON != null)
-            + " meos_errno=" + meos_errno());
     }
 
     // ------------------------------------------------------------------
