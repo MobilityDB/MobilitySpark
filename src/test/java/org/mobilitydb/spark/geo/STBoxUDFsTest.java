@@ -27,6 +27,7 @@ package org.mobilitydb.spark.geo;
 
 import org.junit.jupiter.api.*;
 import org.mobilitydb.spark.temporal.ConstructorUDFs;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos_geo.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class STBoxUDFsTest {
+class STBoxUDFsTest extends MeosTestBase {
 
     // STBOX XT([-1,1],[-2,2],[2020-01-01,2020-01-02])
     private static String STBOX_XT;
@@ -50,9 +51,6 @@ class STBoxUDFsTest {
 
     @BeforeAll
     static void initMeos() throws Exception {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         STBOX_XT = ConstructorUDFs.stbox.call(
             "STBOX XT(((-1,-2),(1,2)),[2020-01-01 00:00:00+00,2020-01-02 00:00:00+00])");
         STBOX_T = ConstructorUDFs.stbox.call(

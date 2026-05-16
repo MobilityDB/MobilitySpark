@@ -28,6 +28,7 @@ package org.mobilitydb.spark.temporal;
 import org.junit.jupiter.api.*;
 
 import java.util.List;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class MoreAccessorUDFsExt5Test {
+class MoreAccessorUDFsExt5Test extends MeosTestBase {
 
     /** ttext sequence with two distinct values. */
     private static String TTEXT_SEQ_HEX;
@@ -47,9 +48,6 @@ class MoreAccessorUDFsExt5Test {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TTEXT_SEQ_HEX = temporal_as_hexwkb(
             ttext_in("[hello@2020-01-01 00:00:00+00, world@2020-01-02 00:00:00+00]"),
             (byte) 0);

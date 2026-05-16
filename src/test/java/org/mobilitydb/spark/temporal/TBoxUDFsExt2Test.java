@@ -28,6 +28,7 @@ package org.mobilitydb.spark.temporal;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class TBoxUDFsExt2Test {
+class TBoxUDFsExt2Test extends MeosTestBase {
 
     private static String TBOX_XT_HEX;      // TBox with X and T dimensions (floatspan)
     private static String TBOX_T_HEX;       // TBox with T dimension only
@@ -55,9 +56,6 @@ class TBoxUDFsExt2Test {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         // Build a tbox with float X + time via tnumber_to_tbox on a tfloat
         Pointer tfloatPtr = tfloat_in("[1.5@2020-01-01 00:00:00+00, 9.5@2020-01-03 00:00:00+00]");
         Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);

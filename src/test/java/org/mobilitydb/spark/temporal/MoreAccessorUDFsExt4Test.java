@@ -28,6 +28,7 @@ package org.mobilitydb.spark.temporal;
 import org.junit.jupiter.api.*;
 
 import java.util.List;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class MoreAccessorUDFsExt4Test {
+class MoreAccessorUDFsExt4Test extends MeosTestBase {
 
     /** 3-instant linear tint sequence. */
     private static String TINT_SEQ_HEX;
@@ -48,9 +49,6 @@ class MoreAccessorUDFsExt4Test {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TINT_SEQ_HEX = temporal_as_hexwkb(
             tint_in("[1@2020-01-01 00:00:00+00, 2@2020-01-02 00:00:00+00, 3@2020-01-03 00:00:00+00]"),
             (byte) 0);

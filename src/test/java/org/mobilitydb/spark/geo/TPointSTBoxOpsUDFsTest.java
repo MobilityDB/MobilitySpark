@@ -27,6 +27,7 @@ package org.mobilitydb.spark.geo;
 
 import org.junit.jupiter.api.*;
 import org.mobilitydb.spark.temporal.ConstructorUDFs;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos_geo.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class TPointSTBoxOpsUDFsTest {
+class TPointSTBoxOpsUDFsTest extends MeosTestBase {
 
     private static String TRIP;
     private static String STBOX_OVERLAP;
@@ -50,9 +51,6 @@ class TPointSTBoxOpsUDFsTest {
 
     @BeforeAll
     static void initMeos() throws Exception {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TRIP = temporal_as_hexwkb(
             tgeompoint_in("[POINT(0.0 0.0)@2020-01-01 00:00:00+00, "
                         + "POINT(4.0 0.0)@2020-01-01 01:00:00+00]"),

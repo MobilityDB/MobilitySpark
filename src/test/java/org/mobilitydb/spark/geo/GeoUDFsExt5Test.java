@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.geo;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,15 +37,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos_geo.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class GeoUDFsExt5Test {
+class GeoUDFsExt5Test extends MeosTestBase {
 
     private static String TRIP_4326;
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         // SRID 4326: WGS-84 geographic coordinates
         TRIP_4326 = temporal_as_hexwkb(
             tgeompoint_in("SRID=4326;[POINT(4.35 50.85)@2020-01-01 00:00:00+00, "

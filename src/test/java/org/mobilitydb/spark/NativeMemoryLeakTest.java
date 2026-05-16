@@ -61,7 +61,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * vmRssKb() helper returns -1 and the growth check is skipped.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class NativeMemoryLeakTest {
+class NativeMemoryLeakTest extends MeosTestBase {
 
     private static final int  WARMUP_ITERS  = 200;
     private static final int  TEST_ITERS    = 5_000;
@@ -77,9 +77,6 @@ class NativeMemoryLeakTest {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-        meos_initialize_noexit_error_handler();
         TRIP_HEX = temporal_as_hexwkb(
             tgeompoint_in("[POINT(0.0 0.0)@2020-01-01 00:00:00+00, POINT(0.1 0.0)@2020-01-01 01:00:00+00]"),
             (byte) 0);

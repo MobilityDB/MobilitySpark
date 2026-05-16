@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.geo;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos_geo.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class StaticGeoUDFsTest {
+class StaticGeoUDFsTest extends MeosTestBase {
 
     private static final String POLY = "POLYGON((0 0,4 0,4 4,0 4,0 0))";
     private static final String POLY2 = "POLYGON((2 2,6 2,6 6,2 6,2 2))";
@@ -45,12 +46,6 @@ class StaticGeoUDFsTest {
     private static final String POINT_OUTSIDE = "POINT(10 10)";
     private static final String LINE = "LINESTRING(0 0,10 0)";
     private static final String LINE2 = "LINESTRING(5 5,5 -5)";
-
-    @BeforeAll
-    static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-    }
 
     // ------------------------------------------------------------------
     // Geometry predicates

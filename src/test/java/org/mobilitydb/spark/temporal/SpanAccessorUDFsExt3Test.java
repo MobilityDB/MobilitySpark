@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,16 +38,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class SpanAccessorUDFsExt3Test {
+class SpanAccessorUDFsExt3Test extends MeosTestBase {
 
     private static String INTSPANSET_HEX;
     private static String FLOATSPANSET_HEX;
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         INTSPANSET_HEX   = spanset_as_hexwkb(intspanset_in("{[1, 5], [10, 20]}"), (byte) 0);
         FLOATSPANSET_HEX = spanset_as_hexwkb(floatspanset_in("{[1.0, 5.0], [10.0, 20.0]}"), (byte) 0);
     }

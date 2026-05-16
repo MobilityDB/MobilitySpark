@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h, meos/include/meos_geo.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class MoreAccessorUDFsTest {
+class MoreAccessorUDFsTest extends MeosTestBase {
 
     /** TSequence with 3 instants — covers instant/sequence navigation. */
     private static String TRIP;
@@ -49,9 +50,6 @@ class MoreAccessorUDFsTest {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TRIP = temporal_as_hexwkb(
             tgeompoint_in("[POINT(0 0)@2020-01-01 00:00:00+00, POINT(1 0)@2020-01-01 01:00:00+00,"
                         + " POINT(2 0)@2020-01-02 00:00:00+00]"),

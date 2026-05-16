@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h (026_tnumber_mathfuncs)
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class MathUDFsTest {
+class MathUDFsTest extends MeosTestBase {
 
     private static String TINT_NEG;
     private static String TINT_POS;
@@ -45,9 +46,6 @@ class MathUDFsTest {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         // tint with negative value at t1, positive at t2
         TINT_NEG = temporal_as_hexwkb(tint_in("[-5@2020-01-01, 3@2020-01-02]"), (byte) 0);
         TINT_POS = temporal_as_hexwkb(tint_in("[2@2020-01-01, 4@2020-01-02]"), (byte) 0);
