@@ -58,6 +58,17 @@ public final class BerlinMODUDFs {
 
     private BerlinMODUDFs() {}
 
+    /**
+     * MEOS WKB variant flag (meos_geo.h: {@code #define WKB_EXTENDED 0x04}).
+     *
+     * STBox/tgeompoint hex-WKB MUST be serialised with this flag, otherwise the
+     * SRID is not encoded and {@code *_from_hexwkb} round-trips it back as SRID
+     * 0.  A subsequent SRID-aware test (e.g. overlaps_tspatial_stbox against an
+     * SRID-3812 trip) then sees a 0-vs-3812 mismatch and returns false for
+     * every pair — silently emptying bbox-prefiltered queries such as Q10.
+     */
+    private static final byte WKB_EXTENDED = 0x04;
+
     private static final DateTimeFormatter PG_FMT =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -188,7 +199,7 @@ public final class BerlinMODUDFs {
             if (result == null) return null;
             try {
                 Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                return functions.stbox_as_hexwkb(result, (byte) 0, sizeOut);
+                return functions.stbox_as_hexwkb(result, WKB_EXTENDED, sizeOut);
             } finally {
                 MeosMemory.free(result);
             }
@@ -216,7 +227,7 @@ public final class BerlinMODUDFs {
                 if (expanded == null) return null;
                 try {
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                    return functions.stbox_as_hexwkb(expanded, (byte) 0, sizeOut);
+                    return functions.stbox_as_hexwkb(expanded, WKB_EXTENDED, sizeOut);
                 } finally {
                     MeosMemory.free(expanded);
                 }
