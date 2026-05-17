@@ -164,6 +164,21 @@ public final class MobilitySparkSession implements AutoCloseable {
 
     @Override
     public void close() {
-        meos_finalize();
+        // Intentionally does NOT call meos_finalize().
+        //
+        // meos_finalize() tears down MEOS process-global state and the
+        // thread-local cleanup handlers registered by every per-thread
+        // meos_initialize() (MeosThread.ensureReady on each Spark executor
+        // task thread).  In a Spark lifecycle close() runs while the
+        // SparkContext / executor thread-pool is still alive (e.g.
+        // try (MobilitySparkSession ms = ...) { ... } finally { spark.stop(); }
+        // closes ms BEFORE spark.stop()).  Finalising MEOS here makes the
+        // subsequent thread teardown free MEOS TLS that meos_finalize()
+        // already freed -> "double free or corruption (fasttop)" SIGABRT
+        // during shutdown (intermittent, heap/timing dependent).  The OS
+        // reclaims all native MEOS memory when the JVM exits; explicit
+        // finalize is unnecessary and unsafe in the Spark/test lifecycle.
+        // meos_finalize() belongs only in a standalone main() that owns the
+        // entire JVM and has no live MEOS-using threads at exit.
     }
 }
