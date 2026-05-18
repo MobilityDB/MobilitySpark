@@ -209,32 +209,30 @@ public final class TemporalCompUDFs {
         spark.udf().register("teqTfloatFloat", teqTfloatFloat, DataTypes.StringType);
         spark.udf().register("teqTboolBool",   teqTboolBool,   DataTypes.StringType);
         spark.udf().register("teqTtextText",   teqTtextText,   DataTypes.StringType);
-        spark.udf().register("teqTemporal",    teqTemporal,    DataTypes.StringType);
         // tne
         spark.udf().register("tneTintInt",     tneTintInt,     DataTypes.StringType);
         spark.udf().register("tneTfloatFloat", tneTfloatFloat, DataTypes.StringType);
         spark.udf().register("tneTboolBool",   tneTboolBool,   DataTypes.StringType);
         spark.udf().register("tneTtextText",   tneTtextText,   DataTypes.StringType);
-        spark.udf().register("tneTemporal",    tneTemporal,    DataTypes.StringType);
         // tlt
         spark.udf().register("tltTintInt",     tltTintInt,     DataTypes.StringType);
         spark.udf().register("tltTfloatFloat", tltTfloatFloat, DataTypes.StringType);
         spark.udf().register("tltTtextText",   tltTtextText,   DataTypes.StringType);
-        spark.udf().register("tltTemporal",    tltTemporal,    DataTypes.StringType);
         // tle
         spark.udf().register("tleTintInt",     tleTintInt,     DataTypes.StringType);
         spark.udf().register("tleTfloatFloat", tleTfloatFloat, DataTypes.StringType);
         spark.udf().register("tleTtextText",   tleTtextText,   DataTypes.StringType);
-        spark.udf().register("tleTemporal",    tleTemporal,    DataTypes.StringType);
         // tgt
         spark.udf().register("tgtTintInt",     tgtTintInt,     DataTypes.StringType);
         spark.udf().register("tgtTfloatFloat", tgtTfloatFloat, DataTypes.StringType);
         spark.udf().register("tgtTtextText",   tgtTtextText,   DataTypes.StringType);
-        spark.udf().register("tgtTemporal",    tgtTemporal,    DataTypes.StringType);
         // tge
         spark.udf().register("tgeTintInt",     tgeTintInt,     DataTypes.StringType);
         spark.udf().register("tgeTfloatFloat", tgeTfloatFloat, DataTypes.StringType);
         spark.udf().register("tgeTtextText",   tgeTtextText,   DataTypes.StringType);
-        spark.udf().register("tgeTemporal",    tgeTemporal,    DataTypes.StringType);
+        // The temporal × temporal forms teq/tne/tlt/tle/tgt/tge are
+        // superseded 1:1 by the portable bare names, registered by
+        // org.mobilitydb.spark.portable.PortableOperatorAliasUDFs reusing
+        // these very backing fields (one bare name, all six families).
     }
 }

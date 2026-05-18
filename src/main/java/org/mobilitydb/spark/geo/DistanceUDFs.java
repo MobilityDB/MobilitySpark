@@ -416,8 +416,10 @@ public final class DistanceUDFs {
         spark.udf().register("minDistanceTgeoGeo",    minDistanceTgeoGeo,    DataTypes.DoubleType);
         spark.udf().register("minDistanceTgeoTgeo",   minDistanceTgeoTgeo,   DataTypes.DoubleType);
 
-        // MobilityDB SQL bare-name aliases
-        spark.udf().register("nearestApproachDistance", nadTgeoGeo,  DataTypes.DoubleType);
+        // MobilityDB SQL bare-name aliases.
+        // The portable operator alias `nearestApproachDistance` (|=|) is
+        // registered by org.mobilitydb.spark.portable.PortableOperatorAliasUDFs,
+        // reusing this same nadTgeoGeo backing field.
         spark.udf().register("nearestApproachInstant",  naiTgeoGeo,  DataTypes.StringType);
         spark.udf().register("shortestLine",            shortestLineTgeoGeo, DataTypes.StringType);
         spark.udf().register("minDistance",             minDistanceTgeoTgeo, DataTypes.DoubleType);

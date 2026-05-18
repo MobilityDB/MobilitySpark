@@ -182,11 +182,9 @@ public final class TemporalBoxOpsUDFs {
         spark.udf().register("temporalContainedTstzspan", temporalContainedTstzspan, DataTypes.BooleanType);
         spark.udf().register("temporalOverlapsTstzspan",  temporalOverlapsTstzspan,  DataTypes.BooleanType);
         spark.udf().register("temporalSameTstzspan",      temporalSameTstzspan,      DataTypes.BooleanType);
-        // temporal × temporal
-        spark.udf().register("temporalAdjacentTemporal",  temporalAdjacentTemporal,  DataTypes.BooleanType);
-        spark.udf().register("temporalContainsTemporal",  temporalContainsTemporal,  DataTypes.BooleanType);
-        spark.udf().register("temporalContainedTemporal", temporalContainedTemporal, DataTypes.BooleanType);
-        spark.udf().register("temporalOverlapsTemporal",  temporalOverlapsTemporal,  DataTypes.BooleanType);
-        spark.udf().register("temporalSameTemporal",      temporalSameTemporal,      DataTypes.BooleanType);
+        // temporal × temporal — superseded 1:1 by the portable bare names
+        // adjacent/contains/contained/overlaps/same, registered by
+        // org.mobilitydb.spark.portable.PortableOperatorAliasUDFs reusing
+        // these very backing fields (one bare name, all six families).
     }
 }
