@@ -50,6 +50,15 @@ OUT_OF_SCOPE_SECTIONS = {
     "geo/073_tpoint_gist.in.sql",             # GiST support
     "geo/074_tgeo_spgist.in.sql",             # SPGiST support
     "geo/074_tpoint_spgist.in.sql",           # SPGiST support
+    # Sibling-family index plumbing — GiST/GIN opclass-support callbacks
+    # (consistent / extract_query / extract_value / triconsistent), the
+    # exact same PG-only class already excluded for temporal/geo above.
+    # No Spark equivalent: index access methods are PG-internal.
+    "cbuffer/166_tcbuffer_indexes.in.sql",    # GiST support
+    "npoint/092_tnpoint_gin.in.sql",          # GIN support
+    "npoint/098_tnpoint_indexes.in.sql",      # GiST support
+    "pose/114_tpose_indexes.in.sql",          # GiST support
+    "rgeo/134_trgeo_indexes.in.sql",          # GiST support
 }
 
 
@@ -450,10 +459,15 @@ def write_report(out_path, mdb_section_funcs, mdb_section_op_count,
         "aggregate transition/combine/final/serialize callbacks, planner "
         "hooks (`_sel`, `_joinsel`, `_supportfn`, `_analyze`), text/binary "
         "I/O helpers (`_in`, `_out`, `_recv`, `_send`), type modifier "
-        "helpers, the `999_oid_cache` PG catalog hook, and PG geometric "
-        "type constructors (`019_geo_constructors`).  None of them have "
-        "Spark equivalents and they should not be implemented; listed "
-        "here only for completeness."
+        "helpers, the `999_oid_cache` PG catalog hook, PG geometric "
+        "type constructors (`019_geo_constructors`), and the sibling-family "
+        "GiST/GIN index opclass-support callbacks "
+        "(`cbuffer/166_tcbuffer_indexes`, `npoint/092_tnpoint_gin`, "
+        "`npoint/098_tnpoint_indexes`, `pose/114_tpose_indexes`, "
+        "`rgeo/134_trgeo_indexes` — the same index-plumbing class already "
+        "excluded for temporal/geo).  None of them have Spark equivalents "
+        "and they should not be implemented; listed here only for "
+        "completeness."
     )
     lines.append("")
     if out_of_scope_results:

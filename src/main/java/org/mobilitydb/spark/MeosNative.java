@@ -329,6 +329,105 @@ public final class MeosNative {
         // dominates every remaining pair's lower bound.
         double tgeoarr_tgeoarr_mindist(Pointer arr1, int count1,
                                        Pointer arr2, int count2);
+
+        // ================================================================
+        // cbuffer family (meos_cbuffer.h) — not in JMEOS-1.4.
+        // All symbols verified present in lib/libmeos.so via `nm -D`.
+        // ================================================================
+
+        // Base type: ctor, hex-WKB I/O, accessors
+        Pointer cbuffer_make(Pointer point, double radius);          // Cbuffer*
+        Pointer cbuffer_from_hexwkb(String hexwkb);                  // Cbuffer*
+        String  cbuffer_as_hexwkb(Pointer cb, byte variant, Pointer size);
+        Pointer cbuffer_in(String str);                             // Cbuffer*
+        Pointer cbuffer_point(Pointer cb);                          // GSERIALIZED*
+        double  cbuffer_radius(Pointer cb);
+        // Spatial relationships (return int: -1 err, 0 false, 1 true)
+        int     cbuffer_contains(Pointer cb1, Pointer cb2);
+        int     cbuffer_covers(Pointer cb1, Pointer cb2);
+        int     cbuffer_disjoint(Pointer cb1, Pointer cb2);
+        int     cbuffer_intersects(Pointer cb1, Pointer cb2);
+        int     cbuffer_touches(Pointer cb1, Pointer cb2);
+        int     cbuffer_dwithin(Pointer cb1, Pointer cb2, double dist);
+        boolean cbuffer_same(Pointer cb1, Pointer cb2);
+        // Temporal cbuffer: ctor, text I/O, accessors
+        Pointer tcbuffer_make(Pointer tpoint, Pointer tfloat);       // Temporal*
+        Pointer tcbuffer_in(String str);                            // Temporal*
+        Pointer tcbuffer_points(Pointer temp);                      // Set*
+        Pointer tcbuffer_radius(Pointer temp);                      // Set*
+
+        // ================================================================
+        // npoint family (meos_npoint.h, npoint/tnpoint_routeops.h)
+        // — not in JMEOS-1.4. All verified present via `nm -D`.
+        // ================================================================
+
+        // Base type network point / segment
+        Pointer npoint_make(long rid, double pos);                  // Npoint*
+        Pointer nsegment_make(long rid, double pos1, double pos2);   // Nsegment*
+        Pointer npoint_from_hexwkb(String hexwkb);                  // Npoint*
+        String  npoint_as_hexwkb(Pointer np, byte variant, Pointer size);
+        Pointer npoint_in(String str);                             // Npoint*
+        Pointer nsegment_in(String str);                           // Nsegment*
+        String  nsegment_out(Pointer ns, int maxdd);
+        long    npoint_route(Pointer np);
+        double  npoint_position(Pointer np);
+        double  nsegment_start_position(Pointer ns);
+        double  nsegment_end_position(Pointer ns);
+        Pointer npointset_in(String str);                          // Set*
+        Pointer npointset_routes(Pointer s);                       // Set*
+        // Temporal network point
+        Pointer tnpointinst_make(Pointer np, long pgEpochMicros);   // TInstant*
+        long    tnpoint_route(Pointer temp);
+        Pointer tnpoint_routes(Pointer temp);                       // Set*
+        Pointer tnpoint_positions(Pointer temp, Pointer count);     // Nsegment**
+        // Route-set operators (091). `invert` flag = false (temp first).
+        boolean contains_rid_tnpoint_bigint(Pointer temp, long rid, boolean invert);
+        boolean contained_rid_tnpoint_bigint(Pointer temp, long rid, boolean invert);
+        boolean same_rid_tnpoint_bigint(Pointer temp, long rid, boolean invert);
+        boolean contains_rid_tnpoint_bigintset(Pointer temp, Pointer s, boolean invert);
+        boolean contained_rid_tnpoint_bigintset(Pointer temp, Pointer s, boolean invert);
+        boolean same_rid_tnpoint_bigintset(Pointer temp, Pointer s, boolean invert);
+        boolean overlaps_rid_tnpoint_bigintset(Pointer temp, Pointer s, boolean invert);
+        boolean contains_rid_tnpoint_tnpoint(Pointer temp1, Pointer temp2);
+        boolean contained_rid_tnpoint_tnpoint(Pointer temp1, Pointer temp2);
+        boolean same_rid_tnpoint_tnpoint(Pointer temp1, Pointer temp2);
+        boolean overlaps_rid_tnpoint_tnpoint(Pointer temp1, Pointer temp2);
+
+        // ================================================================
+        // pose family (meos_pose.h) — not in JMEOS-1.4.
+        // All verified present via `nm -D`.
+        // ================================================================
+
+        Pointer pose_make_2d(double x, double y, double theta, int srid); // Pose*
+        Pointer pose_from_hexwkb(String hexwkb);                     // Pose*
+        String  pose_as_hexwkb(Pointer pose, byte variant, Pointer size);
+        Pointer pose_in(String str);                                // Pose*
+        Pointer pose_to_point(Pointer pose);                        // GSERIALIZED*
+        double  pose_rotation(Pointer pose);
+        Pointer pose_orientation(Pointer pose);                     // double* (quat)
+        boolean pose_same(Pointer pose1, Pointer pose2);
+        Pointer poseset_in(String str);                             // Set*
+        Pointer tpose_make(Pointer tpoint, Pointer tradius);        // Temporal*
+        Pointer tpose_in(String str);                               // Temporal*
+        Pointer tpose_from_mfjson(String mfjson);                   // Temporal*
+        Pointer tpose_points(Pointer temp);                         // Set*
+        Pointer tpose_rotation(Pointer temp);                       // Temporal*
+
+        // ================================================================
+        // rgeo family (meos_rgeo.h) — not in JMEOS-1.4.
+        // All verified present via `nm -D`.
+        //
+        // NOTE: the v_clip_* kernels of 133_trgeo_vclip.in.sql are
+        // intentionally NOT declared here.  libmeos.so exports only the
+        // low-level v_clip_tpoly_point / v_clip_tpoly_tpoly, which take
+        // raw PostGIS LWPOLY*/LWPOINT*/Pose* + out-params (no GSERIALIZED/
+        // Temporal entry point reachable from the hex-WKB convention); the
+        // other four are not exported at all.  Documented ABI gap, not
+        // stubbed.
+        // ================================================================
+
+        Pointer geo_tpose_to_trgeo(Pointer gs, Pointer temp);       // Temporal*
+        Pointer trgeo_to_tpose(Pointer temp);                       // Temporal*
     }
 
     public static final Lib INSTANCE;
