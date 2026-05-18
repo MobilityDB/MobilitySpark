@@ -1,6 +1,6 @@
 # MobilitySpark parity status — surface-level audit
 
-Generated 2026-05-10. **Active addressable scope** (temporal + geo, excluding PG-only helpers): 858/858 names covered (100.0%).
+Generated 2026-05-18. **Active addressable scope** (temporal + geo, excluding PG-only helpers): 858/858 names covered (100.0%).
 
 **Out of scope** (PG-only — no Spark equivalent exists): 405 names skipped — 84 from PG-only sections (GiST/SPGiST opclasses, set/span/spanset index files, `019_geo_constructors.in.sql` PG geometric types, `999_oid_cache.in.sql`) plus 321 PG helper functions inside active sections (`*_in/_out/_recv/_send`, `*_transfn/_combinefn/_finalfn/_serialize/_deserialize`, `*_sel/_joinsel/_supportfn/_analyze`, `*_typmod_in/_typmod_out`).  Listed in appendix B; not counted in the headline.
 
