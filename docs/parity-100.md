@@ -7,7 +7,7 @@ families in scope** — `temporal`, `geo`, `cbuffer`, `npoint`, `pose`,
 | Axis | State | Gate |
 |---|---|---|
 | **Portable bare-name dialect** (RFC #920 — the cross-engine contract) | **29/29 canonical bare names registered, 0 unbacked, all six families — 100%** | [`scripts/portable_parity.py`](../scripts/portable_parity.py) |
-| **MobilityDB SQL surface** (every `CREATE FUNCTION`, snake→camel match) | **1353/1462 active addressable covered (92.5%)** — the four sibling families now counted, not excluded | [`scripts/parity-audit.py`](../scripts/parity-audit.py) → [`parity-status.md`](parity-status.md) |
+| **MobilityDB SQL surface** (every `CREATE FUNCTION`, snake→camel match) | **1571/1577 active addressable covered (99.6%)** — every section 100% except the `v_clip` ABI gap below; all six families counted | [`scripts/parity-audit.py`](../scripts/parity-audit.py) → [`parity-status.md`](parity-status.md) |
 
 ---
 
@@ -38,32 +38,50 @@ unbacked, 100%** (same prefix logic as MobilityDB/MEOS-API
 
 ---
 
-## MobilityDB SQL surface (92.5% — remaining work, with a plan)
+## MobilityDB SQL surface (99.6%)
 
 The full MobilityDB SQL surface is partitioned by `scripts/parity-audit.py`
 into:
 
 | Bucket | This release |
 |--------|---|
-| **Active addressable** (any function a Spark UDF can semantically reproduce — **all six families**) | **1353 / 1462 covered (92.5%)** |
-| **Out of scope** (PG plumbing: `*_in/_out/_recv/_send`, `_transfn/_combinefn/_finalfn`, GiST/SPGiST opclasses, `_cmp/_eq/.../_hash`, PG range types, PG-extension-only entry points) | excluded by mechanism, not by family |
+| **Active addressable** (any function a Spark UDF can semantically reproduce — **all six families**) | **1571 / 1577 covered (99.6%)** |
+| **Out of scope** (PG plumbing: `*_in/_out/_recv/_send`, `_transfn/_combinefn/_finalfn`, GiST/SPGiST/GIN index opclasses, `_cmp/_eq/.../_hash`, PG range types, PG-extension-only entry points) | excluded by mechanism, not by family |
 
 PostGIS `BOX2D`/`BOX3D` are *not* out of scope — PostGIS is embedded in
 MEOS, so `box2d`/`box3d` UDFs are real.
 
-**The remaining ~109 (7.5%) is tracked work, not a headline exclusion.**
-It is dominated by:
+The `cbuffer` / `npoint` / `pose` / `rgeo` typed per-family UDF surface is
+implemented (`CbufferUDFs`, `NpointUDFs`, `PoseUDFs`, `RgeoUDFs`), reusing
+each function's own MEOS C symbol via the `MeosNative` raw-FFI / generic
+`functions.*` pattern — no reimplementation. Every active section is at
+100% with two structural exceptions:
 
-- the per-overload typed UDF surface of `cbuffer` / `npoint` / `pose` /
-  `rgeo` (circular buffers, network points, spatial poses, rigid
-  geometries). These four are **full user-facing temporal types, in
-  scope** — the portable bare-name dialect above already covers them via
-  the superclass backings; the gap is the *typed per-family* UDF surface,
-  to be filled with the same `MeosNative`/`functions.*` reuse pattern, no
-  new operator logic.
-- the previously-noted typed-Datum tile / split / value-set returns
-  (`getValue`/`getValues`/`*SeqSetGaps`/`timeSplit` double-pointer arrays)
-  and `segmentMaxDuration`/`asMVTGeom` multi-array outputs.
+- **Index-plumbing exception (documented, uniform with temporal/geo).**
+  The GiST/GIN opclass-support callbacks of
+  `cbuffer/166_tcbuffer_indexes`, `npoint/092_tnpoint_gin`,
+  `npoint/098_tnpoint_indexes`, `pose/114_tpose_indexes`,
+  `rgeo/134_trgeo_indexes` are out of scope — the same PG-only index
+  access-method class already excluded for `temporal/043_temporal_gist`,
+  `geo/073_tgeo_gist`, etc. Index methods are PG-internal; Spark has no
+  equivalent.
+
+- **`rgeo/133_trgeo_vclip` — MEOS-library ABI gap (6 functions).**
+  The `v_clip_*` user surface is implemented only in the `mobilitydb`
+  PostgreSQL extension (`VClip_*` `MODULE_PATHNAME` wrappers), not in the
+  MEOS C library MobilitySpark links. `lib/libmeos.so` exports only the
+  low-level kernels `v_clip_tpoly_point` / `v_clip_tpoly_tpoly`, which
+  take raw PostGIS `LWPOLY*`/`LWPOINT*`/`Pose*` structs plus
+  out-parameters — there is no `GSERIALIZED`/`Temporal` entry point
+  reachable from the hex-WKB string convention — and the other four
+  (`v_clip_poly_point`, `v_clip_poly_poly`, `v_clip_tpoly_poly`,
+  `v_clip_tpoly_tpoint`) are not exported at all. These six are recorded
+  as a documented gap and intentionally **not stubbed**: binding them
+  requires an `extern "C"` GSERIALIZED/Temporal-level v-clip entry point
+  to be added to MEOS upstream (proposed fix: export
+  `v_clip_trgeo_geo` / `v_clip_trgeo_trgeo` wrappers that accept
+  `GSERIALIZED`/`Temporal` and a `TimestampTz`, returning the scalar
+  clip distance — mirroring the existing `tdistance_trgeo_*` exports).
 
 Re-run `python3 scripts/parity-audit.py --mdb ../MobilityDB --mspark .`
 to regenerate [`parity-status.md`](parity-status.md); `DEFERRED_FAMILIES`
