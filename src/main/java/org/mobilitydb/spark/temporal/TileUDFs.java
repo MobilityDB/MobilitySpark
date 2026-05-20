@@ -44,6 +44,7 @@ import org.apache.spark.sql.api.java.UDF9;
 import org.apache.spark.sql.types.DataTypes;
 
 import java.sql.Timestamp;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for multidimensional tiling — split a temporal value into
@@ -66,7 +67,7 @@ public final class TileUDFs {
     private static final int TBOX_SIZE  = 56;
 
     private static long pgEpoch(Timestamp ts) {
-        return (ts.getTime() - 946684800L * 1000L) * 1000L;
+        return (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
     }
 
     // ------------------------------------------------------------------

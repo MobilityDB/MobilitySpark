@@ -38,6 +38,7 @@ import org.apache.spark.sql.types.DataTypes;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for span and set topology predicates and algebraic operations.
@@ -454,8 +455,6 @@ public final class SpanAlgebraUDFs {
         };
 
     // milliseconds from Unix epoch (1970-01-01) to PG epoch (2000-01-01)
-    private static final long PG_UNIX_OFFSET_MS = 946684800L * 1000L;
-
     // ------------------------------------------------------------------
     // Span type conversions
     //
@@ -650,7 +649,7 @@ public final class SpanAlgebraUDFs {
         (ts) -> {
             if (ts == null) return null;
             MeosThread.ensureReady();
-            long pgMicros = (ts.getTime() - PG_UNIX_OFFSET_MS) * 1000L;
+            long pgMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
             OffsetDateTime odt = OffsetDateTime.ofInstant(Instant.ofEpochSecond(pgMicros, 0), ZoneOffset.UTC);
             Pointer result = functions.timestamptz_to_span(odt);
             if (result == null) return null;
@@ -662,7 +661,7 @@ public final class SpanAlgebraUDFs {
         (ts) -> {
             if (ts == null) return null;
             MeosThread.ensureReady();
-            long pgMicros = (ts.getTime() - PG_UNIX_OFFSET_MS) * 1000L;
+            long pgMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
             OffsetDateTime odt = OffsetDateTime.ofInstant(Instant.ofEpochSecond(pgMicros, 0), ZoneOffset.UTC);
             Pointer result = functions.timestamptz_to_set(odt);
             if (result == null) return null;

@@ -43,6 +43,7 @@ import org.apache.spark.sql.types.DataTypes;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for STBox accessor and expansion operations.
@@ -63,8 +64,6 @@ public final class STBoxUDFs {
     private STBoxUDFs() {}
 
     // milliseconds from Unix epoch (1970-01-01) to PG epoch (2000-01-01)
-    private static final long PG_UNIX_OFFSET_MS = 946684800L * 1000L;
-
     private static Pointer stboxPtr(String hex) {
         if (hex == null) return null;
         return functions.stbox_from_hexwkb(hex);
@@ -171,7 +170,7 @@ public final class STBoxUDFs {
             if (p == null) return null;
             Pointer r = functions.stbox_tmin(p);
             if (r == null) return null;
-            return new java.sql.Timestamp(r.getLong(0) / 1000L + PG_UNIX_OFFSET_MS);
+            return new java.sql.Timestamp(r.getLong(0) / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS);
         };
 
     public static final UDF1<String, java.sql.Timestamp> stboxTmax =
@@ -181,7 +180,7 @@ public final class STBoxUDFs {
             if (p == null) return null;
             Pointer r = functions.stbox_tmax(p);
             if (r == null) return null;
-            return new java.sql.Timestamp(r.getLong(0) / 1000L + PG_UNIX_OFFSET_MS);
+            return new java.sql.Timestamp(r.getLong(0) / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS);
         };
 
     // ------------------------------------------------------------------
@@ -434,7 +433,7 @@ public final class STBoxUDFs {
         (ts) -> {
             if (ts == null) return null;
             MeosThread.ensureReady();
-            long pgMicros = (ts.getTime() - PG_UNIX_OFFSET_MS) * 1000L;
+            long pgMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
             OffsetDateTime odt = OffsetDateTime.ofInstant(Instant.ofEpochSecond(pgMicros, 0), ZoneOffset.UTC);
             Pointer result = functions.timestamptz_to_stbox(odt);
             if (result == null) return null;

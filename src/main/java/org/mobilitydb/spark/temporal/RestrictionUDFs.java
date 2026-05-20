@@ -38,6 +38,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for restricting temporal values by value or timestamp set.
@@ -314,7 +315,7 @@ public final class RestrictionUDFs {
             Pointer tptr = functions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                long pgEpochMicros = (ts.getTime() - 946684800L * 1000L) * 1000L;
+                long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
                 Pointer result = functions.temporal_delete_timestamptz(tptr, odt, false);
@@ -342,7 +343,7 @@ public final class RestrictionUDFs {
             Pointer tptr = functions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                long pgEpochMicros = (ts.getTime() - 946684800L * 1000L) * 1000L;
+                long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
                 Pointer result = functions.temporal_at_timestamptz(tptr, odt);
@@ -366,7 +367,7 @@ public final class RestrictionUDFs {
             Pointer tptr = functions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                long pgEpochMicros = (ts.getTime() - 946684800L * 1000L) * 1000L;
+                long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
                 Pointer result = functions.temporal_minus_timestamptz(tptr, odt);
