@@ -3,14 +3,21 @@
 .project
 .settings/
 
-# Intellij
+# IntelliJ IDEA
 .idea/
 *.iml
 *.iws
+*.ipr
 
-# Mac
+# macOS
 .DS_Store
+**/.DS_Store
 
 # Maven
 log/
 target/
+
+# Large BerlinMOD benchmark data (generated locally — too large for GitHub)
+berlinmod/data/trips.csv
+dependency-reduced-pom.xml
+hs_err_pid*.log

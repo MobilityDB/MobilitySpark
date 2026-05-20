@@ -1,0 +1,1089 @@
+/*****************************************************************************
+ *
+ * This MobilityDB code is provided under The PostgreSQL License.
+ * Copyright (c) 2020-2026, Université libre de Bruxelles and MobilityDB
+ * contributors
+ *
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose, without fee, and without a written
+ * agreement is hereby granted, provided that the above copyright notice and
+ * this paragraph and the following two paragraphs appear in all copies.
+ *
+ * IN NO EVENT SHALL UNIVERSITE LIBRE DE BRUXELLES BE LIABLE TO ANY PARTY FOR
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+ * LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION,
+ * EVEN IF UNIVERSITE LIBRE DE BRUXELLES HAS BEEN ADVISED OF THE POSSIBILITY
+ * OF SUCH DAMAGE.
+ *
+ * UNIVERSITE LIBRE DE BRUXELLES SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON
+ * AN "AS IS" BASIS, AND UNIVERSITE LIBRE DE BRUXELLES HAS NO OBLIGATIONS TO
+ * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ *
+ *****************************************************************************/
+
+package org.mobilitydb.spark.temporal;
+
+import functions.functions;
+import jnr.ffi.Pointer;
+import org.mobilitydb.spark.MeosMemory;
+import org.mobilitydb.spark.MeosThread;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.api.java.UDF2;
+import org.apache.spark.sql.api.java.UDF3;
+import org.apache.spark.sql.types.DataTypes;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
+/**
+ * Spark SQL UDFs for converting and transforming temporal types.
+ *
+ * Covers: subtype conversion (to TInstant/TSequence/TSequenceSet),
+ * interpolation change, type casting (tfloat↔tint), value-domain
+ * shifting and scaling, time-domain shifting and scaling, SRID
+ * assignment, coordinate rounding, and trajectory simplification.
+ *
+ * All temporal values are encoded as hex-WKB Strings. Interpolation
+ * is expressed as a String: "Discrete", "Step", or "Linear".
+ * Interval arguments use PostgreSQL interval literal syntax, e.g.
+ * "1 day" or "01:00:00".
+ *
+ * Memory management: every native Pointer allocated by MEOS is freed
+ * via MeosMemory.free() in a finally block to prevent native heap
+ * leakage across UDF calls.
+ *
+ * MEOS function authority: meos/include/meos.h, meos/include/meos_geo.h
+ */
+public final class TransformUDFs {
+
+    private TransformUDFs() {}
+
+    // interpType constants from meos.h: DISCRETE=1, STEP=2, LINEAR=3
+    private static int interpToInt(String interp) {
+        if ("Discrete".equalsIgnoreCase(interp)) return 1;
+        if ("Step".equalsIgnoreCase(interp))     return 2;
+        if ("Linear".equalsIgnoreCase(interp))   return 3;
+        throw new IllegalArgumentException("Unknown interpolation: " + interp);
+    }
+
+    // ------------------------------------------------------------------
+    // Subtype conversion
+    // ------------------------------------------------------------------
+
+    // temporalToTInstant(s STRING) → STRING
+    // MEOS: temporal_to_tinstant(const Temporal *) → TInstant *
+    public static final UDF1<String, String> temporalToTInstant =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.temporal_to_tinstant(ptr);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // temporalToTSequence(s STRING, interp STRING) → STRING
+    // interp: "Discrete" | "Step" | "Linear"
+    // MEOS: temporal_to_tsequence(const Temporal *, interpType interp) → TSequence *
+    public static final UDF2<String, String, String> temporalToTSequence =
+        (s, interp) -> {
+            if (s == null || interp == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.temporal_to_tsequence(ptr, interp);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // temporalToTSequenceSet(s STRING, interp STRING) → STRING
+    // interp: "Discrete" | "Step" | "Linear"
+    // MEOS: temporal_to_tsequenceset(const Temporal *, interpType interp) → TSequenceSet *
+    public static final UDF2<String, String, String> temporalToTSequenceSet =
+        (s, interp) -> {
+            if (s == null || interp == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.temporal_to_tsequenceset(ptr, interp);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Interpolation change
+    // ------------------------------------------------------------------
+
+    // temporalSetInterp(s STRING, interpStr STRING) → STRING
+    // interpStr: "Discrete" → 1, "Step" → 2, "Linear" → 3
+    // MEOS: temporal_set_interp(const Temporal *, interpType interp) → Temporal *
+    public static final UDF2<String, String, String> temporalSetInterp =
+        (s, interpStr) -> {
+            if (s == null || interpStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                int interpInt = interpToInt(interpStr);
+                Pointer result = functions.temporal_set_interp(ptr, interpInt);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Type casting
+    // ------------------------------------------------------------------
+
+    // tfloatToTint(s STRING) → STRING
+    // MEOS: tfloat_to_tint(const Temporal *) → Temporal *
+    public static final UDF1<String, String> tfloatToTint =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tfloat_to_tint(ptr);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tintToTfloat(s STRING) → STRING
+    // MEOS: tint_to_tfloat(const Temporal *) → Temporal *
+    public static final UDF1<String, String> tintToTfloat =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tint_to_tfloat(ptr);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Value-domain shifting and scaling (tint)
+    //
+    // MEOS: tint_shift_value(temp, shift)       meos.h
+    //       tint_scale_value(temp, width)        meos.h
+    //       tint_shift_scale_value(temp, s, w)   meos.h
+    // ------------------------------------------------------------------
+
+    public static final UDF2<String, Integer, String> tintShiftValue =
+        (s, shift) -> {
+            if (s == null || shift == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tint_shift_value(ptr, shift);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    public static final UDF2<String, Integer, String> tintScaleValue =
+        (s, width) -> {
+            if (s == null || width == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tint_scale_value(ptr, width);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    public static final UDF3<String, Integer, Integer, String> tintShiftScaleValue =
+        (s, shift, width) -> {
+            if (s == null || shift == null || width == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tint_shift_scale_value(ptr, shift, width);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Value-domain shifting and scaling (tfloat)
+    // ------------------------------------------------------------------
+
+    // tfloatShiftValue(s STRING, shift DOUBLE) → STRING
+    // MEOS: tfloat_shift_value(const Temporal *, double) → Temporal *
+    public static final UDF2<String, Double, String> tfloatShiftValue =
+        (s, shift) -> {
+            if (s == null || shift == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tfloat_shift_value(ptr, shift);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tfloatScaleValue(s STRING, width DOUBLE) → STRING
+    // MEOS: tfloat_scale_value(const Temporal *, double) → Temporal *
+    public static final UDF2<String, Double, String> tfloatScaleValue =
+        (s, width) -> {
+            if (s == null || width == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tfloat_scale_value(ptr, width);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tfloatShiftScaleValue(s STRING, shift DOUBLE, width DOUBLE) → STRING
+    // MEOS: tfloat_shift_scale_value(const Temporal *, double shift, double width) → Temporal *
+    public static final UDF3<String, Double, Double, String> tfloatShiftScaleValue =
+        (s, shift, width) -> {
+            if (s == null || shift == null || width == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tfloat_shift_scale_value(ptr, shift, width);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Time-domain shifting and scaling
+    // ------------------------------------------------------------------
+
+    // temporalShiftTime(s STRING, shiftStr STRING) → STRING
+    // MEOS: temporal_shift_time(const Temporal *, const Interval *) → Temporal *
+    public static final UDF2<String, String, String> temporalShiftTime =
+        (s, shiftStr) -> {
+            if (s == null || shiftStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer shiftPtr = functions.pg_interval_in(shiftStr, -1);
+                if (shiftPtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_shift_time(tptr, shiftPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(shiftPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // temporalScaleTime(s STRING, scaleStr STRING) → STRING
+    // MEOS: temporal_scale_time(const Temporal *, const Interval *) → Temporal *
+    public static final UDF2<String, String, String> temporalScaleTime =
+        (s, scaleStr) -> {
+            if (s == null || scaleStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer scalePtr = functions.pg_interval_in(scaleStr, -1);
+                if (scalePtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_scale_time(tptr, scalePtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(scalePtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // temporalShiftScaleTime(s STRING, shiftStr STRING, scaleStr STRING) → STRING
+    // shiftStr and scaleStr are PostgreSQL interval literals, e.g. "1 day".
+    // MEOS: temporal_shift_scale_time(const Temporal *, const Interval *, const Interval *) → Temporal *
+    public static final UDF3<String, String, String, String> temporalShiftScaleTime =
+        (s, shiftStr, scaleStr) -> {
+            if (s == null || shiftStr == null || scaleStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer tptr = functions.temporal_from_hexwkb(s);
+            if (tptr == null) return null;
+            try {
+                Pointer shiftPtr = functions.pg_interval_in(shiftStr, -1);
+                if (shiftPtr == null) return null;
+                try {
+                    Pointer scalePtr = functions.pg_interval_in(scaleStr, -1);
+                    if (scalePtr == null) return null;
+                    try {
+                        Pointer result = functions.temporal_shift_scale_time(tptr, shiftPtr, scalePtr);
+                        if (result == null) return null;
+                        try {
+                            return functions.temporal_as_hexwkb(result, (byte) 0);
+                        } finally {
+                            MeosMemory.free(result);
+                        }
+                    } finally {
+                        MeosMemory.free(scalePtr);
+                    }
+                } finally {
+                    MeosMemory.free(shiftPtr);
+                }
+            } finally {
+                MeosMemory.free(tptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Spatial transformations (tpoint)
+    // ------------------------------------------------------------------
+
+    // tpointSetSrid(s STRING, srid INT) → STRING
+    // MEOS: tspatial_set_srid(const Temporal *, int32_t srid) → Temporal *
+    public static final UDF2<String, Integer, String> tpointSetSrid =
+        (s, srid) -> {
+            if (s == null || srid == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.tspatial_set_srid(ptr, srid);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tpointRound(s STRING, maxdd INT) → STRING
+    // MEOS: temporal_round(const Temporal *, int maxdd) → Temporal *
+    public static final UDF2<String, Integer, String> tpointRound =
+        (s, maxdd) -> {
+            if (s == null || maxdd == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.temporal_round(ptr, maxdd);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // Trajectory simplification
+    // ------------------------------------------------------------------
+
+    // temporalSimplifyDp(s STRING, dist DOUBLE) → STRING
+    // Uses the Douglas-Peucker algorithm with synchronized=false.
+    // MEOS: temporal_simplify_dp(const Temporal *, double eps_dist, bool synchronized) → Temporal *
+    public static final UDF2<String, Double, String> temporalSimplifyDp =
+        (s, dist) -> {
+            if (s == null || dist == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.temporal_simplify_dp(ptr, dist, false);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // temporalSimplifyMaxDist(s STRING, dist DOUBLE) → STRING
+    // Uses maximum-distance simplification with synchronized=false.
+    // MEOS: temporal_simplify_max_dist(const Temporal *, double eps_dist, bool synchronized) → Temporal *
+    public static final UDF2<String, Double, String> temporalSimplifyMaxDist =
+        (s, dist) -> {
+            if (s == null || dist == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.temporal_simplify_max_dist(ptr, dist, false);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    private static final OffsetDateTime PG_EPOCH = OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
+    // temporalSimplifyMinDist(s STRING, dist DOUBLE) → STRING
+    // Removes consecutive instants whose distance is below the threshold.
+    // MEOS: temporal_simplify_min_dist(const Temporal *, double dist) → Temporal *
+    public static final UDF2<String, Double, String> temporalSimplifyMinDist =
+        (s, dist) -> {
+            if (s == null || dist == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer result = functions.temporal_simplify_min_dist(ptr, dist);
+                if (result == null) return null;
+                try {
+                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                } finally {
+                    MeosMemory.free(result);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // temporalSimplifyMinTdelta(s STRING, durationStr STRING) → STRING
+    // Removes consecutive instants whose time delta is below the threshold.
+    // MEOS: temporal_simplify_min_tdelta(const Temporal *, const Interval *) → Temporal *
+    public static final UDF2<String, String, String> temporalSimplifyMinTdelta =
+        (s, durationStr) -> {
+            if (s == null || durationStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer ivPtr = functions.pg_interval_in(durationStr, -1);
+                if (ivPtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_simplify_min_tdelta(ptr, ivPtr);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(ivPtr);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // temporalTPrecision(s STRING, durationStr STRING) → STRING
+    // Rounds all timestamps to the nearest multiple of the given duration.
+    // MEOS: temporal_tprecision(const Temporal *, const Interval *, TimestampTz origin)
+    public static final UDF2<String, String, String> temporalTPrecision =
+        (s, durationStr) -> {
+            if (s == null || durationStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer ivPtr = functions.pg_interval_in(durationStr, -1);
+                if (ivPtr == null) return null;
+                try {
+                    Pointer result = functions.temporal_tprecision(ptr, ivPtr, PG_EPOCH);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(ivPtr);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // temporalTSample(s STRING, durationStr STRING, interpStr STRING) → STRING
+    // Re-samples a temporal value at regular time intervals.
+    // origin is fixed at 2000-01-01 00:00:00 UTC (MEOS/PG epoch).
+    // MEOS: temporal_tsample(const Temporal *, const Interval *, TimestampTz, interpType) → Temporal *
+    public static final UDF3<String, String, String, String> temporalTSample =
+        (s, durationStr, interpStr) -> {
+            if (s == null || durationStr == null || interpStr == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer ivPtr = functions.pg_interval_in(durationStr, -1);
+                if (ivPtr == null) return null;
+                try {
+                    int interp;
+                    switch (interpStr) {
+                        case "Discrete": interp = 1; break;
+                        case "Step":     interp = 2; break;
+                        default:         interp = 3; break;
+                    }
+                    Pointer result = functions.temporal_tsample(ptr, ivPtr, PG_EPOCH, interp);
+                    if (result == null) return null;
+                    try {
+                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                    } finally {
+                        MeosMemory.free(result);
+                    }
+                } finally {
+                    MeosMemory.free(ivPtr);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // tpointTrajectory(s STRING) → STRING  (WKT of the trajectory geometry)
+    // For a tgeompoint sequence, this returns a LINESTRING or POINT geometry.
+    // MEOS: tpoint_trajectory(const Temporal *, bool unary_union) → GSERIALIZED *
+    public static final UDF1<String, String> tpointTrajectory =
+        (s) -> {
+            if (s == null) return null;
+            MeosThread.ensureReady();
+            Pointer ptr = functions.temporal_from_hexwkb(s);
+            if (ptr == null) return null;
+            try {
+                Pointer gsPtr = functions.tpoint_trajectory(ptr, false);
+                if (gsPtr == null) return null;
+                try {
+                    return functions.geo_as_text(gsPtr, 6);
+                } finally {
+                    MeosMemory.free(gsPtr);
+                }
+            } finally {
+                MeosMemory.free(ptr);
+            }
+        };
+
+    // ------------------------------------------------------------------
+    // floatset transforms
+    // ------------------------------------------------------------------
+
+    // floatsetCeil(setHex STRING) → STRING
+    // MEOS: floatset_ceil(const Set *) → Set *
+    public static final UDF1<String, String> floatsetCeil =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatset_ceil(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatsetFloor(setHex STRING) → STRING
+    // MEOS: floatset_floor(const Set *) → Set *
+    public static final UDF1<String, String> floatsetFloor =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatset_floor(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatsetDegrees(setHex STRING) → STRING  (radians → degrees)
+    // MEOS: floatset_degrees(const Set *, bool normalize) → Set *
+    public static final UDF1<String, String> floatsetDegrees =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatset_degrees(p, false);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatsetRadians(setHex STRING) → STRING  (degrees → radians)
+    // MEOS: floatset_radians(const Set *) → Set *
+    public static final UDF1<String, String> floatsetRadians =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatset_radians(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // textset transforms (case normalization)
+    // ------------------------------------------------------------------
+
+    // textsetLower(setHex STRING) → STRING  (all elements lowercased)
+    // MEOS: textset_lower(const Set *) → Set *
+    public static final UDF1<String, String> textsetLower =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.textset_lower(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // textsetUpper(setHex STRING) → STRING  (all elements uppercased)
+    // MEOS: textset_upper(const Set *) → Set *
+    public static final UDF1<String, String> textsetUpper =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.textset_upper(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // textsetInitcap(setHex STRING) → STRING  (first letter of each element capitalized)
+    // MEOS: textset_initcap(const Set *) → Set *
+    public static final UDF1<String, String> textsetInitcap =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.textset_initcap(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // intspan / floatspan shift-scale
+    // ------------------------------------------------------------------
+
+    // intspanShiftScale(spanHex STRING, shift INTEGER, width INTEGER) → STRING
+    // MEOS: intspan_shift_scale(const Span *, int shift, int width,
+    //                           bool hasshift, bool haswidth) → Span *
+    public static final UDF3<String, Integer, Integer, String> intspanShiftScale =
+        (hex, shift, width) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.span_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int s = (shift == null) ? 0 : shift;
+                int w = (width == null) ? 0 : width;
+                Pointer r = functions.intspan_shift_scale(p, s, w,
+                    shift != null, width != null);
+                if (r == null) return null;
+                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspanShiftScale(spanHex STRING, shift DOUBLE, width DOUBLE) → STRING
+    // MEOS: floatspan_shift_scale(const Span *, double, double, bool, bool) → Span *
+    public static final UDF3<String, Double, Double, String> floatspanShiftScale =
+        (hex, shift, width) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.span_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                double s = (shift == null) ? 0.0 : shift;
+                double w = (width == null) ? 0.0 : width;
+                Pointer r = functions.floatspan_shift_scale(p, s, w,
+                    shift != null, width != null);
+                if (r == null) return null;
+                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // intspanset / floatspanset shift-scale and type conversion
+    // ------------------------------------------------------------------
+
+    // intspansetShiftScale(hex STRING, shift INTEGER, width INTEGER) → STRING
+    // MEOS: intspanset_shift_scale(const SpanSet *, int, int, bool, bool) → SpanSet *
+    public static final UDF3<String, Integer, Integer, String> intspansetShiftScale =
+        (hex, shift, width) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                int s = (shift == null) ? 0 : shift;
+                int w = (width == null) ? 0 : width;
+                Pointer r = functions.intspanset_shift_scale(p, s, w,
+                    shift != null, width != null);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetShiftScale(hex STRING, shift DOUBLE, width DOUBLE) → STRING
+    // MEOS: floatspanset_shift_scale(const SpanSet *, double, double, bool, bool) → SpanSet *
+    public static final UDF3<String, Double, Double, String> floatspansetShiftScale =
+        (hex, shift, width) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                double s = (shift == null) ? 0.0 : shift;
+                double w = (width == null) ? 0.0 : width;
+                Pointer r = functions.floatspanset_shift_scale(p, s, w,
+                    shift != null, width != null);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetCeil(hex STRING) → STRING
+    // MEOS: floatspanset_ceil(const SpanSet *) → SpanSet *
+    public static final UDF1<String, String> floatspansetCeil =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatspanset_ceil(p);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetFloor(hex STRING) → STRING
+    // MEOS: floatspanset_floor(const SpanSet *) → SpanSet *
+    public static final UDF1<String, String> floatspansetFloor =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatspanset_floor(p);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetRound(hex STRING, maxDecimals INTEGER) → STRING
+    // MEOS: floatspanset_round(const SpanSet *, int) → SpanSet *
+    public static final UDF2<String, Integer, String> floatspansetRound =
+        (hex, decimals) -> {
+            if (hex == null || decimals == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatspanset_round(p, decimals);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // intspansetToFloat(hex STRING) → STRING  (intspanset → floatspanset)
+    // MEOS: intspanset_to_floatspanset(const SpanSet *) → SpanSet *
+    public static final UDF1<String, String> intspansetToFloat =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.intspanset_to_floatspanset(p);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // floatspansetToInt(hex STRING) → STRING  (floatspanset → intspanset)
+    // MEOS: floatspanset_to_intspanset(const SpanSet *) → SpanSet *
+    public static final UDF1<String, String> floatspansetToInt =
+        (hex) -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.spanset_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.floatspanset_to_intspanset(p);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    // ------------------------------------------------------------------
+    // Registration
+    // ------------------------------------------------------------------
+
+    public static void registerAll(SparkSession spark) {
+        // Subtype conversion
+        spark.udf().register("temporalToTInstant",    temporalToTInstant,    DataTypes.StringType);
+        spark.udf().register("temporalToTSequence",   temporalToTSequence,   DataTypes.StringType);
+        spark.udf().register("temporalToTSequenceSet", temporalToTSequenceSet, DataTypes.StringType);
+        // Interpolation change
+        spark.udf().register("temporalSetInterp",     temporalSetInterp,     DataTypes.StringType);
+        // Type casting
+        spark.udf().register("tfloatToTint",          tfloatToTint,          DataTypes.StringType);
+        spark.udf().register("tintToTfloat",          tintToTfloat,          DataTypes.StringType);
+        // tint value-domain shifting and scaling
+        spark.udf().register("tintShiftValue",        tintShiftValue,        DataTypes.StringType);
+        spark.udf().register("tintScaleValue",        tintScaleValue,        DataTypes.StringType);
+        spark.udf().register("tintShiftScaleValue",   tintShiftScaleValue,   DataTypes.StringType);
+        // Value-domain shifting and scaling
+        spark.udf().register("tfloatShiftValue",      tfloatShiftValue,      DataTypes.StringType);
+        spark.udf().register("tfloatScaleValue",      tfloatScaleValue,      DataTypes.StringType);
+        spark.udf().register("tfloatShiftScaleValue", tfloatShiftScaleValue, DataTypes.StringType);
+        // Time-domain shifting and scaling
+        spark.udf().register("temporalShiftTime",       temporalShiftTime,       DataTypes.StringType);
+        spark.udf().register("temporalScaleTime",       temporalScaleTime,       DataTypes.StringType);
+        spark.udf().register("temporalShiftScaleTime", temporalShiftScaleTime, DataTypes.StringType);
+        // Spatial transformations
+        spark.udf().register("tpointSetSrid",         tpointSetSrid,         DataTypes.StringType);
+        spark.udf().register("tpointRound",           tpointRound,           DataTypes.StringType);
+        // Trajectory simplification
+        spark.udf().register("temporalSimplifyDp",         temporalSimplifyDp,         DataTypes.StringType);
+        spark.udf().register("temporalSimplifyMaxDist",    temporalSimplifyMaxDist,    DataTypes.StringType);
+        spark.udf().register("temporalSimplifyMinDist",    temporalSimplifyMinDist,    DataTypes.StringType);
+        spark.udf().register("temporalSimplifyMinTdelta",  temporalSimplifyMinTdelta,  DataTypes.StringType);
+        spark.udf().register("temporalTPrecision",         temporalTPrecision,         DataTypes.StringType);
+        // Temporal sampling
+        spark.udf().register("temporalTSample", temporalTSample, DataTypes.StringType);
+        // Trajectory extraction
+        spark.udf().register("tpointTrajectory", tpointTrajectory, DataTypes.StringType);
+        // floatset transforms
+        spark.udf().register("floatsetCeil",    floatsetCeil,    DataTypes.StringType);
+        spark.udf().register("floatsetFloor",   floatsetFloor,   DataTypes.StringType);
+        spark.udf().register("floatsetDegrees", floatsetDegrees, DataTypes.StringType);
+        spark.udf().register("floatsetRadians", floatsetRadians, DataTypes.StringType);
+        // textset case normalization
+        spark.udf().register("textsetLower",   textsetLower,   DataTypes.StringType);
+        spark.udf().register("textsetUpper",   textsetUpper,   DataTypes.StringType);
+        spark.udf().register("textsetInitcap", textsetInitcap, DataTypes.StringType);
+        // intspan / floatspan shift-scale
+        spark.udf().register("intspanShiftScale",   intspanShiftScale,   DataTypes.StringType);
+        spark.udf().register("floatspanShiftScale",  floatspanShiftScale,  DataTypes.StringType);
+        // intspanset / floatspanset transforms
+        spark.udf().register("intspansetShiftScale",   intspansetShiftScale,   DataTypes.StringType);
+        spark.udf().register("floatspansetShiftScale", floatspansetShiftScale, DataTypes.StringType);
+        spark.udf().register("floatspansetCeil",       floatspansetCeil,       DataTypes.StringType);
+        spark.udf().register("floatspansetFloor",      floatspansetFloor,      DataTypes.StringType);
+        spark.udf().register("floatspansetRound",      floatspansetRound,      DataTypes.StringType);
+        spark.udf().register("intspansetToFloat",      intspansetToFloat,      DataTypes.StringType);
+        spark.udf().register("floatspansetToInt",      floatspansetToInt,      DataTypes.StringType);
+
+        // MobilityDB SQL bare-name aliases for the simplify family
+        spark.udf().register("douglasPeuckerSimplify", temporalSimplifyDp,         DataTypes.StringType);
+        spark.udf().register("maxDistSimplify",        temporalSimplifyMaxDist,    DataTypes.StringType);
+        spark.udf().register("minDistSimplify",        temporalSimplifyMinDist,    DataTypes.StringType);
+        spark.udf().register("minTimeDeltaSimplify",   temporalSimplifyMinTdelta,  DataTypes.StringType);
+        // MobilityDB SQL bare-name aliases for span/spanset type conversions
+        spark.udf().register("intspanset",   floatspansetToInt,  DataTypes.StringType);
+        spark.udf().register("floatspanset", intspansetToFloat,  DataTypes.StringType);
+        // shiftScale alias — most common case is floatspan
+        spark.udf().register("shiftScale", floatspanShiftScale, DataTypes.StringType);
+        // tstzset ↔ dateset conversions
+        spark.udf().register("dateset",  tstzsetToDateset, DataTypes.StringType);
+        spark.udf().register("tstzset",  datesetToTstzset, DataTypes.StringType);
+        // span / spanset constructor aliases
+        // (range/multirange NOT registered — they wrap PG-specific types
+        //  with no Spark equivalent; see feedback_pg_specific_types_oos memory)
+        spark.udf().register("span",      temporalToTstzspan, DataTypes.StringType);
+        spark.udf().register("spanset",   spanToSpanset,      DataTypes.StringType);
+    }
+
+    public static final UDF1<String, String> temporalToTstzspan =
+        hex -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.temporal_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.temporal_to_tstzspan(p);
+                if (r == null) return null;
+                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, String> spanToSpanset =
+        hex -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.span_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.span_to_spanset(p);
+                if (r == null) return null;
+                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, String> tstzsetToDateset =
+        hex -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.tstzset_to_dateset(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+
+    public static final UDF1<String, String> datesetToTstzset =
+        hex -> {
+            if (hex == null) return null;
+            MeosThread.ensureReady();
+            Pointer p = functions.set_from_hexwkb(hex);
+            if (p == null) return null;
+            try {
+                Pointer r = functions.dateset_to_tstzset(p);
+                if (r == null) return null;
+                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                finally { MeosMemory.free(r); }
+            } finally { MeosMemory.free(p); }
+        };
+}
