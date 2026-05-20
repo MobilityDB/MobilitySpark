@@ -26,14 +26,14 @@ import sys
 from datetime import date
 
 
-# Type families currently deferred from the active parity sweep.
-# Re-included once the temporal/geo surface stabilises.
-DEFERRED_FAMILIES = {
-    "npoint",
-    "cbuffer",
-    "pose",
-    "rgeo",
-}
+# Type families deferred from the active parity sweep.
+#
+# EMPTY BY INVARIANT. cbuffer / npoint / pose / rgeo are FULL user-facing
+# temporal types and ARE in scope — covered like every other family (RFC
+# #920; MobilityDB#1075 aliases all six). They must never be excluded from
+# the parity headline. Re-deferring any of them is incomplete work, not an
+# accepted end state. Keep this set empty.
+DEFERRED_FAMILIES = set()
 
 
 # Whole SQL sections that are PG-only (no Spark equivalent exists).
@@ -370,10 +370,18 @@ def write_report(out_path, mdb_section_funcs, mdb_section_op_count,
         f"appendix B; not counted in the headline."
     )
     lines.append("")
-    lines.append(
-        f"**Deferred families** ({', '.join(sorted(DEFERRED_FAMILIES))}) "
-        "appear in appendix C and are also excluded from the headline."
-    )
+    if DEFERRED_FAMILIES:
+        lines.append(
+            f"**Deferred families** ({', '.join(sorted(DEFERRED_FAMILIES))}) "
+            "appear in appendix C and are also excluded from the headline."
+        )
+    else:
+        lines.append(
+            "**All six type families in scope** (temporal, geo, cbuffer, "
+            "npoint, pose, rgeo). None is deferred or excluded from the "
+            "headline — they are full user-facing temporal types covered "
+            "like every other family (RFC #920; MobilityDB#1075)."
+        )
     lines.append("")
     lines.append(
         "**Methodology**: parsed `CREATE FUNCTION` from "
