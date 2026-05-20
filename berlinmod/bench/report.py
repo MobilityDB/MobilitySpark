@@ -112,16 +112,39 @@ def collect_machine_spec() -> dict:
     return spec
 
 
-def load_results(results_dir: Path) -> dict[str, dict]:
-    platforms = {}
-    for fname, key in [("mbdb.json", "mobilitydb"),
-                       ("mduck.json", "mobilityduck"),
-                       ("mspark.json", "mobilityspark")]:
-        path = results_dir / fname
+def load_results(results_dir: Path) -> dict[str, dict[int, dict]]:
+    """Load results JSON files.  Recognises two layouts:
+
+    1.  Single-tier per platform — `mbdb.json`, `mduck.json`, `mspark.json`
+        (legacy, pre-3-tier-framework).  The tier field defaults to 3 (the
+        old loader-default behaviour).
+    2.  Per-tier per platform — `mbdb.tier1.json`, `mbdb.tier2.json`,
+        `mbdb.tier3.json`, `mduck.tier{1,2,3}.json`, `mspark.tier1.json`.
+
+    Returns: ``{platform_key: {tier_int: result_dict, ...}}``.
+    """
+    platforms: dict[str, dict[int, dict]] = {}
+    for prefix, key in [("mbdb", "mobilitydb"),
+                        ("mduck", "mobilityduck"),
+                        ("mspark", "mobilityspark")]:
+        # Per-tier files first (preferred 3-tier framework layout)
+        tier_files = sorted(results_dir.glob(f"{prefix}.tier*.json"))
+        if tier_files:
+            tiered: dict[int, dict] = {}
+            for path in tier_files:
+                with open(path) as f:
+                    data = json.load(f)
+                tier = int(data.get("tier", 3))
+                tiered[tier] = data
+            platforms[key] = tiered
+            continue
+        # Legacy single-file layout
+        path = results_dir / f"{prefix}.json"
         if path.exists():
             with open(path) as f:
                 data = json.load(f)
-            platforms[key] = data
+            tier = int(data.get("tier", 3))
+            platforms[key] = {tier: data}
     return platforms
 
 
@@ -152,11 +175,11 @@ def build_report(platforms: dict[str, dict], machine: dict) -> str:
         lines.append("*No result files found in the results directory.*")
         return "\n".join(lines)
 
-    # Platform versions + data size
+    # Platform versions + data size — emit one row per (platform, tier)
     lines.append("### Platforms")
     lines.append("")
-    lines.append("| Platform | Version | Vehicles | Trips | Runs |")
-    lines.append("|---|---|---|---|---|")
+    lines.append("| Platform | Tier | Version | Vehicles | Trips | Runs |")
+    lines.append("|---|---|---|---|---|---|")
     DISPLAY = {
         "mobilitydb":    "MobilityDB",
         "mobilityduck":  "MobilityDuck",
@@ -165,39 +188,53 @@ def build_report(platforms: dict[str, dict], machine: dict) -> str:
     for key in ["mobilitydb", "mobilityduck", "mobilityspark"]:
         if key not in platforms:
             continue
-        d = platforms[key]
-        lines.append(
-            f"| {DISPLAY[key]} | {d.get('version','?')} "
-            f"| {d.get('data_vehicles','?')} "
-            f"| {d.get('data_trips','?')} "
-            f"| {d.get('runs','?')} |"
-        )
+        for tier in sorted(platforms[key].keys()):
+            d = platforms[key][tier]
+            lines.append(
+                f"| {DISPLAY[key]} | {tier} | {d.get('version','?')} "
+                f"| {d.get('data_vehicles','?')} "
+                f"| {d.get('data_trips','?')} "
+                f"| {d.get('runs','?')} |"
+            )
     lines.append("")
 
-    # Timing table
-    present = [k for k in ["mobilitydb", "mobilityduck", "mobilityspark"]
-               if k in platforms]
-    header = "| Query | Description |" + "".join(
-        f" {DISPLAY[k]} |" for k in present)
+    # Flatten (platform, tier) into column keys so each column is one
+    # configuration.  For each column we still use the platform's DISPLAY
+    # name plus a tier suffix when more than one tier is present for that
+    # platform — keeps the table compact when only Tier 3 (default) data
+    # exists.
+    columns: list[tuple[str, int, str]] = []  # (key, tier, header_label)
+    for key in ["mobilitydb", "mobilityduck", "mobilityspark"]:
+        if key not in platforms:
+            continue
+        tiers = sorted(platforms[key].keys())
+        for tier in tiers:
+            label = DISPLAY[key]
+            if len(tiers) > 1:
+                label = f"{label} T{tier}"
+            columns.append((key, tier, label))
+
     lines.append("### Query Timings (median wall-clock)")
     lines.append("")
-    lines.append(header)
-    lines.append("|---|---|" + "---|" * len(present))
+    lines.append("| Query | Description |" + "".join(
+        f" {col_label} |" for _, _, col_label in columns))
+    lines.append("|---|---|" + "---|" * len(columns))
 
     all_queries = list(QUERY_LABELS.keys())
     for q in all_queries:
-        # include row only if at least one platform has data for this query
-        cells = {}
-        for k in present:
-            times = platforms[k].get("queries", {}).get(q)
-            cells[k] = fmt_ms(median_ms(times)) if times else "—"
-        if all(v == "—" for v in cells.values()):
+        cells: list[str] = []
+        any_data = False
+        for key, tier, _ in columns:
+            times = platforms[key].get(tier, {}).get("queries", {}).get(q)
+            if times:
+                cells.append(fmt_ms(median_ms(times)))
+                any_data = True
+            else:
+                cells.append("—")
+        if not any_data:
             continue
         label = QUERY_LABELS.get(q, q)
-        row = f"| `{q}` | {label} |"
-        for k in present:
-            row += f" {cells[k]} |"
-        lines.append(row)
+        lines.append(f"| `{q}` | {label} | " + " | ".join(cells) + " |")
 
     lines.append("")
 

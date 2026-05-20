@@ -17,6 +17,15 @@
 #   --output  FILE     Path to write results JSON (default: results/mduck.json)
 #   --dbfile  PATH     DuckDB file to use  (default: /tmp/berlinmod_bench.duckdb)
 #   --no-load          Skip data loading (reuse existing dbfile)
+#   --tier    {1,2,3}  Index-acceleration tier (default: 3 = production-realistic)
+#                      1 = th3index columnar prefilter only (no TRTREE on Trip)
+#                      2 = native TRTREE on Trip only       (drop trip_h3 prefilter
+#                                                            UDFs by NULL-ing the column)
+#                      3 = both                             (default — current behaviour)
+#                      See ../README.md "Three-tier index framework" for details.
+#                      Tiers 2/3 require MobilityDuck PRs #143 + #144 in the loaded
+#                      extension (pin via vcpkg_ports/meos/portfile.cmake or use
+#                      the v1.0-preview-100pct release bundle).
 #
 # Requirements:
 #   duckdb on PATH (or pass --duckdb); MobilityDuck extension loadable.
@@ -33,6 +42,7 @@ OUTPUT="${SCRIPT_DIR}/results/mduck.json"
 DBFILE="/tmp/berlinmod_bench.duckdb"
 LOAD=true
 QUERIES_ARG=""
+TIER=3
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -43,9 +53,15 @@ while [[ $# -gt 0 ]]; do
     --output)   OUTPUT="$2";       shift 2 ;;
     --dbfile)   DBFILE="$2";       shift 2 ;;
     --no-load)  LOAD=false;        shift   ;;
+    --tier)     TIER="$2";         shift 2 ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
+
+case "$TIER" in
+  1|2|3) ;;
+  *) echo "Invalid --tier '$TIER' (must be 1, 2, or 3)"; exit 1 ;;
+esac
 
 ALL_QUERIES=(q01 q02 q03 q04 q05 q06 q07 q08 qrt q09 q10 q11 q12 q13 q14 q15 q16 q17)
 
@@ -103,6 +119,34 @@ if $LOAD; then
   "$DUCKDB" "$DBFILE" -c "$LOAD_SQL"
   echo "    done."
 fi
+
+# ── tier-specific index activation ───────────────────────────────────────────
+# Tier 1 (th3index only) → loader's default (no native TRTREE created).
+# Tier 2 (native only)   → create TRTREE on Trip; NULL-out trip_h3 to defeat
+#                          the th3 prefilter UDFs in the queries.
+# Tier 3 (combined)      → create TRTREE on Trip; keep trip_h3 active.
+#
+# Tiers 2/3 require MobilityDuck PRs #143 (multi-entry TRTREE) and #144
+# (constant-geometry pushdown) to be present in the loaded extension.  If the
+# CREATE INDEX errors out, see ../README.md "MobilityDuck TRTREE dependency".
+case "$TIER" in
+  1)
+    echo "=== Tier 1: th3index prefilter only (no native TRTREE) ==="
+    ;;
+  2)
+    echo "=== Tier 2: native TRTREE on Trip; clearing trip_h3 prefilter ==="
+    "$DUCKDB" "$DBFILE" -c "${MOBILITY_LOAD} CREATE INDEX IF NOT EXISTS trips_trtree_idx ON Trips USING TRTREE (trip);" || \
+      { echo "    !!! TRTREE index creation failed — extension does not yet expose TRTREE"; \
+        echo "    !!! See README.md 'MobilityDuck TRTREE dependency'."; }
+    "$DUCKDB" "$DBFILE" -c "${MOBILITY_LOAD} UPDATE Trips SET trip_h3 = NULL;"
+    ;;
+  3)
+    echo "=== Tier 3: th3index + native TRTREE (production-realistic) ==="
+    "$DUCKDB" "$DBFILE" -c "${MOBILITY_LOAD} CREATE INDEX IF NOT EXISTS trips_trtree_idx ON Trips USING TRTREE (trip);" || \
+      { echo "    !!! TRTREE index creation failed — falling back to Tier 1 acceleration"; \
+        echo "    !!! See README.md 'MobilityDuck TRTREE dependency'."; }
+    ;;
+esac
 
 # ── version ───────────────────────────────────────────────────────────────────
 MDUCK_VER=$(_duck_q "SELECT mobilityduck_version();" 2>/dev/null | head -1 || echo "unknown")

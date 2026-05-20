@@ -13,7 +13,8 @@
 --
 -- MobilityDB operator equivalent: t1.trip |=| t2.trip <= 10.0
 
-SELECT v1.licence AS licence1,
+SELECT /*+ BROADCAST(v1, v2) */
+       v1.licence AS licence1,
        v2.licence AS licence2
 FROM   Vehicles v1
 JOIN   Trips t1 ON t1.vehId = v1.vehId
@@ -24,3 +25,7 @@ WHERE  v1.type  = 'truck'
   AND  everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)
   AND  eDwithin(t1.trip, t2.trip, 10.0)
 ORDER  BY v1.licence, v2.licence;
+-- The `/*+ BROADCAST(v1, v2) */` block is a Spark SQL hint pinning the
+-- small Vehicles tables to every executor.  PostgreSQL and DuckDB treat
+-- it as an ordinary block comment.  See berlinmod/README.md "NxN
+-- mitigations on Spark".

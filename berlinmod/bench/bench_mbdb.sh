@@ -16,6 +16,11 @@
 #                      Default: all queries in canonical order
 #   --output  FILE     Path to write results JSON (default: results/mbdb.json)
 #   --no-load          Skip data loading (reuse existing tables in DBNAME)
+#   --tier    {1,2,3}  Index-acceleration tier (default: 3 = production-realistic)
+#                      1 = th3index columnar prefilter only (drop GiST/SP-GiST on trip)
+#                      2 = native GiST/SP-GiST on trip only  (drop GiST on trip_h3)
+#                      3 = both                              (default — current behaviour)
+#                      See ../README.md "Three-tier index framework" for details.
 #
 # Requirements:
 #   psql on PATH; MobilityDB installed and available for CREATE EXTENSION.
@@ -31,6 +36,7 @@ RUNS=3
 OUTPUT="${SCRIPT_DIR}/results/mbdb.json"
 LOAD=true
 QUERIES_ARG=""
+TIER=3
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -40,9 +46,15 @@ while [[ $# -gt 0 ]]; do
     --queries)  QUERIES_ARG="$2";  shift 2 ;;
     --output)   OUTPUT="$2";       shift 2 ;;
     --no-load)  LOAD=false;        shift   ;;
+    --tier)     TIER="$2";         shift 2 ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
+
+case "$TIER" in
+  1|2|3) ;;
+  *) echo "Invalid --tier '$TIER' (must be 1, 2, or 3)"; exit 1 ;;
+esac
 
 ALL_QUERIES=(q01 q02 q03 q04 q05 q06 q07 q08 qrt q09 q10 q11 q12 q13 q14 q15 q16 q17)
 
@@ -94,6 +106,29 @@ if $LOAD; then
   echo "    done."
 fi
 
+# ── tier-specific index activation ───────────────────────────────────────────
+# Tier 1 (th3index only)  → drop GiST/SP-GiST on the raw `trip` column.
+# Tier 2 (native only)    → drop GiST on `trip_h3` so the th3 prefilter has no
+#                           index acceleration (queries still pass the
+#                           th3 predicate but the planner falls back).
+# Tier 3 (combined)       → all indexes (no drops; loader's default).
+case "$TIER" in
+  1)
+    echo "=== Tier 1: dropping native spatial indexes (keeping trip_h3 GiST) ==="
+    _psql -c "DROP INDEX IF EXISTS trips_trip_gist_idx;"
+    _psql -c "DROP INDEX IF EXISTS trips_trip_spgist_idx;"
+    _psql -c "ANALYZE Trips;"
+    ;;
+  2)
+    echo "=== Tier 2: dropping th3index GiST (keeping native trip GiST + SP-GiST) ==="
+    _psql -c "DROP INDEX IF EXISTS trips_trip_h3_gist_idx;"
+    _psql -c "ANALYZE Trips;"
+    ;;
+  3)
+    echo "=== Tier 3: all indexes active (loader default) ==="
+    ;;
+esac
+
 # ── version ───────────────────────────────────────────────────────────────────
 MBDB_VER=$(_psql -t -c "SELECT mobilitydb_version();" | tr -d ' \n')
 PG_VER=$(_psql -t -c "SELECT version();" | awk '{print $1, $2}' | tr -d '\n')
@@ -129,11 +164,11 @@ done
 mkdir -p "$(dirname "$OUTPUT")"
 
 # Merge new timings into existing output file (preserving unselected queries)
-python3 - "$TIMEFILE" "$OUTPUT" "$PLATFORM_VER" "$TRIP_COUNT" "$VEH_COUNT" "$RUNS" <<'PYEOF'
+python3 - "$TIMEFILE" "$OUTPUT" "$PLATFORM_VER" "$TRIP_COUNT" "$VEH_COUNT" "$RUNS" "$TIER" <<'PYEOF'
 import sys, json, collections, datetime, os
 
-timefile, outfile, version, trips, vehicles, runs = \
-    sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6])
+timefile, outfile, version, trips, vehicles, runs, tier = \
+    sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6]), int(sys.argv[7])
 
 QUERY_ORDER = ["q01","q02","q03","q04","q05","q06","q07","q08","qrt",
                "q09","q10","q11","q12","q13","q14","q15","q16","q17"]
@@ -165,6 +200,7 @@ for q in existing:
 result = {
     "platform": "mobilitydb",
     "version":  version,
+    "tier":     tier,
     "data_vehicles": vehicles,
     "data_trips":    trips,
     "runs":          runs,

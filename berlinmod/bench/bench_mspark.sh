@@ -18,6 +18,21 @@
 #   --output FILE        Path to write results JSON (default: results/mspark.json)
 #   --jar    PATH        Pre-built fat JAR (skip mvn build)
 #
+# Tier:
+#   Spark always runs the BerlinMOD benchmark at TIER 1 (the th3index
+#   columnar prefilter is the only common-denominator acceleration that
+#   Spark can use; native spatial indexes are PG/Duck-only).  See
+#   ../README.md "Three-tier index framework" for context.  No --tier
+#   flag is exposed on this runner.
+#
+# NxN mitigations for the Trips × Trips queries (Q5, Q6, Q10, Q16):
+#   The four queries use Spark-optimised UNNEST + equi-join variants
+#   (`q05_spark.sql`, etc.) that BerlinMODBench auto-prefers over the
+#   portable form when present.  PG / DuckDB always run the portable
+#   `<query>.sql` (they have spatial indexes; the portable form is
+#   already optimal there).  See ../README.md "NxN mitigations on
+#   Spark" for the rewrite strategy.
+#
 # Requirements:
 #   spark-submit on PATH (or --spark-submit); Java 11/17/21; Maven for building.
 #   Run setup/install_spark.sh if spark-submit is missing.
