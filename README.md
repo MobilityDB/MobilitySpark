@@ -48,7 +48,7 @@ More information about MobilityDB, including publications, presentations, etc., 
 
 - 🚀 MobilityDB installed with MEOS
 - 🔧 JMEOS working version
-- ⚡ Spark 3.4.0
+- ⚡ Apache Spark 3.5.x (LTS); see [`doc/spark-version.md`](doc/spark-version.md) for the Spark-version target and the rationale for not yet supporting Spark 4
 - 📝 Maven 4
 - ☕ Java 17 (recommended)
 
