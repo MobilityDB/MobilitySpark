@@ -40,6 +40,7 @@ import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 import java.util.function.ToDoubleFunction;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for typed accessor aliases bridging MobilityDB SQL bare
@@ -410,7 +411,7 @@ public final class AccessorAliasUDFs {
     // ------------------------------------------------------------------
 
     private static long tsToPgEpochMicros(java.sql.Timestamp ts) {
-        return (ts.getTime() - 946684800L * 1000L) * 1000L;
+        return (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
     }
 
     public static final org.apache.spark.sql.api.java.UDF3<String, String, java.sql.Timestamp, String[]>
@@ -472,7 +473,7 @@ public final class AccessorAliasUDFs {
                 long binStart = org.mobilitydb.spark.MeosNative.INSTANCE
                     .timestamptz_get_bin(tsToPgEpochMicros(ts), iv, tsToPgEpochMicros(origin));
                 // Convert PG-epoch micros → java Timestamp
-                long unixMicros = binStart + 946684800L * 1000000L;
+                long unixMicros = binStart + TimeUtil.PG_UNIX_EPOCH_OFFSET_US;
                 return new java.sql.Timestamp(unixMicros / 1000);
             } finally { MeosMemory.free(iv); }
         };

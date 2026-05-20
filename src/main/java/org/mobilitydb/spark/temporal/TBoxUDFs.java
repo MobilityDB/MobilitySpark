@@ -39,6 +39,7 @@ import org.mobilitydb.spark.MeosThread;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for TBox (temporal numeric bounding box) accessor operations.
@@ -59,8 +60,6 @@ public final class TBoxUDFs {
     private TBoxUDFs() {}
 
     // milliseconds from Unix epoch (1970-01-01) to PG epoch (2000-01-01)
-    private static final long PG_UNIX_OFFSET_MS = 946684800L * 1000L;
-
     private static Pointer tboxPtr(String hex) {
         if (hex == null) return null;
         return functions.tbox_from_hexwkb(hex);
@@ -144,7 +143,7 @@ public final class TBoxUDFs {
             if (p == null) return null;
             Pointer r = functions.tbox_tmin(p);
             if (r == null) return null;
-            return new java.sql.Timestamp(r.getLong(0) / 1000L + PG_UNIX_OFFSET_MS);
+            return new java.sql.Timestamp(r.getLong(0) / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS);
         };
 
     public static final UDF1<String, java.sql.Timestamp> tboxTmax =
@@ -155,7 +154,7 @@ public final class TBoxUDFs {
             if (p == null) return null;
             Pointer r = functions.tbox_tmax(p);
             if (r == null) return null;
-            return new java.sql.Timestamp(r.getLong(0) / 1000L + PG_UNIX_OFFSET_MS);
+            return new java.sql.Timestamp(r.getLong(0) / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS);
         };
 
     public static final UDF1<String, Boolean> tboxTminInc =
@@ -354,7 +353,7 @@ public final class TBoxUDFs {
         (ts) -> {
             if (ts == null) return null;
             MeosThread.ensureReady();
-            long pgMicros = (ts.getTime() - PG_UNIX_OFFSET_MS) * 1000L;
+            long pgMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
             OffsetDateTime odt = OffsetDateTime.ofInstant(Instant.ofEpochSecond(pgMicros, 0), ZoneOffset.UTC);
             Pointer result = functions.timestamptz_to_tbox(odt);
             if (result == null) return null;
@@ -374,7 +373,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer span = functions.span_from_hexwkb(spanHex);
             if (span == null) return null;
-            long pgMicros = (ts.getTime() - PG_UNIX_OFFSET_MS) * 1000L;
+            long pgMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
             OffsetDateTime odt = OffsetDateTime.ofInstant(Instant.ofEpochSecond(pgMicros, 0), ZoneOffset.UTC);
             Pointer result = functions.numspan_timestamptz_to_tbox(span, odt);
             if (result == null) return null;

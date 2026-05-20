@@ -37,6 +37,7 @@ import org.apache.spark.sql.types.DataTypes;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for span, spanset, and set bound/count accessors.
@@ -48,15 +49,14 @@ public final class SpanAccessorUDFs {
     private SpanAccessorUDFs() {}
 
     // milliseconds from Unix epoch (1970-01-01) to PG epoch (2000-01-01)
-    private static final long PG_UNIX_OFFSET_MS   = 946684800L * 1000L;
     // days from Unix epoch (1970-01-01) to PG epoch (2000-01-01)
-    private static final long PG_UNIX_OFFSET_DAYS = 10957L;
+    // PG_UNIX_OFFSET_DAYS moved to org.mobilitydb.spark.util.TimeUtil.PG_UNIX_EPOCH_OFFSET_DAYS
 
     // tstzspan_lower/upper returns OffsetDateTime where toEpochSecond()
     // holds raw PG-epoch microseconds; divide by 1000 then add PG→Unix offset
     private static java.sql.Timestamp odtToTimestamp(OffsetDateTime odt) {
         if (odt == null) return null;
-        return new java.sql.Timestamp(odt.toEpochSecond() / 1000L + PG_UNIX_OFFSET_MS);
+        return new java.sql.Timestamp(odt.toEpochSecond() / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS);
     }
 
     // ------------------------------------------------------------------
@@ -154,7 +154,7 @@ public final class SpanAccessorUDFs {
             Pointer p = functions.span_from_hexwkb(hex);
             if (p == null) return null;
             int days = functions.datespan_lower(p);
-            return new java.sql.Date((days + PG_UNIX_OFFSET_DAYS) * 86400000L);
+            return new java.sql.Date((days + TimeUtil.PG_UNIX_EPOCH_OFFSET_DAYS) * 86400000L);
         };
 
     public static final UDF1<String, java.sql.Date> datespanUpper =
@@ -164,7 +164,7 @@ public final class SpanAccessorUDFs {
             Pointer p = functions.span_from_hexwkb(hex);
             if (p == null) return null;
             int days = functions.datespan_upper(p);
-            return new java.sql.Date((days + PG_UNIX_OFFSET_DAYS) * 86400000L);
+            return new java.sql.Date((days + TimeUtil.PG_UNIX_EPOCH_OFFSET_DAYS) * 86400000L);
         };
 
     // ------------------------------------------------------------------
@@ -444,7 +444,7 @@ public final class SpanAccessorUDFs {
             if (p == null) return null;
             try {
                 int days = functions.dateset_start_value(p);
-                return new java.sql.Date((days + PG_UNIX_OFFSET_DAYS) * 86400000L);
+                return new java.sql.Date((days + TimeUtil.PG_UNIX_EPOCH_OFFSET_DAYS) * 86400000L);
             } finally { MeosMemory.free(p); }
         };
 
@@ -456,7 +456,7 @@ public final class SpanAccessorUDFs {
             if (p == null) return null;
             try {
                 int days = functions.dateset_end_value(p);
-                return new java.sql.Date((days + PG_UNIX_OFFSET_DAYS) * 86400000L);
+                return new java.sql.Date((days + TimeUtil.PG_UNIX_EPOCH_OFFSET_DAYS) * 86400000L);
             } finally { MeosMemory.free(p); }
         };
 
@@ -475,7 +475,7 @@ public final class SpanAccessorUDFs {
                     List<java.sql.Date> result = new ArrayList<>(n);
                     for (int i = 0; i < n; i++) {
                         int days = arr.getInt((long) i * 4);
-                        result.add(new java.sql.Date((days + PG_UNIX_OFFSET_DAYS) * 86400000L));
+                        result.add(new java.sql.Date((days + TimeUtil.PG_UNIX_EPOCH_OFFSET_DAYS) * 86400000L));
                     }
                     return result;
                 } finally { MeosMemory.free(arr); }
@@ -521,7 +521,7 @@ public final class SpanAccessorUDFs {
                     List<java.sql.Timestamp> result = new ArrayList<>(n);
                     for (int i = 0; i < n; i++) {
                         long pgMicros = arr.getLong((long) i * 8);
-                        result.add(new java.sql.Timestamp(pgMicros / 1000L + PG_UNIX_OFFSET_MS));
+                        result.add(new java.sql.Timestamp(pgMicros / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS));
                     }
                     return result;
                 } finally { MeosMemory.free(arr); }
@@ -768,7 +768,7 @@ public final class SpanAccessorUDFs {
                     List<java.sql.Timestamp> result = new ArrayList<>(n);
                     for (int i = 0; i < n; i++) {
                         long pgMicros = arr.getLong((long) i * 8);
-                        result.add(new java.sql.Timestamp(pgMicros / 1000L + PG_UNIX_OFFSET_MS));
+                        result.add(new java.sql.Timestamp(pgMicros / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS));
                     }
                     return result;
                 } finally { MeosMemory.free(arr); }

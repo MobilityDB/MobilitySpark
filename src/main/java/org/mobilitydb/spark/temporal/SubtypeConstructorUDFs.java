@@ -38,6 +38,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for typed temporal-instant constructors and typed
@@ -247,7 +248,7 @@ public final class SubtypeConstructorUDFs {
         };
 
     private static long toPgEpochMicros(Timestamp ts) {
-        return (ts.getTime() - 946684800L * 1000L) * 1000L;
+        return (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
     }
 
     // beforeTimestamp(temporal, ts) → temporal restricted to before ts
