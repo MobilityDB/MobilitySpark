@@ -31,10 +31,11 @@ import org.apache.spark.sql.api.java.*;
 /**
  * Per-thread MEOS initialisation for Spark executor threads.
  *
- * In Spark's multi-threaded executor model every task thread must initialise
- * MEOS independently because session_timezone and the timezone cache are
- * thread-local inside libmeos.  The ThreadLocal in MEOS_READY ensures
- * initialisation runs exactly once per native thread.
+ * In Spark's multi-threaded executor model every task thread initialises
+ * MEOS independently.  meos_initialize() sets up the per-thread MEOS state
+ * (session_timezone, timezone cache, GEOS context, PROJ context, GSL RNGs,
+ * errno).  The ThreadLocal in MEOS_READY runs initialisation exactly once
+ * per native thread.
  *
  * Usage — two patterns:
  *
@@ -52,6 +53,9 @@ public final class MeosThread {
     private static final ThreadLocal<Boolean> MEOS_READY = ThreadLocal.withInitial(() -> {
         functions.meos_initialize();
         functions.meos_initialize_timezone("UTC");
+        // The no-exit handler logs MEOS errors and sets meos_errno without
+        // calling exit(), so a MEOS error inside a Spark task does not tear
+        // down the JVM.
         functions.meos_initialize_noexit_error_handler();
         return Boolean.TRUE;
     });

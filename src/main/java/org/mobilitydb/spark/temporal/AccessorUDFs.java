@@ -512,7 +512,7 @@ public final class AccessorUDFs {
             Pointer tptr = functions.temporal_from_hexwkb(trip);
             Pointer iptr = functions.temporal_from_hexwkb(instantHex);
             if (tptr == null || iptr == null) return null;
-            Pointer r = functions.temporal_append_tinstant(tptr, iptr, 0.0, null, false);
+            Pointer r = functions.temporal_append_tinstant(tptr, iptr, 3 /* LINEAR */, 0.0, null, false);
             if (r == null) return null;
             return functions.temporal_as_hexwkb(r, (byte) 0);
         };
