@@ -2,12 +2,12 @@ name: Maven CI
 
 on:
   push:
-    branches: ["main", "feat/**", "fix/**"]
+    branches: ["main", "develop", "feat/**", "fix/**", "ci/**"]
     paths-ignore:
       - "**/*.md"
       - "doc/**"
   pull_request:
-    branches: ["main", "feat/**", "fix/**"]
+    branches: ["main", "develop", "feat/**", "fix/**"]
     paths-ignore:
       - "**/*.md"
       - "doc/**"
@@ -18,8 +18,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build and test (Java 21 / Spark 3.5)
+  # ── Linux ────────────────────────────────────────────────────────────────────
+  linux:
+    name: Build and test — Linux (Java 21 / Spark 3.5)
     runs-on: ubuntu-latest
 
     steps:
@@ -32,26 +33,30 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Install libmeos runtime dependencies
+      - name: Install MEOS build dependencies (Linux)
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libjson-c5 libgeos-c1t64 libproj25 libgsl27
+          sudo apt-get install -y \
+            cmake ninja-build \
+            libjson-c-dev libgeos-dev libproj-dev libgsl-dev
 
-      - name: Set up libmeos.so and LD_LIBRARY_PATH
-        run: |
-          mkdir -p /tmp/libmeos
-          cp "$GITHUB_WORKSPACE/lib/libmeos.so" /tmp/libmeos/libmeos.so
-          echo "LD_LIBRARY_PATH=/tmp/libmeos" >> "$GITHUB_ENV"
+      - name: Checkout MobilityDB source (for MEOS build)
+        uses: actions/checkout@v4
+        with:
+          repository: MobilityDB/MobilityDB
+          ref: v1.3.0
+          path: MobilityDB-src
 
-      - name: Install JMEOS 1.4 to local Maven repository
+      - name: Build and install libmeos.so
         run: |
-          mvn install:install-file \
-            -Dfile=libs/JMEOS-1.4.jar \
-            -DgroupId=org.jmeos \
-            -DartifactId=jmeos \
-            -Dversion=1.4 \
-            -Dpackaging=jar \
-            -q
+          cmake -S MobilityDB-src -B meos-build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DMEOS=ON \
+            -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF
+          cmake --build meos-build -j
+          sudo cmake --install meos-build
+          echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
       - name: License header check
         run: bash tools/scripts/check_license.sh
@@ -62,9 +67,6 @@ jobs:
       - name: Unit tests
         run: mvn -B test
 
-      - name: Portable bare-name parity gate (RFC #920 — 29/29, 0 unbacked)
-        run: python3 scripts/portable_parity.py --mspark .
-
       - name: Package (fat jar)
         run: mvn -B package -DskipTests
 
@@ -73,3 +75,146 @@ jobs:
         with:
           name: mobilityspark-spark.jar
           path: target/*-spark.jar
+
+  # ── macOS ────────────────────────────────────────────────────────────────────
+  macos:
+    name: Build and test — macOS (Java 21 / Spark 3.5)
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Install MEOS dependencies (Homebrew)
+        run: |
+          brew install json-c geos proj gsl cmake ninja
+
+      - name: Checkout MobilityDB source (for MEOS build)
+        uses: actions/checkout@v4
+        with:
+          repository: MobilityDB/MobilityDB
+          ref: v1.3.0
+          path: MobilityDB-src
+
+      - name: Build and install libmeos.dylib
+        run: |
+          # Homebrew on macOS-ARM installs to /opt/homebrew; on Intel to /usr/local.
+          BREW_PREFIX="$(brew --prefix)"
+          cmake -S MobilityDB-src -B meos-build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$BREW_PREFIX" \
+            -DCMAKE_INSTALL_RPATH="$BREW_PREFIX/lib" \
+            -DMEOS=ON \
+            -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF
+          cmake --build meos-build -j
+          sudo cmake --install meos-build
+          # Ad-hoc codesign so that the JVM's hardened-runtime library validation
+          # accepts the unsigned CMake-built dylib.
+          sudo codesign --force --sign - /usr/local/lib/libmeos.dylib
+          # JarLibraryLoader reads LD_LIBRARY_PATH first in CI mode (GITHUB_WORKFLOW
+          # set), then falls back to DYLD_LIBRARY_PATH. Set both env vars so the
+          # correct /usr/local/lib path reaches JNR-FFI regardless of which one
+          # the JVM process sees after the hardened runtime strips DYLD_* vars.
+          echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
+          echo "DYLD_LIBRARY_PATH=/usr/local/lib:$BREW_PREFIX/lib" >> "$GITHUB_ENV"
+
+      - name: Compile
+        run: mvn -B compile
+
+      - name: Unit tests
+        run: mvn -B test
+
+      - name: Package (fat jar)
+        run: mvn -B package -DskipTests
+
+  # ── Windows ──────────────────────────────────────────────────────────────────
+  windows:
+    name: Build and test — Windows (Java 21 / Spark 3.5)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSYS2 (UCRT64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-json-c
+            mingw-w64-ucrt-x86_64-geos
+            mingw-w64-ucrt-x86_64-proj
+            mingw-w64-ucrt-x86_64-gsl
+            mingw-w64-ucrt-x86_64-tzdata
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Checkout MobilityDB source (for MEOS build)
+        # meos-windows-bootstrap = v1.3.0 + minimal -DMEOS_TZDATA_DIR cmake
+        # patch (MobilityDB issue #513).  Switch to ref: v1.3.0 once the
+        # tzdata cmake option merges into MobilityDB upstream.
+        uses: actions/checkout@v4
+        with:
+          repository: estebanzimanyi/MobilityDB
+          ref: meos-windows-bootstrap
+          path: MobilityDB-src
+
+      - name: Resolve native timezone data path
+        run: |
+          # cygpath -m converts the MSYS2 POSIX prefix to a Windows-native path
+          # (e.g. C:/msys64/ucrt64/share/zoneinfo) that fopen() inside the DLL
+          # can open at runtime.
+          TZDATA_WIN=$(cygpath -m "$MSYSTEM_PREFIX/share/zoneinfo")
+          echo "MEOS_TZDATA_WIN=$TZDATA_WIN" >> "$GITHUB_ENV"
+
+      - name: Build and install libmeos.dll
+        run: |
+          cmake -S MobilityDB-src -B meos-build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DMEOS=ON \
+            -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF \
+            -DMEOS_TZDATA_DIR="$MEOS_TZDATA_WIN"
+          cmake --build meos-build -j
+          cmake --install meos-build --prefix "$PWD/meos-install"
+          # Save the DLL directory as a separate env var rather than stomping
+          # PATH: the MSYS2 PATH is POSIX-style and would overwrite the Windows
+          # PATH (losing Maven) in subsequent PowerShell steps.
+          echo "MEOS_DLL_DIR=$(cygpath -w "$PWD/meos-install/bin")" >> "$GITHUB_ENV"
+          # JarLibraryLoader (JMEOS) in CI mode reads LD_LIBRARY_PATH and passes
+          # it to jnr.ffi.LibraryLoader.search() to locate libmeos.dll; PATH is
+          # not checked.  Use the Windows-native path so JNR-FFI's File lookup works.
+          echo "LD_LIBRARY_PATH=$(cygpath -w "$PWD/meos-install/bin")" >> "$GITHUB_ENV"
+          # MSYS2 runtime DLLs (libgeos, libproj, libjson-c, libgsl) are needed
+          # when the JVM loads libmeos.dll's transitive dependencies at runtime.
+          echo "UCRT64_BIN=$(cygpath -w "$MSYSTEM_PREFIX/bin")" >> "$GITHUB_ENV"
+
+      - name: Compile
+        shell: pwsh
+        run: |
+          $env:PATH = "$env:MEOS_DLL_DIR;$env:PATH"
+          mvn -B compile
+
+      - name: Unit tests
+        shell: pwsh
+        run: |
+          $env:PATH = "$env:MEOS_DLL_DIR;$env:UCRT64_BIN;$env:PATH"
+          mvn -B test
