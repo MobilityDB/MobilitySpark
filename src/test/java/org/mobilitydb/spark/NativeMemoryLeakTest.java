@@ -79,7 +79,7 @@ class NativeMemoryLeakTest {
     static void initMeos() {
         meos_initialize();
         meos_initialize_timezone("UTC");
-        meos_initialize_noexit_error_handler();
+        meos_initialize_error_handler(MeosThread.NOEXIT_ERROR_HANDLER);
         TRIP_HEX = temporal_as_hexwkb(
             tgeompoint_in("[POINT(0.0 0.0)@2020-01-01 00:00:00+00, POINT(0.1 0.0)@2020-01-01 01:00:00+00]"),
             (byte) 0);

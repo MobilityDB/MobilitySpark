@@ -436,7 +436,7 @@ public final class GeoAnalyticsUDFs {
             jnr.ffi.Pointer t = functions.temporal_from_hexwkb(trip);
             if (t == null) return null;
             try {
-                jnr.ffi.Pointer r = functions.tpoint_transform_pipeline(t, pipeline,
+                jnr.ffi.Pointer r = functions.tspatial_transform_pipeline(t, pipeline,
                     srid == null ? 0 : srid, isForward == null ? true : isForward);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }

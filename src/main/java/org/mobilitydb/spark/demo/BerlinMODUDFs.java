@@ -107,7 +107,7 @@ public final class BerlinMODUDFs {
     // other can be:
     //   - a tstzspan literal ("[2020-..., 2020-...]") → temporal overlap
     //   - an STBox hex-WKB string (from geoTimeStbox / expandSpace)    → spatial overlap
-    // MEOS: overlaps_temporal_tstzspan / overlaps_tpoint_stbox (JMEOS-1.5 tpoint variant)
+    // MEOS: overlaps_temporal_tstzspan / overlaps_tpoint_stbox (JMEOS-1.4 tpoint variant)
     // ------------------------------------------------------------------
     public static final UDF2<String, String, Boolean> bboxOverlaps = (trip, other) -> {
         if (trip == null || other == null) return null;
@@ -151,12 +151,11 @@ public final class BerlinMODUDFs {
         if (tptr == null) return null;
         OffsetDateTime odt = parseTs(tsArg);
         if (odt == null) return null;
-        Pointer valueOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-        boolean found = functions.temporal_value_at_timestamptz(tptr, odt, true, valueOut);
-        if (!found) return null;
-        long addr = valueOut.getLong(0);
-        if (addr == 0L) return null;
-        Pointer geomPtr = Runtime.getSystemRuntime().getMemoryManager().newPointer(addr);
+        // The generator folds the (Datum *result, bool found) out-parameter
+        // form into a single return: the value Datum pointer, or null if the
+        // instant is absent.  For a tgeompoint the Datum is the GSERIALIZED.
+        Pointer geomPtr = functions.temporal_value_at_timestamptz(tptr, odt, true);
+        if (geomPtr == null) return null;
         return functions.geo_as_text(geomPtr, 15);
     };
 
@@ -243,7 +242,7 @@ public final class BerlinMODUDFs {
     // tDwithin(t1 STRING, t2 STRING, dist NUMBER) → STRING (tbool hex-WKB)
     // Returns a temporal boolean showing when the two trajectories are within
     // dist of each other (used by Q10 with whenTrue).
-    // MEOS: tdwithin_tpoint_tpoint (JMEOS-1.5 tpoint variant)
+    // MEOS: tdwithin_tpoint_tpoint (JMEOS-1.4 tpoint variant)
     // Note: JMEOS wraps with extra (restr, atvalue) booleans; pass false,false
     // to get the full temporal result.
     // ------------------------------------------------------------------

@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spark.version>3.5.1</spark.version>
         <scala.binary.version>2.13</scala.binary.version>
-        <jmeos.jar>${project.basedir}/libs/JMEOS-1.5.jar</jmeos.jar>
+        <jmeos.jar>${project.basedir}/libs/JMEOS-1.4.jar</jmeos.jar>
     </properties>
 
     <dependencies>
@@ -32,13 +32,13 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- JMEOS 1.5 — interface split (4×≤400-method sub-interfaces) fixes JVM 64 KB
+        <!-- JMEOS 1.4 — interface split (4×≤400-method sub-interfaces) fixes JVM 64 KB
              MethodTooLargeException on macOS/Windows. Multi-platform JarLibraryLoader
              for Linux/macOS/Windows. Not yet on Maven Central. -->
         <dependency>
             <groupId>org.jmeos</groupId>
             <artifactId>jmeos</artifactId>
-            <version>1.5</version>
+            <version>1.4</version>
             <scope>system</scope>
             <systemPath>${jmeos.jar}</systemPath>
         </dependency>

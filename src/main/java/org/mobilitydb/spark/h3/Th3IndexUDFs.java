@@ -27,6 +27,7 @@ package org.mobilitydb.spark.h3;
 
 import functions.functions;
 import jnr.ffi.Pointer;
+import jnr.ffi.Runtime;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
@@ -35,6 +36,7 @@ import org.apache.spark.sql.api.java.UDF5;
 import org.apache.spark.sql.types.DataTypes;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
+import org.mobilitydb.spark.util.TimeUtil;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -321,10 +323,20 @@ public final class Th3IndexUDFs {
             if (values == null || timestamps == null) return null;
             if (values.length != timestamps.length) return null;
             MeosThread.ensureReady();
-            OffsetDateTime[] times = new OffsetDateTime[timestamps.length];
-            for (int i = 0; i < timestamps.length; i++) times[i] = parseTs(timestamps[i]);
+            int n = values.length;
+            // Marshal the H3Index value array and the TimestampTz array into
+            // native int64 buffers; th3indexseq_make takes raw MEOS arrays.
+            Runtime rt = Runtime.getSystemRuntime();
+            Pointer vbuf = rt.getMemoryManager().allocateDirect(8L * n);
+            vbuf.put(0, values, 0, n);
+            Pointer tbuf = rt.getMemoryManager().allocateDirect(8L * n);
+            for (int i = 0; i < n; i++) {
+                OffsetDateTime odt = parseTs(timestamps[i]);
+                if (odt == null) return null;
+                tbuf.putLong(8L * i, TimeUtil.toMeosTimestamp(odt));
+            }
             Pointer p = functions.th3indexseq_make(
-                values, times, values.length,
+                vbuf, tbuf, n,
                 lowerInc != null && lowerInc,
                 upperInc != null && upperInc);
             if (p == null) return null;
@@ -348,7 +360,11 @@ public final class Th3IndexUDFs {
                 seqs[i] = functions.temporal_from_hexwkb(sequencesHex[i]);
                 if (seqs[i] == null) return null;
             }
-            Pointer p = functions.th3indexseqset_make(seqs, seqs.length);
+            // Marshal the Pointer[] of sequences into a native pointer array.
+            Runtime rt = Runtime.getSystemRuntime();
+            Pointer sbuf = rt.getMemoryManager().allocateDirect(8L * seqs.length);
+            for (int i = 0; i < seqs.length; i++) sbuf.putPointer(8L * i, seqs[i]);
+            Pointer p = functions.th3indexseqset_make(sbuf, seqs.length);
             if (p == null) return null;
             try { return functions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
@@ -390,8 +406,16 @@ public final class Th3IndexUDFs {
         MeosThread.ensureReady();
         Pointer t = functions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
-        try { return functions.th3index_values(t); }
-        finally { MeosMemory.free(t); }
+        try {
+            Pointer countPtr = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
+            Pointer arr = functions.th3index_values(t, countPtr);
+            if (arr == null) return null;
+            int n = countPtr.getInt(0);
+            long[] out = new long[n];
+            arr.get(0, out, 0, n);
+            MeosMemory.free(arr);
+            return out;
+        } finally { MeosMemory.free(t); }
     };
 
     /**
@@ -759,7 +783,10 @@ public final class Th3IndexUDFs {
             Pointer gs = functions.geo_from_text(geomWkt, 0);
             if (gs == null) return null;
             try {
-                Pointer inst = functions.tpointinst_make(gs, 0L);
+                // The instant time is irrelevant for cell extraction; use the
+                // MEOS epoch (2000-01-01Z). tpointinst_make takes OffsetDateTime.
+                Pointer inst = functions.tpointinst_make(gs,
+                    OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
                 if (inst == null) return null;
                 try {
                     Pointer th3 = functions.tgeompoint_to_th3index(inst, resolution);
@@ -789,7 +816,7 @@ public final class Th3IndexUDFs {
             Pointer gs = functions.geo_from_text(geomWkt, 0);
             if (gs == null) return null;
             try {
-                Pointer set = functions.geo_to_h3index_set(gs, resolution);
+                Pointer set = H3IndexJnrBindings.LIB.geo_to_h3index_set(gs, resolution);
                 return setHex(set);
             } finally {
                 MeosMemory.free(gs);
@@ -814,7 +841,7 @@ public final class Th3IndexUDFs {
                 Pointer t = functions.temporal_from_hexwkb(th3idx);
                 if (t == null) return null;
                 try {
-                    int r = functions.ever_eq_anyof_h3indexset_th3index(cells, t);
+                    int r = H3IndexJnrBindings.LIB.ever_eq_anyof_h3indexset_th3index(cells, t);
                     return r < 0 ? null : r == 1;
                 } finally {
                     MeosMemory.free(t);

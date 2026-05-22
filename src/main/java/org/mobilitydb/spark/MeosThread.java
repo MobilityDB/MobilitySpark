@@ -26,6 +26,7 @@
 package org.mobilitydb.spark;
 
 import functions.functions;
+import functions.error_handler_fn;
 import org.apache.spark.sql.api.java.*;
 
 /**
@@ -50,13 +51,22 @@ public final class MeosThread {
 
     private MeosThread() {}
 
+    /**
+     * No-exit MEOS error handler.  MEOS's default handler calls
+     * exit(EXIT_FAILURE) on an ERROR, which would tear down the whole JVM if a
+     * MEOS error fired inside a Spark task.  This handler returns instead of
+     * exiting; the error still surfaces because MEOS sets meos_errno, which the
+     * generated wrappers check (MeosErrorHandler.checkError) and rethrow as a
+     * Java exception.  Held as a static field so JNR keeps the native callback
+     * alive for the process lifetime.
+     */
+    public static final error_handler_fn NOEXIT_ERROR_HANDLER =
+        (errorLevel, errorCode, errorMessage) -> { /* do not exit the JVM */ };
+
     private static final ThreadLocal<Boolean> MEOS_READY = ThreadLocal.withInitial(() -> {
         functions.meos_initialize();
         functions.meos_initialize_timezone("UTC");
-        // The no-exit handler logs MEOS errors and sets meos_errno without
-        // calling exit(), so a MEOS error inside a Spark task does not tear
-        // down the JVM.
-        functions.meos_initialize_noexit_error_handler();
+        functions.meos_initialize_error_handler(NOEXIT_ERROR_HANDLER);
         return Boolean.TRUE;
     });
 

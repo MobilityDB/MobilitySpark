@@ -98,10 +98,12 @@ class MathUDFsExtTest {
     }
 
     @Test @Order(5)
-    void tnumberTrend_tint_returns_nonnull() throws Exception {
+    void tnumberTrend_tint_returns_null() throws Exception {
+        // tnumber_trend is derivative-based and requires linear interpolation
+        // (MEOS ensure_linear_interp).  A tint is step-interpolated, so it has
+        // no defined trend and MEOS correctly returns null.
         String r = AnalyticsUDFs.tnumberTrend.call(TINT_SEQ);
-        assertNotNull(r);
-        assertFalse(r.isBlank());
+        assertNull(r);
     }
 
     // ------------------------------------------------------------------

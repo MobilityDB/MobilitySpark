@@ -128,7 +128,7 @@ public final class AlwaysSpatialRelsUDFs {
     public static final UDF2<String, String, Boolean> aTouchesTgeoTgeo   = tgeoTgeo(functions::atouches_tgeo_tgeo);
     public static final UDF2<String, String, Boolean> aContainsTgeoGeo   = tgeoGeo(functions::acontains_tgeo_geo);
     public static final UDF2<String, String, Boolean> aContainsTgeoTgeo  = tgeoTgeo(functions::acontains_tgeo_tgeo);
-    public static final UDF2<String, String, Boolean> aContainsGeoTgeo   = geoTgeo(functions::acontains_geo_tpoint);
+    public static final UDF2<String, String, Boolean> aContainsGeoTgeo   = geoTgeo(functions::acontains_geo_tgeo);
     public static final UDF2<String, String, Boolean> aCoversTgeoGeo     = tgeoGeo(functions::acovers_tgeo_geo);
 
     public static final UDF3<String, String, Double, Boolean> aDwithinTgeoGeo  = tgeoGeoDist(functions::adwithin_tgeo_geo);

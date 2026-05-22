@@ -104,7 +104,7 @@ public final class TransformUDFs {
             Pointer ptr = functions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.temporal_to_tsequence(ptr, interp);
+                Pointer result = functions.temporal_to_tsequence(ptr, interpToInt(interp));
                 if (result == null) return null;
                 try {
                     return functions.temporal_as_hexwkb(result, (byte) 0);
@@ -126,7 +126,7 @@ public final class TransformUDFs {
             Pointer ptr = functions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.temporal_to_tsequenceset(ptr, interp);
+                Pointer result = functions.temporal_to_tsequenceset(ptr, interpToInt(interp));
                 if (result == null) return null;
                 try {
                     return functions.temporal_as_hexwkb(result, (byte) 0);

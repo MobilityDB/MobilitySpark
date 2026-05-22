@@ -312,7 +312,7 @@ public final class MoreAccessorUDFs {
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                return functions.temporal_lower_inc(ptr) != 0;
+                return functions.temporal_lower_inc(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -327,7 +327,7 @@ public final class MoreAccessorUDFs {
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                return functions.temporal_upper_inc(ptr) != 0;
+                return functions.temporal_upper_inc(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }
