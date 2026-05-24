@@ -146,20 +146,38 @@ echo ""
 TIMEFILE=$(mktemp)
 trap 'rm -f "$TIMEFILE"' EXIT
 
+FAILED_QUERIES=()
 for Q in "${QUERIES[@]}"; do
   QFILE="${BERLINMOD_DIR}/${Q}.sql"
   [[ -f "$QFILE" ]] || { echo "  [skip] ${Q} — SQL file not found"; continue; }
   printf "  timing %-6s: " "$Q"
+  QERR=""
   for RUN in $(seq 1 "$RUNS"); do
     T0=$(date +%s%3N)
-    _psql -o /dev/null -f "$QFILE" 2>/dev/null || true
-    T1=$(date +%s%3N)
-    ELAPSED=$((T1 - T0))
-    printf "%d " "$ELAPSED"
-    echo "${Q} ${ELAPSED}" >> "$TIMEFILE"
+    # ON_ERROR_STOP=1 so a failing query exits non-zero instead of being
+    # silently swallowed and recorded as a (phantom) fast timing.
+    if QERR=$(_psql -v ON_ERROR_STOP=1 -o /dev/null -f "$QFILE" 2>&1); then
+      T1=$(date +%s%3N)
+      ELAPSED=$((T1 - T0))
+      printf "%d " "$ELAPSED"
+      echo "${Q} ${ELAPSED}" >> "$TIMEFILE"
+    else
+      break
+    fi
   done
-  echo "ms"
+  if [[ -n "$QERR" ]]; then
+    echo "FAILED"
+    echo "      !!! $(echo "$QERR" | grep -iE 'ERROR|FATAL' | head -1 | sed 's/^[[:space:]]*//')"
+    FAILED_QUERIES+=("$Q")
+  else
+    echo "ms"
+  fi
 done
+
+if (( ${#FAILED_QUERIES[@]} > 0 )); then
+  echo ""
+  echo "  !!! ${#FAILED_QUERIES[@]} query(ies) FAILED and are excluded from the report: ${FAILED_QUERIES[*]}"
+fi
 
 mkdir -p "$(dirname "$OUTPUT")"
 

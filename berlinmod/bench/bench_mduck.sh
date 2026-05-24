@@ -165,22 +165,39 @@ echo ""
 TIMEFILE=$(mktemp)
 trap 'rm -f "$TIMEFILE"' EXIT
 
+FAILED_QUERIES=()
 for Q in "${QUERIES[@]}"; do
   QFILE="${BERLINMOD_DIR}/${Q}.sql"
   [[ -f "$QFILE" ]] || { echo "  [skip] ${Q} — SQL file not found"; continue; }
   QSQL=$(grep -v '^\s*--' "$QFILE" | tr '\n' ' ')
   printf "  timing %-6s: " "$Q"
+  QERR=""
   for RUN in $(seq 1 "$RUNS"); do
     T0=$(date +%s%3N)
-    "$DUCKDB" "$DBFILE" -c "${MOBILITY_LOAD} SET search_path='portable,main'; ${QSQL}" \
-      > /dev/null 2>&1 || true
-    T1=$(date +%s%3N)
-    ELAPSED=$((T1 - T0))
-    printf "%d " "$ELAPSED"
-    echo "${Q} ${ELAPSED}" >> "$TIMEFILE"
+    # Capture stderr / exit code so a failing query surfaces as FAILED instead
+    # of being swallowed and recorded as a (phantom) fast timing.
+    if QERR=$("$DUCKDB" "$DBFILE" -c "${MOBILITY_LOAD} SET search_path='portable,main'; ${QSQL}" 2>&1 >/dev/null); then
+      T1=$(date +%s%3N)
+      ELAPSED=$((T1 - T0))
+      printf "%d " "$ELAPSED"
+      echo "${Q} ${ELAPSED}" >> "$TIMEFILE"
+    else
+      break
+    fi
   done
-  echo "ms"
+  if [[ -n "$QERR" ]]; then
+    echo "FAILED"
+    echo "      !!! $(echo "$QERR" | grep -iE 'Error|Exception' | head -1 | sed 's/^[[:space:]]*//')"
+    FAILED_QUERIES+=("$Q")
+  else
+    echo "ms"
+  fi
 done
+
+if (( ${#FAILED_QUERIES[@]} > 0 )); then
+  echo ""
+  echo "  !!! ${#FAILED_QUERIES[@]} query(ies) FAILED and are excluded from the report: ${FAILED_QUERIES[*]}"
+fi
 
 mkdir -p "$(dirname "$OUTPUT")"
 
