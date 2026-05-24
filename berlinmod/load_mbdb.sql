@@ -57,7 +57,8 @@ CREATE TABLE QueryInstants (
 
 CREATE TABLE QueryPoints (
   pointId INTEGER              PRIMARY KEY,
-  geom    geometry(Point,3857) NOT NULL
+  geom    geometry(Point,3857) NOT NULL,
+  geomWKT TEXT                 NOT NULL
 );
 
 CREATE TABLE QueryRegions (
@@ -100,7 +101,7 @@ CREATE TEMP TABLE TripsTmp (tripId INTEGER, vehId INTEGER, trip TEXT);
 INSERT INTO Trips
   SELECT tripId, vehId,
          tgeompointfromhexewkb(trip)                                 AS trip,
-         tgeompoint_to_th3index(tgeompointfromhexewkb(trip), :h3resolution) AS trip_h3
+         h3_latlng_to_cell(transform(tgeompointfromhexewkb(trip), 4326), :h3resolution) AS trip_h3
   FROM TripsTmp;
 DROP TABLE TripsTmp;
 
@@ -110,7 +111,7 @@ DROP TABLE TripsTmp;
 
 CREATE TEMP TABLE QueryPointsTmp (pointId INTEGER, geom TEXT);
 \copy QueryPointsTmp FROM 'DATADIR/query_points.csv' DELIMITER ',' CSV HEADER
-INSERT INTO QueryPoints SELECT pointId, ST_GeomFromText(geom, 3857) FROM QueryPointsTmp;
+INSERT INTO QueryPoints SELECT pointId, ST_GeomFromText(geom, 3857), geom FROM QueryPointsTmp;
 DROP TABLE QueryPointsTmp;
 
 -------------------------------------------------------------------------------
