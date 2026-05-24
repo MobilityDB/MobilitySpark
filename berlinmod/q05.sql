@@ -26,14 +26,14 @@
 SELECT /*+ BROADCAST(l1, v1, l2, v2) */
        l1.licence AS licence1,
        l2.licence AS licence2,
-       MIN(minDistance(t1.trip, t2.trip)) AS min_dist
+       MIN(ST_Distance(trajectory(t1.trip), trajectory(t2.trip))) AS min_dist
 FROM   QueryLicences l1
 JOIN   Vehicles v1  ON  v1.licence = l1.licence
 JOIN   Trips    t1  ON  t1.vehId   = v1.vehId
 JOIN   QueryLicences l2 ON l1.licenceId < l2.licenceId
 JOIN   Vehicles v2  ON  v2.licence = l2.licence
 JOIN   Trips    t2  ON  t2.vehId   = v2.vehId
-WHERE  everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)
+WHERE  ever_eq(t1.trip_h3, t2.trip_h3)
 GROUP  BY l1.licence, l2.licence
 ORDER  BY l1.licence, l2.licence;
 -- The `/*+ BROADCAST(...) */` block is a Spark SQL hint forcing the four

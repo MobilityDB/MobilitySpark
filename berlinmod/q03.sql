@@ -12,7 +12,7 @@
 SELECT v.vehId     AS vehid,
        v.licence,
        i.instantId AS instantid,
-       asHexWKB(atTime(t.trip, i.instant)) AS pos
+       asHexEWKB(atTime(t.trip, i.instant)) AS pos
 FROM   QueryLicences l
 JOIN   Vehicles v  ON  v.licence = l.licence
 JOIN   Trips    t  ON  t.vehId   = v.vehId

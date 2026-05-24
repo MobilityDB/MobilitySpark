@@ -22,7 +22,7 @@ JOIN   Vehicles v2 ON v1.vehId < v2.vehId
 JOIN   Trips t2 ON t2.vehId = v2.vehId
 WHERE  v1.type  = 'truck'
   AND  v2.type  = 'truck'
-  AND  everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)
+  AND  ever_eq(t1.trip_h3, t2.trip_h3)
   AND  eDwithin(t1.trip, t2.trip, 10.0)
 ORDER  BY v1.licence, v2.licence;
 -- The `/*+ BROADCAST(v1, v2) */` block is a Spark SQL hint pinning the

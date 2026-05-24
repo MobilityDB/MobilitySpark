@@ -10,6 +10,6 @@
 --   The hex-WKB strings must be byte-for-byte identical across platforms.
 
 SELECT tripId AS tripid,
-       asHexWKB(trip) AS trip_hexwkb
+       asHexEWKB(trip) AS trip_hexwkb
 FROM   Trips
 ORDER  BY tripId;

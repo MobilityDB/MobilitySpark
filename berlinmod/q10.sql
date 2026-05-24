@@ -23,7 +23,7 @@ WITH Temp AS (
   JOIN   Vehicles v1 ON v1.licence = l.licence
   JOIN   Trips    t1 ON t1.vehId   = v1.vehId
   JOIN   Trips    t2 ON t1.vehId  <> t2.vehId
-  WHERE  everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)
+  WHERE  ever_eq(t1.trip_h3, t2.trip_h3)
     AND  t2.trip && expandSpace(t1.trip, 3)
 )
 SELECT licence1, car2Id, periods
