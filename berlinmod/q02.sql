@@ -18,6 +18,6 @@ SELECT DISTINCT v.licence
 FROM   Vehicles v
 JOIN   Trips t    ON  t.vehId = v.vehId
 JOIN   QueryRegions r ON
-   everIntersectsH3IndexSet_Th3Index(geoToH3IndexSet(r.geom, 7), t.trip_h3)
+   everIntersectsH3IndexSet_Th3Index(geoToH3IndexSet(ST_Transform(r.geom, 4326), 7), t.trip_h3)
    AND eIntersects(t.trip, r.geom)
 ORDER  BY v.licence;

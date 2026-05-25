@@ -120,7 +120,9 @@ DROP TABLE QueryPointsTmp;
 
 CREATE TEMP TABLE QueryRegionsTmp (regionId INTEGER, geom TEXT);
 \copy QueryRegionsTmp FROM 'DATADIR/query_regions.csv' DELIMITER ',' CSV HEADER
-INSERT INTO QueryRegions SELECT regionId, ST_GeomFromText(geom, 3857) FROM QueryRegionsTmp;
+-- query_regions.csv holds lon/lat (the exporter emits ST_Transform(geom,4326));
+-- parse as 4326 then reproject to 3857 to match Trip's SRID.
+INSERT INTO QueryRegions SELECT regionId, ST_Transform(ST_GeomFromText(geom, 4326), 3857) FROM QueryRegionsTmp;
 DROP TABLE QueryRegionsTmp;
 
 -------------------------------------------------------------------------------
