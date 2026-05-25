@@ -1,0 +1,31 @@
+{
+  "platform": "mobilitydb",
+  "version": "MobilityDB1.4.0 on PostgreSQL 18.1 ",
+  "tier": 2,
+  "data_vehicles": 141,
+  "data_trips": 1620,
+  "runs": 2,
+  "timestamp": "2026-05-25T06:47:31+00:00",
+  "queries": {
+    "q02": [
+      20985,
+      20435
+    ],
+    "q04": [
+      16045,
+      16057
+    ],
+    "q05": [
+      54734,
+      55323
+    ],
+    "q06": [
+      3775,
+      3635
+    ],
+    "q10": [
+      28690,
+      29689
+    ]
+  }
+}
