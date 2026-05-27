@@ -66,6 +66,9 @@ import java.util.HexFormat;
  * MEOS function authority: meos/include/meos_rgeo.h.
  */
 public final class RgeoUDFs {
+    // MEOS interpolation code for LINEAR (continuous) sequences.
+    private static final int INTERP_LINEAR = 3;
+
 
     private RgeoUDFs() {}
 
@@ -174,7 +177,7 @@ public final class RgeoUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequence(p, "linear");
+                Pointer r = functions.temporal_to_tsequence(p, INTERP_LINEAR);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -188,14 +191,13 @@ public final class RgeoUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequenceset(p, "linear");
+                Pointer r = functions.temporal_to_tsequenceset(p, INTERP_LINEAR);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
 
-    private static final int INTERP_LINEAR = 3;
 
     public static final UDF2<String[], String, String> trgeometrySeqSetGaps =
         (instants, maxt) -> {

@@ -142,6 +142,9 @@ public final class SubtypeConstructorUDFs {
     // default 'linear' interpolation.
     // ------------------------------------------------------------------
 
+    // interpType enum (meos.h): INTERP_NONE=0, DISCRETE=1, STEP=2, LINEAR=3
+    private static final int INTERP_LINEAR = 3;
+
     private static UDF1<String, String> seqAlias() {
         return hex -> {
             if (hex == null) return null;
@@ -149,7 +152,7 @@ public final class SubtypeConstructorUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequence(p, "linear");
+                Pointer r = functions.temporal_to_tsequence(p, INTERP_LINEAR);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -164,7 +167,7 @@ public final class SubtypeConstructorUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequenceset(p, "linear");
+                Pointer r = functions.temporal_to_tsequenceset(p, INTERP_LINEAR);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }

@@ -305,7 +305,7 @@ public final class MoreAccessorUDFs {
     // ------------------------------------------------------------------
 
     // lowerInc(trip STRING) → BOOLEAN  (true if the lower bound is inclusive)
-    // MEOS: temporal_lower_inc(const Temporal *) → int  (nonzero = true)
+    // MEOS: temporal_lower_inc(const Temporal *) → bool
     public static final UDF1<String, Boolean> lowerInc =
         (trip) -> {
             if (trip == null) return null;
@@ -313,14 +313,14 @@ public final class MoreAccessorUDFs {
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                return functions.temporal_lower_inc(ptr) != 0;
+                return functions.temporal_lower_inc(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }
         };
 
     // upperInc(trip STRING) → BOOLEAN  (true if the upper bound is inclusive)
-    // MEOS: temporal_upper_inc(const Temporal *) → int  (nonzero = true)
+    // MEOS: temporal_upper_inc(const Temporal *) → bool
     public static final UDF1<String, Boolean> upperInc =
         (trip) -> {
             if (trip == null) return null;
@@ -328,7 +328,7 @@ public final class MoreAccessorUDFs {
             Pointer ptr = functions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                return functions.temporal_upper_inc(ptr) != 0;
+                return functions.temporal_upper_inc(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }

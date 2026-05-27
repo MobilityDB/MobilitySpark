@@ -131,7 +131,8 @@ public final class BerlinMODUDFs {
     // valueAtTimestamp(trip STRING, instant) → STRING (WKT geometry)
     // Returns the geometry of a tgeompoint at a given instant, as WKT.
     // instant can be a java.sql.Timestamp (Spark TIMESTAMP) or String.
-    // MEOS: temporal_value_at_timestamptz (MEOS 1.4 canonical name)
+    // MEOS 1.4: tgeo_value_at_timestamptz — the temporal_value_at_timestamptz
+    // family is split per base type (tbool/tint/tfloat/ttext/tgeo/tpose).
     // ------------------------------------------------------------------
     public static final UDF2<String, Object, String> valueAtTimestamp = (trip, tsArg) -> {
         if (trip == null || tsArg == null) return null;
@@ -141,7 +142,7 @@ public final class BerlinMODUDFs {
         OffsetDateTime odt = parseTs(tsArg);
         if (odt == null) return null;
         Pointer valueOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-        boolean found = functions.temporal_value_at_timestamptz(tptr, odt, true, valueOut);
+        boolean found = functions.tgeo_value_at_timestamptz(tptr, odt, true, valueOut);
         if (!found) return null;
         long addr = valueOut.getLong(0);
         if (addr == 0L) return null;

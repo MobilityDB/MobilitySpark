@@ -97,11 +97,13 @@ class MathUDFsExtTest {
         assertFalse(r.isBlank());
     }
 
+    // tnumber_trend computes a linear slope, so it requires linear
+    // interpolation.  A tint is step-interpolated, so MEOS tnumber_trend
+    // returns NULL (ensure_linear_interp guard in tnumber_mathfuncs.c).
     @Test @Order(5)
-    void tnumberTrend_tint_returns_nonnull() throws Exception {
+    void tnumberTrend_tint_step_returns_null() throws Exception {
         String r = AnalyticsUDFs.tnumberTrend.call(TINT_SEQ);
-        assertNotNull(r);
-        assertFalse(r.isBlank());
+        assertNull(r);
     }
 
     // ------------------------------------------------------------------

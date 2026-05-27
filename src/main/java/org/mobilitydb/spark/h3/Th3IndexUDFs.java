@@ -27,6 +27,7 @@ package org.mobilitydb.spark.h3;
 
 import functions.functions;
 import jnr.ffi.Pointer;
+import jnr.ffi.Runtime;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
@@ -321,10 +322,21 @@ public final class Th3IndexUDFs {
             if (values == null || timestamps == null) return null;
             if (values.length != timestamps.length) return null;
             MeosThread.ensureReady();
-            OffsetDateTime[] times = new OffsetDateTime[timestamps.length];
-            for (int i = 0; i < timestamps.length; i++) times[i] = parseTs(timestamps[i]);
+            int n = values.length;
+            Runtime rt = Runtime.getSystemRuntime();
+            Pointer valueBuf = rt.getMemoryManager().allocateDirect(8L * n);
+            Pointer timeBuf = rt.getMemoryManager().allocateDirect(8L * n);
+            for (int i = 0; i < n; i++) {
+                valueBuf.putLong(i * 8L, values[i]);
+                OffsetDateTime t = parseTs(timestamps[i]);
+                if (t == null) return null;
+                /* TimestampTz = microseconds since 2000-01-01 UTC. */
+                long micros = (t.toEpochSecond() - 946684800L) * 1_000_000L
+                    + t.getNano() / 1_000L;
+                timeBuf.putLong(i * 8L, micros);
+            }
             Pointer p = functions.th3indexseq_make(
-                values, times, values.length,
+                valueBuf, timeBuf, n,
                 lowerInc != null && lowerInc,
                 upperInc != null && upperInc);
             if (p == null) return null;
@@ -342,13 +354,18 @@ public final class Th3IndexUDFs {
     public static final UDF1<String[], String> th3IndexSeqSetMake = (sequencesHex) -> {
         if (sequencesHex == null) return null;
         MeosThread.ensureReady();
-        Pointer[] seqs = new Pointer[sequencesHex.length];
+        int n = sequencesHex.length;
+        Pointer[] seqs = new Pointer[n];
         try {
-            for (int i = 0; i < sequencesHex.length; i++) {
+            for (int i = 0; i < n; i++) {
                 seqs[i] = functions.temporal_from_hexwkb(sequencesHex[i]);
                 if (seqs[i] == null) return null;
             }
-            Pointer p = functions.th3indexseqset_make(seqs, seqs.length);
+            Pointer buf = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8L * n);
+            for (int i = 0; i < n; i++) {
+                buf.putAddress(i * 8L, seqs[i].address());
+            }
+            Pointer p = functions.th3indexseqset_make(buf, n);
             if (p == null) return null;
             try { return functions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
@@ -390,8 +407,16 @@ public final class Th3IndexUDFs {
         MeosThread.ensureReady();
         Pointer t = functions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
-        try { return functions.th3index_values(t); }
-        finally { MeosMemory.free(t); }
+        try {
+            Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+            Pointer arr = functions.th3index_values(t, countOut);
+            if (arr == null) return null;
+            int count = countOut.getInt(0);
+            long[] out = new long[count];
+            for (int i = 0; i < count; i++) out[i] = arr.getLong((long) i * 8);
+            MeosMemory.free(arr);
+            return out;
+        } finally { MeosMemory.free(t); }
     };
 
     /**
@@ -759,7 +784,8 @@ public final class Th3IndexUDFs {
             Pointer gs = functions.geo_from_text(geomWkt, 0);
             if (gs == null) return null;
             try {
-                Pointer inst = functions.tpointinst_make(gs, 0L);
+                Pointer inst = functions.tpointinst_make(gs,
+                    OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
                 if (inst == null) return null;
                 try {
                     Pointer th3 = functions.tgeompoint_to_th3index(inst, resolution);
