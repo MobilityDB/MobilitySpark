@@ -35,13 +35,29 @@ jobs:
       - name: Install libmeos runtime dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libjson-c5 libgeos-c1t64 libproj25 libgsl27
+          # proj-data + libh3-1 are required by the th3index libmeos.so:
+          # libmeos NEEDs libh3.so.1, and geodetic transforms need PROJ data.
+          sudo apt-get install -y libjson-c5 libgeos-c1t64 libproj25 proj-data libgsl27 libh3-1
 
       - name: Set up libmeos.so and LD_LIBRARY_PATH
         run: |
           mkdir -p /tmp/libmeos
           cp "$GITHUB_WORKSPACE/lib/libmeos.so" /tmp/libmeos/libmeos.so
           echo "LD_LIBRARY_PATH=/tmp/libmeos" >> "$GITHUB_ENV"
+
+      - name: Provide the MEOS spatial_ref_sys table
+        run: |
+          # libmeos resolves SRID metadata (geodetic recognition for
+          # tgeogpoint, transforms) from its built-in default path
+          # /usr/local/share/spatial_ref_sys.csv. The vendored .so ships
+          # without that data file, so geography input fails with
+          # MEOS_ERR_INVALID_ARG. Fetch the canonical table to the default
+          # path, as a runtime data dependency rather than a vendored blob.
+          sudo mkdir -p /usr/local/share
+          sudo curl -fsSL \
+            https://raw.githubusercontent.com/MobilityDB/MobilityDB/master/meos/src/geo/spatial_ref_sys.csv \
+            -o /usr/local/share/spatial_ref_sys.csv
+          test -s /usr/local/share/spatial_ref_sys.csv
 
       - name: Install JMEOS 1.4 to local Maven repository
         run: |
