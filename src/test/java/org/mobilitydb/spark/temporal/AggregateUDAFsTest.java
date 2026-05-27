@@ -273,4 +273,35 @@ class AggregateUDAFsTest {
         assertNotNull(result);
         assertFalse(result.isBlank());
     }
+
+    // ------------------------------------------------------------------
+    // tAvg
+    // ------------------------------------------------------------------
+
+    @Test @Order(17)
+    void tAvg_two_tfloats_returns_nonnull() {
+        AggregateUDAFs.TAvgFn agg = new AggregateUDAFs.TAvgFn();
+        String buf = agg.zero();
+        buf = agg.reduce(buf, TFLOAT1);
+        buf = agg.reduce(buf, TFLOAT2);
+        String result = agg.finish(buf);
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(18)
+    void tAvg_tint_returns_nonnull() {
+        AggregateUDAFs.TAvgFn agg = new AggregateUDAFs.TAvgFn();
+        String buf = agg.reduce(agg.zero(), TINT1);
+        buf = agg.reduce(buf, TINT2);
+        String result = agg.finish(buf);
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(19)
+    void tAvg_empty_input_returns_null() {
+        AggregateUDAFs.TAvgFn agg = new AggregateUDAFs.TAvgFn();
+        assertNull(agg.finish(agg.zero()));
+    }
 }

@@ -369,6 +369,37 @@ public final class AggregateUDAFs {
     }
 
     // ------------------------------------------------------------------
+    // tAvg — temporal average of a tnumber (tint or tfloat)
+    // MEOS: tnumber_tavg_transfn + tnumber_tavg_finalfn
+    // Returns: tfloat hex-WKB
+    // ------------------------------------------------------------------
+    public static final class TAvgFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+
+        @Override public String finish(String buf) {
+            MeosThread.ensureReady();
+            String[] hexes = entries(buf);
+            if (hexes.length == 0) return null;
+            Pointer state = null;
+            for (String hex : hexes) {
+                Pointer inp = functions.temporal_from_hexwkb(hex);
+                if (inp == null) continue;
+                Pointer next = functions.tnumber_tavg_transfn(state, inp);
+                MeosMemory.free(inp);
+                state = next;
+            }
+            if (state == null) return null;
+            return hexOut(functions.tnumber_tavg_finalfn(state));
+        }
+
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    // ------------------------------------------------------------------
     // tTextMin / tTextMax — temporal aggregates on ttext
     // Returns: ttext hex-WKB
     // ------------------------------------------------------------------
@@ -502,6 +533,7 @@ public final class AggregateUDAFs {
         spark.udf().register("tFloatMin", org.apache.spark.sql.functions.udaf(new TFloatMinFn(), Encoders.STRING()));
         spark.udf().register("tFloatMax", org.apache.spark.sql.functions.udaf(new TFloatMaxFn(), Encoders.STRING()));
         spark.udf().register("tFloatSum", org.apache.spark.sql.functions.udaf(new TFloatSumFn(), Encoders.STRING()));
+        spark.udf().register("tAvg",      org.apache.spark.sql.functions.udaf(new TAvgFn(),      Encoders.STRING()));
         spark.udf().register("tTextMin",  org.apache.spark.sql.functions.udaf(new TTextMinFn(),  Encoders.STRING()));
         spark.udf().register("tTextMax",  org.apache.spark.sql.functions.udaf(new TTextMaxFn(),  Encoders.STRING()));
         spark.udf().register("tCentroid", org.apache.spark.sql.functions.udaf(new TCentroidFn(), Encoders.STRING()));
