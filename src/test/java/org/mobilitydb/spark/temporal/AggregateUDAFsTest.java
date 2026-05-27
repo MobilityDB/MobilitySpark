@@ -344,4 +344,41 @@ class AggregateUDAFsTest {
         AggregateUDAFs.SetUnionFn agg = new AggregateUDAFs.SetUnionFn();
         assertNull(agg.finish(agg.zero()));
     }
+
+    // ------------------------------------------------------------------
+    // windowed aggregates (input encodes "temporalHex|intervalText")
+    // ------------------------------------------------------------------
+
+    @Test @Order(24)
+    void wIntSum_returns_nonnull() {
+        AggregateUDAFs.WIntSumFn agg = new AggregateUDAFs.WIntSumFn();
+        String enc = TINT1 + "|1 day";
+        String result = agg.finish(agg.reduce(agg.zero(), enc));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(25)
+    void wFloatMax_returns_nonnull() {
+        AggregateUDAFs.WFloatMaxFn agg = new AggregateUDAFs.WFloatMaxFn();
+        String enc = TFLOAT1 + "|1 day";
+        String result = agg.finish(agg.reduce(agg.zero(), enc));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(26)
+    void wAvg_returns_nonnull() {
+        AggregateUDAFs.WAvgFn agg = new AggregateUDAFs.WAvgFn();
+        String enc = TFLOAT1 + "|1 day";
+        String result = agg.finish(agg.reduce(agg.zero(), enc));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(27)
+    void windowed_empty_input_returns_null() {
+        AggregateUDAFs.WIntSumFn agg = new AggregateUDAFs.WIntSumFn();
+        assertNull(agg.finish(agg.zero()));
+    }
 }
