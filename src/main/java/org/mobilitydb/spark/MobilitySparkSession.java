@@ -136,6 +136,9 @@ public final class MobilitySparkSession implements AutoCloseable {
         RestrictionUDFs.registerAll(spark);
         TransformUDFs.registerAll(spark);
         AggregateUDAFs.registerAll(spark);
+        // Comparison / ordering (= <> < <= > >= cmp hash) for all scalar,
+        // set, span and box types + generic temporal compare/hash.
+        org.mobilitydb.spark.temporal.ComparisonUDFs.registerAll(spark);
         org.mobilitydb.spark.h3.Th3IndexUDFs.registerAll(spark);
         // Sibling temporal families (cbuffer / npoint / pose / rgeo)
         org.mobilitydb.spark.cbuffer.CbufferUDFs.registerAll(spark);
