@@ -100,6 +100,26 @@ public final class AggregateUDAFs {
         }
     }
 
+    /** Serialize a Set Pointer to hex-WKB and free it. */
+    private static String setHex(Pointer p) {
+        if (p == null) return null;
+        try {
+            return functions.set_as_hexwkb(p, (byte) 0);
+        } finally {
+            MeosMemory.free(p);
+        }
+    }
+
+    /** Serialize a SpanSet Pointer to hex-WKB and free it. */
+    private static String spansetHex(Pointer p) {
+        if (p == null) return null;
+        try {
+            return functions.spanset_as_hexwkb(p, (byte) 0);
+        } finally {
+            MeosMemory.free(p);
+        }
+    }
+
     // ------------------------------------------------------------------
     // tCount — count how many temporal values are defined at each instant
     // Returns: tint hex-WKB
@@ -520,6 +540,99 @@ public final class AggregateUDAFs {
     }
 
     // ------------------------------------------------------------------
+    // setUnion - union of sets into a set
+    // MEOS: set_union_transfn + set_union_finalfn
+    // Returns: set hex-WKB
+    // ------------------------------------------------------------------
+    public static final class SetUnionFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+
+        @Override public String finish(String buf) {
+            MeosThread.ensureReady();
+            String[] hexes = entries(buf);
+            if (hexes.length == 0) return null;
+            Pointer state = null;
+            for (String hex : hexes) {
+                Pointer inp = functions.set_from_hexwkb(hex);
+                if (inp == null) continue;
+                Pointer next = functions.set_union_transfn(state, inp);
+                MeosMemory.free(inp);
+                state = next;
+            }
+            if (state == null) return null;
+            return setHex(functions.set_union_finalfn(state));
+        }
+
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    // ------------------------------------------------------------------
+    // spanUnion - union of spans into a span set
+    // MEOS: span_union_transfn + spanset_union_finalfn
+    // Returns: spanset hex-WKB
+    // ------------------------------------------------------------------
+    public static final class SpanUnionFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+
+        @Override public String finish(String buf) {
+            MeosThread.ensureReady();
+            String[] hexes = entries(buf);
+            if (hexes.length == 0) return null;
+            Pointer state = null;
+            for (String hex : hexes) {
+                Pointer inp = functions.span_from_hexwkb(hex);
+                if (inp == null) continue;
+                Pointer next = functions.span_union_transfn(state, inp);
+                MeosMemory.free(inp);
+                state = next;
+            }
+            if (state == null) return null;
+            return spansetHex(functions.spanset_union_finalfn(state));
+        }
+
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    // ------------------------------------------------------------------
+    // merge - merge temporal values that do not overlap into one temporal
+    // MEOS: temporal_merge_transfn + temporal_tagg_finalfn
+    // Returns: temporal hex-WKB
+    // ------------------------------------------------------------------
+    public static final class MergeFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+
+        @Override public String finish(String buf) {
+            MeosThread.ensureReady();
+            String[] hexes = entries(buf);
+            if (hexes.length == 0) return null;
+            Pointer state = null;
+            for (String hex : hexes) {
+                Pointer inp = functions.temporal_from_hexwkb(hex);
+                if (inp == null) continue;
+                Pointer next = functions.temporal_merge_transfn(state, inp);
+                MeosMemory.free(inp);
+                state = next;
+            }
+            if (state == null) return null;
+            return hexOut(functions.temporal_tagg_finalfn(state));
+        }
+
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    // ------------------------------------------------------------------
     // REGISTRATION
     // ------------------------------------------------------------------
 
@@ -538,5 +651,8 @@ public final class AggregateUDAFs {
         spark.udf().register("tTextMax",  org.apache.spark.sql.functions.udaf(new TTextMaxFn(),  Encoders.STRING()));
         spark.udf().register("tCentroid", org.apache.spark.sql.functions.udaf(new TCentroidFn(), Encoders.STRING()));
         spark.udf().register("tExtent",   org.apache.spark.sql.functions.udaf(new TExtentFn(),   Encoders.STRING()));
+        spark.udf().register("setUnion",  org.apache.spark.sql.functions.udaf(new SetUnionFn(),  Encoders.STRING()));
+        spark.udf().register("spanUnion", org.apache.spark.sql.functions.udaf(new SpanUnionFn(), Encoders.STRING()));
+        spark.udf().register("merge",     org.apache.spark.sql.functions.udaf(new MergeFn(),     Encoders.STRING()));
     }
 }

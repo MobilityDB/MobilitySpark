@@ -304,4 +304,44 @@ class AggregateUDAFsTest {
         AggregateUDAFs.TAvgFn agg = new AggregateUDAFs.TAvgFn();
         assertNull(agg.finish(agg.zero()));
     }
+
+    // ------------------------------------------------------------------
+    // setUnion / spanUnion / merge
+    // ------------------------------------------------------------------
+
+    @Test @Order(20)
+    void setUnion_two_intsets_returns_nonnull() {
+        AggregateUDAFs.SetUnionFn agg = new AggregateUDAFs.SetUnionFn();
+        String s1 = set_as_hexwkb(intset_in("{1, 2, 3}"), (byte) 0);
+        String s2 = set_as_hexwkb(intset_in("{3, 4, 5}"), (byte) 0);
+        String result = agg.finish(agg.reduce(agg.reduce(agg.zero(), s1), s2));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(21)
+    void spanUnion_two_intspans_returns_nonnull() {
+        AggregateUDAFs.SpanUnionFn agg = new AggregateUDAFs.SpanUnionFn();
+        String a = span_as_hexwkb(intspan_in("[1, 5]"), (byte) 0);
+        String b = span_as_hexwkb(intspan_in("[10, 20]"), (byte) 0);
+        String result = agg.finish(agg.reduce(agg.reduce(agg.zero(), a), b));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(22)
+    void merge_two_disjoint_tints_returns_nonnull() {
+        AggregateUDAFs.MergeFn agg = new AggregateUDAFs.MergeFn();
+        String m1 = temporal_as_hexwkb(tint_in("[1@2020-01-01, 2@2020-01-02]"), (byte) 0);
+        String m2 = temporal_as_hexwkb(tint_in("[3@2020-01-03, 4@2020-01-04]"), (byte) 0);
+        String result = agg.finish(agg.reduce(agg.reduce(agg.zero(), m1), m2));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(23)
+    void setUnion_empty_input_returns_null() {
+        AggregateUDAFs.SetUnionFn agg = new AggregateUDAFs.SetUnionFn();
+        assertNull(agg.finish(agg.zero()));
+    }
 }
