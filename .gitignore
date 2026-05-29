@@ -21,3 +21,6 @@ target/
 berlinmod/data/trips.csv
 dependency-reduced-pom.xml
 hs_err_pid*.log
+
+# Isolated per-worktree Maven repo (build-local, never shipped)
+.m2-uni/
