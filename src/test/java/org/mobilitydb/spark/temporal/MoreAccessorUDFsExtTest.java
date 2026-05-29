@@ -28,6 +28,7 @@ package org.mobilitydb.spark.temporal;
 import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class MoreAccessorUDFsExtTest {
+class MoreAccessorUDFsExtTest extends MeosTestBase {
 
     private static String TBOOL_SEQ;
     private static String TINT_SEQ;
@@ -57,9 +58,6 @@ class MoreAccessorUDFsExtTest {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TBOOL_SEQ = temporal_as_hexwkb(
             tbool_in("Interp=Step;[true@2020-01-01 00:00:00+00, true@2020-01-03 00:00:00+00]"),
             (byte) 0);

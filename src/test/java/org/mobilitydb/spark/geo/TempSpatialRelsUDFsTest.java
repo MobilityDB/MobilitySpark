@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.geo;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos_geo.h (072_tgeo_tempspatialrels)
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class TempSpatialRelsUDFsTest {
+class TempSpatialRelsUDFsTest extends MeosTestBase {
 
     private static String TRIP;
     private static final String REGION_ON_PATH = "POLYGON((0 -1, 1 -1, 1 1, 0 1, 0 -1))";
@@ -49,9 +50,6 @@ class TempSpatialRelsUDFsTest {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TRIP = temporal_as_hexwkb(
             tgeompoint_in("[POINT(0.0 0.0)@2020-01-01 00:00:00+00, POINT(1.0 0.0)@2020-01-01 01:00:00+00]"),
             (byte) 0);

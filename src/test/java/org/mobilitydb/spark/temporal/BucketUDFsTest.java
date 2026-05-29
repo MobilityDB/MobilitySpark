@@ -26,18 +26,13 @@
 package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class BucketUDFsTest {
-
-    @BeforeAll
-    static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-    }
+class BucketUDFsTest extends MeosTestBase {
 
     @Test @Order(1)
     void floatBucket_aligns_to_origin() throws Exception {

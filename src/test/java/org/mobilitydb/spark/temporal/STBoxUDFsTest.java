@@ -29,6 +29,7 @@ import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.junit.jupiter.api.*;
 import org.mobilitydb.spark.geo.STBoxUDFs;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,15 +41,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h, meos/include/meos_geo.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class STBoxUDFsTest {
+class STBoxUDFsTest extends MeosTestBase {
 
     private static String STBOX_HEX;
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         // Build stbox hex: STBOX XT(((1.1234,2.5678),(3.9876,4.1111)),[2020-01-01,2020-01-03])
         Pointer sb = stbox_in(
             "STBOX XT(((1.1234,2.5678),(3.9876,4.1111))," +

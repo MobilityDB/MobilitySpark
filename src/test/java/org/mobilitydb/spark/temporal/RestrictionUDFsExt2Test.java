@@ -29,6 +29,7 @@ import org.junit.jupiter.api.*;
 
 import org.mobilitydb.spark.geo.STBoxUDFs;
 import org.mobilitydb.spark.temporal.ConstructorUDFs;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h, meos/include/meos_geo.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class RestrictionUDFsExt2Test {
+class RestrictionUDFsExt2Test extends MeosTestBase {
 
     private static String TFLOAT_SEQ;
     private static String TRIP_3D;
@@ -52,9 +53,6 @@ class RestrictionUDFsExt2Test {
 
     @BeforeAll
     static void initMeos() throws Exception {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TFLOAT_SEQ = temporal_as_hexwkb(
             tfloat_in("[1.0@2020-01-01, 5.0@2020-01-05]"), (byte) 0);
 

@@ -31,6 +31,7 @@ import org.junit.jupiter.api.*;
 import org.mobilitydb.spark.geo.STBoxUDFs;
 
 import java.sql.Timestamp;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos_geo.h, meos/include/meos.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class STBoxUDFsExt2Test {
+class STBoxUDFsExt2Test extends MeosTestBase {
 
     private static String TSTZSPAN_HEX;
     private static String STBOX_A_HEX;  // STBox with spatial + time component
@@ -50,9 +51,6 @@ class STBoxUDFsExt2Test {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TSTZSPAN_HEX = span_as_hexwkb(
             tstzspan_in("[2020-01-01 00:00:00+00, 2020-01-03 00:00:00+00]"), (byte) 0);
 

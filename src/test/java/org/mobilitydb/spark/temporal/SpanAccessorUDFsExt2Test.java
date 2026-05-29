@@ -29,6 +29,7 @@ import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;
 import java.util.List;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h, meos/include/meos_geo.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class SpanAccessorUDFsExt2Test {
+class SpanAccessorUDFsExt2Test extends MeosTestBase {
 
     /** TstzSpanSet: 2 disjoint 1-day spans with a gap in between. */
     private static String TSTZSPANSET_HEX;
@@ -50,9 +51,6 @@ class SpanAccessorUDFsExt2Test {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TSTZSPANSET_HEX = spanset_as_hexwkb(
             tstzspanset_in("{[2020-01-01 00:00:00+00, 2020-01-02 00:00:00+00]," +
                             "[2020-02-01 00:00:00+00, 2020-02-02 00:00:00+00]}"),

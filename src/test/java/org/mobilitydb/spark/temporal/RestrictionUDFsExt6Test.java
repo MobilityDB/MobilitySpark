@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,16 +38,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class RestrictionUDFsExt6Test {
+class RestrictionUDFsExt6Test extends MeosTestBase {
 
     private static String TINT_SEQ;
     private static String INTSET_HEX;
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         // Sequence with values 1, 2, 3
         TINT_SEQ = temporal_as_hexwkb(
             tint_in("Interp=Step;[1@2020-01-01 00:00:00+00," +

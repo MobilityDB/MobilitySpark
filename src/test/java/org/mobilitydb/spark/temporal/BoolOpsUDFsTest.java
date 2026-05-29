@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,16 +37,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h (028_tbool_boolops)
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class BoolOpsUDFsTest {
+class BoolOpsUDFsTest extends MeosTestBase {
 
     private static String TBOOL_TRUE;
     private static String TBOOL_FALSE;
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TBOOL_TRUE  = temporal_as_hexwkb(tbool_in("t@2020-01-01"), (byte) 0);
         TBOOL_FALSE = temporal_as_hexwkb(tbool_in("f@2020-01-01"), (byte) 0);
     }

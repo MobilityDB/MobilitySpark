@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class PredicateUDFsExt2Test {
+class PredicateUDFsExt2Test extends MeosTestBase {
 
     private static String TINT5_HEX;
     private static String TFLOAT2_HEX;
@@ -54,9 +55,6 @@ class PredicateUDFsExt2Test {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         TINT5_HEX   = temporal_as_hexwkb(tint_in("5@2020-01-01 00:00:00+00"),    (byte) 0);
         TFLOAT2_HEX = temporal_as_hexwkb(tfloat_in("2.0@2020-01-01 00:00:00+00"), (byte) 0);
         TBOOL_HEX   = temporal_as_hexwkb(tbool_in("true@2020-01-01 00:00:00+00"), (byte) 0);

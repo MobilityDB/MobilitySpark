@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,15 +37,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class TBoxUDFsExtTest {
+class TBoxUDFsExtTest extends MeosTestBase {
 
     private static String TBOX_HEX;
 
     @BeforeAll
     static void initMeos() throws Exception {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         // Build a tbox via tnumber_to_tbox from a tfloat sequence with non-trivial values
         TBOX_HEX = AccessorUDFs.tnumberToTbox.call(
             temporal_as_hexwkb(tfloat_in("[1.123456@2020-01-01, 9.987654@2020-01-03]"), (byte) 0));

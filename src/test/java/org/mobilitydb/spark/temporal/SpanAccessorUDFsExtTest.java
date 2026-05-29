@@ -26,6 +26,7 @@
 package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
+import org.mobilitydb.spark.MeosTestBase;
 
 import static functions.functions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * MEOS function authority: meos/include/meos.h
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class SpanAccessorUDFsExtTest {
+class SpanAccessorUDFsExtTest extends MeosTestBase {
 
     private static String INTSPAN_HEX;
     private static String INTSPANSET_HEX;
@@ -48,9 +49,6 @@ class SpanAccessorUDFsExtTest {
 
     @BeforeAll
     static void initMeos() {
-        meos_initialize();
-        meos_initialize_timezone("UTC");
-
         // intspan [1,10]
         INTSPAN_HEX = span_as_hexwkb(intspan_in("[1, 10]"), (byte) 0);
         // intspanset {[1,5], [8,10]}
