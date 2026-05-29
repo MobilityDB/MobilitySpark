@@ -34,6 +34,7 @@ import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 
 import java.sql.Timestamp;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for generic temporal operations (type-agnostic).
@@ -56,12 +57,10 @@ public final class TemporalUDFs {
 
     // PG epoch is 2000-01-01; Unix epoch is 1970-01-01. Difference = 946684800 s.
     // JMEOS stores PG-epoch µs in the OffsetDateTime's epoch-seconds field.
-    private static final long PG_UNIX_EPOCH_OFFSET_MS = 946684800L * 1000L;
-
     /** Convert a JMEOS OffsetDateTime (PG-epoch µs in epoch-seconds field) to Spark Timestamp. */
     static Timestamp fromJmeosTimestamp(java.time.OffsetDateTime odt) {
         // odt.toEpochSecond() holds the raw PG-epoch µs (not real seconds).
-        long unixEpochMillis = odt.toEpochSecond() / 1000L + PG_UNIX_EPOCH_OFFSET_MS;
+        long unixEpochMillis = odt.toEpochSecond() / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS;
         return new Timestamp(unixEpochMillis);
     }
 
@@ -85,7 +84,7 @@ public final class TemporalUDFs {
             try {
                 Pointer result;
                 if (timeArg instanceof java.sql.Timestamp) {
-                    long pgEpochMicros = (((java.sql.Timestamp) timeArg).getTime() - 946684800L * 1000L) * 1000L;
+                    long pgEpochMicros = (((java.sql.Timestamp) timeArg).getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                     java.time.OffsetDateTime odt = java.time.OffsetDateTime.ofInstant(
                         java.time.Instant.ofEpochSecond(pgEpochMicros, 0),
                         java.time.ZoneOffset.UTC);

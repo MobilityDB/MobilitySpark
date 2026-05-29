@@ -38,6 +38,7 @@ import org.apache.spark.sql.api.java.UDF3;
 import org.apache.spark.sql.types.DataTypes;
 
 import java.util.HexFormat;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for the spatial-pose (pose / poseset / tpose) family.
@@ -256,7 +257,7 @@ public final class PoseUDFs {
                 Pointer g = MeosNative.INSTANCE.pose_to_point(p);
                 if (g == null) return null;
                 double rot = MeosNative.INSTANCE.pose_rotation(p);
-                long micros = (ts.getTime() - 946684800L * 1000L) * 1000L;
+                long micros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 try {
                     Pointer tp = MeosNative.INSTANCE.tgeoinst_make(g, micros);
                     if (tp == null) return null;

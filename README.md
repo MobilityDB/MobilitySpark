@@ -16,6 +16,14 @@ The MobilityDB project is developed by the Computer & Decision Engineering Depar
 
 More information about MobilityDB, including publications, presentations, etc., can be found in the MobilityDB [website](https://mobilitydb.com).
 
+### For contributors and reviewers
+
+- Reviewing a pull request?  See the
+  [PR Reviewer Guide](doc/contributing/reviewer-guide.md) — tier ranking,
+  dependency chains and the standards checklist.  Reviewers landing in
+  any of the three platform repos (MobilityDB / MobilityDuck /
+  MobilitySpark) find the same canonical structure at the same path.
+
 
 ## Table of Contents
 

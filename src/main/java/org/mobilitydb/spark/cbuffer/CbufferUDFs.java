@@ -39,6 +39,7 @@ import org.apache.spark.sql.types.DataTypes;
 
 import java.sql.Timestamp;
 import java.util.HexFormat;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for the circular-buffer (cbuffer / cbufferset / tcbuffer)
@@ -63,10 +64,8 @@ public final class CbufferUDFs {
     // interpType enum (meos.h): INTERP_NONE=0, DISCRETE=1, STEP=2, LINEAR=3
     private static final int INTERP_LINEAR = 3;
 
-    private static final long PG_UNIX_OFFSET_MS = 946684800L * 1000L;
-
     private static long toPgEpochMicros(Timestamp ts) {
-        return (ts.getTime() - PG_UNIX_OFFSET_MS) * 1000L;
+        return (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
     }
 
     // size_t out-param buffer for *_as_hexwkb (writes the byte count there).

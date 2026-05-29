@@ -41,6 +41,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for temporal structure and value accessors not covered by
@@ -57,11 +58,9 @@ public final class MoreAccessorUDFs {
     private MoreAccessorUDFs() {}
 
     // Milliseconds from Unix epoch (1970-01-01) to PG epoch (2000-01-01).
-    private static final long PG_UNIX_EPOCH_OFFSET_MS = 946684800L * 1000L;
-
     /** Convert a raw PG-epoch microsecond value to a Spark Timestamp. */
     static Timestamp fromPgMicros(long pgMicros) {
-        return new Timestamp(pgMicros / 1000L + PG_UNIX_EPOCH_OFFSET_MS);
+        return new Timestamp(pgMicros / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS);
     }
 
     // ------------------------------------------------------------------
@@ -568,7 +567,7 @@ public final class MoreAccessorUDFs {
             Pointer ptr = functions.temporal_from_hexwkb(tval);
             if (ptr == null) return null;
             try {
-                long pgEpochMicros = (ts.getTime() - PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
+                long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
                 Pointer outVal = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(1);
@@ -588,7 +587,7 @@ public final class MoreAccessorUDFs {
             Pointer ptr = functions.temporal_from_hexwkb(tval);
             if (ptr == null) return null;
             try {
-                long pgEpochMicros = (ts.getTime() - PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
+                long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
                 Pointer outVal = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
@@ -608,7 +607,7 @@ public final class MoreAccessorUDFs {
             Pointer ptr = functions.temporal_from_hexwkb(tval);
             if (ptr == null) return null;
             try {
-                long pgEpochMicros = (ts.getTime() - PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
+                long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
                 Pointer outVal = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
@@ -630,7 +629,7 @@ public final class MoreAccessorUDFs {
             Pointer ptr = functions.temporal_from_hexwkb(tval);
             if (ptr == null) return null;
             try {
-                long pgEpochMicros = (ts.getTime() - PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
+                long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
                 Pointer outBuf = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
@@ -717,8 +716,6 @@ public final class MoreAccessorUDFs {
     // palloc'd and must be freed after use.
     // ------------------------------------------------------------------
 
-    private static final long PG_UNIX_OFFSET_MS = 946684800L * 1000L;
-
     // temporalTimestamps(hex STRING) → ARRAY<TIMESTAMP>
     // Returns the distinct timestamps at which the temporal has an instant.
     public static final UDF1<String, List<Timestamp>> temporalTimestamps =
@@ -735,7 +732,7 @@ public final class MoreAccessorUDFs {
                 List<Timestamp> result = new ArrayList<>(count);
                 for (int i = 0; i < count; i++) {
                     long pgMicros = arrPtr.getLong((long) i * 8);
-                    result.add(new Timestamp(pgMicros / 1000L + PG_UNIX_OFFSET_MS));
+                    result.add(new Timestamp(pgMicros / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS));
                 }
                 MeosMemory.free(arrPtr);
                 return result;

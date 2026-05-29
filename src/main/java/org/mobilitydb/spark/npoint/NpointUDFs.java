@@ -41,6 +41,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
+import org.mobilitydb.spark.util.TimeUtil;
 
 /**
  * Spark SQL UDFs for the network-point (npoint / nsegment / npointset /
@@ -259,7 +260,7 @@ public final class NpointUDFs {
             Pointer np = MeosNative.INSTANCE.npoint_from_hexwkb(npHex);
             if (np == null) return null;
             try {
-                long micros = (ts.getTime() - 946684800L * 1000L) * 1000L;
+                long micros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 Pointer r = MeosNative.INSTANCE.tnpointinst_make(np, micros);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
