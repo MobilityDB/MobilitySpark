@@ -75,6 +75,19 @@ class NativeMemoryLeakTest extends MeosTestBase {
     private static final String GEOM_WKT = "POINT(0.05 0.0)";
     private static final String PERIOD   = "[2020-01-01 00:00:00+00, 2020-01-01 00:30:00+00]";
 
+    /**
+     * Minimal libc binding used only to return glibc's freed malloc arenas to
+     * the OS before sampling VmRSS, so the RSS proxy reflects genuinely-retained
+     * native allocations (real leaks) rather than per-arena fragmentation that
+     * varies by glibc version. glibc-only; null (and skipped) elsewhere.
+     */
+    public interface LibC { int malloc_trim(int pad); }
+    private static final LibC LIBC = loadLibC();
+    private static LibC loadLibC() {
+        try { return jnr.ffi.LibraryLoader.create(LibC.class).load("c"); }
+        catch (Throwable t) { return null; }
+    }
+
     @BeforeAll
     static void initMeos() {
         TRIP_HEX = temporal_as_hexwkb(
@@ -102,6 +115,13 @@ class NativeMemoryLeakTest extends MeosTestBase {
         System.gc();
         System.runFinalization();
         System.gc();
+        // Return glibc's freed arenas to the OS so VmRSS measures retained
+        // native memory, not arena fragmentation left behind by large transient
+        // allocations (e.g. the merged trajectory geometry). A genuine leak is
+        // still resident after the trim and trips the assert.
+        if (LIBC != null) {
+            try { LIBC.malloc_trim(0); } catch (Throwable ignored) {}
+        }
     }
 
     private static void assertNoLeak(long beforeKb, long afterKb, String udfName) {
