@@ -59,6 +59,9 @@ public final class CbufferUDFs {
 
     private CbufferUDFs() {}
 
+    // interpType enum (meos.h): INTERP_NONE=0, DISCRETE=1, STEP=2, LINEAR=3
+    private static final int INTERP_LINEAR = 3;
+
     private static final long PG_UNIX_OFFSET_MS = 946684800L * 1000L;
 
     private static long toPgEpochMicros(Timestamp ts) {
@@ -327,7 +330,7 @@ public final class CbufferUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequence(p, 3 /* LINEAR interpType (meos.h) */);
+                Pointer r = functions.temporal_to_tsequence(p, INTERP_LINEAR);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -341,7 +344,7 @@ public final class CbufferUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequenceset(p, 3 /* LINEAR interpType (meos.h) */);
+                Pointer r = functions.temporal_to_tsequenceset(p, INTERP_LINEAR);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -349,8 +352,6 @@ public final class CbufferUDFs {
         };
 
     // tcbufferSeqSetGaps(tcbuffer[], maxt) — generic tsequenceset_make_gaps,
-    // LINEAR interpolation (tcbuffer is continuous).
-    private static final int INTERP_LINEAR = 3;
 
     public static final UDF2<String[], String, String> tcbufferSeqSetGaps =
         (instants, maxt) -> {

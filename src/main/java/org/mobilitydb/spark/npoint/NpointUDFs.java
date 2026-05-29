@@ -64,6 +64,9 @@ public final class NpointUDFs {
 
     private NpointUDFs() {}
 
+    // interpType enum (meos.h): INTERP_NONE=0, DISCRETE=1, STEP=2, LINEAR=3
+    private static final int INTERP_LINEAR = 3;
+
     private static Pointer sizeOut() {
         return Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
     }
@@ -335,7 +338,7 @@ public final class NpointUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequence(p, 3 /* LINEAR interpType (meos.h) */);
+                Pointer r = functions.temporal_to_tsequence(p, INTERP_LINEAR);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -349,14 +352,13 @@ public final class NpointUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequenceset(p, 3 /* LINEAR interpType (meos.h) */);
+                Pointer r = functions.temporal_to_tsequenceset(p, INTERP_LINEAR);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
 
-    private static final int INTERP_LINEAR = 3;
 
     public static final UDF2<String[], String, String> tnpointSeqSetGaps =
         (instants, maxt) -> {
