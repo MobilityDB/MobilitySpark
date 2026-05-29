@@ -271,4 +271,112 @@ class AggregateUDAFsTest extends MeosTestBase {
         assertNotNull(result);
         assertFalse(result.isBlank());
     }
+
+    // ------------------------------------------------------------------
+    // tAvg
+    // ------------------------------------------------------------------
+
+    @Test @Order(17)
+    void tAvg_two_tfloats_returns_nonnull() {
+        AggregateUDAFs.TAvgFn agg = new AggregateUDAFs.TAvgFn();
+        String buf = agg.zero();
+        buf = agg.reduce(buf, TFLOAT1);
+        buf = agg.reduce(buf, TFLOAT2);
+        String result = agg.finish(buf);
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(18)
+    void tAvg_tint_returns_nonnull() {
+        AggregateUDAFs.TAvgFn agg = new AggregateUDAFs.TAvgFn();
+        String buf = agg.reduce(agg.zero(), TINT1);
+        buf = agg.reduce(buf, TINT2);
+        String result = agg.finish(buf);
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(19)
+    void tAvg_empty_input_returns_null() {
+        AggregateUDAFs.TAvgFn agg = new AggregateUDAFs.TAvgFn();
+        assertNull(agg.finish(agg.zero()));
+    }
+
+    // ------------------------------------------------------------------
+    // setUnion / spanUnion / merge
+    // ------------------------------------------------------------------
+
+    @Test @Order(20)
+    void setUnion_two_intsets_returns_nonnull() {
+        AggregateUDAFs.SetUnionFn agg = new AggregateUDAFs.SetUnionFn();
+        String s1 = set_as_hexwkb(intset_in("{1, 2, 3}"), (byte) 0);
+        String s2 = set_as_hexwkb(intset_in("{3, 4, 5}"), (byte) 0);
+        String result = agg.finish(agg.reduce(agg.reduce(agg.zero(), s1), s2));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(21)
+    void spanUnion_two_intspans_returns_nonnull() {
+        AggregateUDAFs.SpanUnionFn agg = new AggregateUDAFs.SpanUnionFn();
+        String a = span_as_hexwkb(intspan_in("[1, 5]"), (byte) 0);
+        String b = span_as_hexwkb(intspan_in("[10, 20]"), (byte) 0);
+        String result = agg.finish(agg.reduce(agg.reduce(agg.zero(), a), b));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(22)
+    void merge_two_disjoint_tints_returns_nonnull() {
+        AggregateUDAFs.MergeFn agg = new AggregateUDAFs.MergeFn();
+        String m1 = temporal_as_hexwkb(tint_in("[1@2020-01-01, 2@2020-01-02]"), (byte) 0);
+        String m2 = temporal_as_hexwkb(tint_in("[3@2020-01-03, 4@2020-01-04]"), (byte) 0);
+        String result = agg.finish(agg.reduce(agg.reduce(agg.zero(), m1), m2));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(23)
+    void setUnion_empty_input_returns_null() {
+        AggregateUDAFs.SetUnionFn agg = new AggregateUDAFs.SetUnionFn();
+        assertNull(agg.finish(agg.zero()));
+    }
+
+    // ------------------------------------------------------------------
+    // windowed aggregates (input encodes "temporalHex|intervalText")
+    // ------------------------------------------------------------------
+
+    @Test @Order(24)
+    void wIntSum_returns_nonnull() {
+        AggregateUDAFs.WIntSumFn agg = new AggregateUDAFs.WIntSumFn();
+        String enc = TINT1 + "|1 day";
+        String result = agg.finish(agg.reduce(agg.zero(), enc));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(25)
+    void wFloatMax_returns_nonnull() {
+        AggregateUDAFs.WFloatMaxFn agg = new AggregateUDAFs.WFloatMaxFn();
+        String enc = TFLOAT1 + "|1 day";
+        String result = agg.finish(agg.reduce(agg.zero(), enc));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(26)
+    void wAvg_returns_nonnull() {
+        AggregateUDAFs.WAvgFn agg = new AggregateUDAFs.WAvgFn();
+        String enc = TFLOAT1 + "|1 day";
+        String result = agg.finish(agg.reduce(agg.zero(), enc));
+        assertNotNull(result);
+        assertFalse(result.isBlank());
+    }
+
+    @Test @Order(27)
+    void windowed_empty_input_returns_null() {
+        AggregateUDAFs.WIntSumFn agg = new AggregateUDAFs.WIntSumFn();
+        assertNull(agg.finish(agg.zero()));
+    }
 }

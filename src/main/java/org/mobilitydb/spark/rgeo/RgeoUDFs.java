@@ -67,6 +67,7 @@ import java.util.HexFormat;
  */
 public final class RgeoUDFs {
 
+
     private RgeoUDFs() {}
 
     // interpType enum (meos.h): INTERP_NONE=0, DISCRETE=1, STEP=2, LINEAR=3

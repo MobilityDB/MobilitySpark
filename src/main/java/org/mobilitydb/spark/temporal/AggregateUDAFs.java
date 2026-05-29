@@ -100,6 +100,26 @@ public final class AggregateUDAFs {
         }
     }
 
+    /** Serialize a Set Pointer to hex-WKB and free it. */
+    private static String setHex(Pointer p) {
+        if (p == null) return null;
+        try {
+            return functions.set_as_hexwkb(p, (byte) 0);
+        } finally {
+            MeosMemory.free(p);
+        }
+    }
+
+    /** Serialize a SpanSet Pointer to hex-WKB and free it. */
+    private static String spansetHex(Pointer p) {
+        if (p == null) return null;
+        try {
+            return functions.spanset_as_hexwkb(p, (byte) 0);
+        } finally {
+            MeosMemory.free(p);
+        }
+    }
+
     // ------------------------------------------------------------------
     // tCount — count how many temporal values are defined at each instant
     // Returns: tint hex-WKB
@@ -369,6 +389,37 @@ public final class AggregateUDAFs {
     }
 
     // ------------------------------------------------------------------
+    // tAvg — temporal average of a tnumber (tint or tfloat)
+    // MEOS: tnumber_tavg_transfn + tnumber_tavg_finalfn
+    // Returns: tfloat hex-WKB
+    // ------------------------------------------------------------------
+    public static final class TAvgFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+
+        @Override public String finish(String buf) {
+            MeosThread.ensureReady();
+            String[] hexes = entries(buf);
+            if (hexes.length == 0) return null;
+            Pointer state = null;
+            for (String hex : hexes) {
+                Pointer inp = functions.temporal_from_hexwkb(hex);
+                if (inp == null) continue;
+                Pointer next = functions.tnumber_tavg_transfn(state, inp);
+                MeosMemory.free(inp);
+                state = next;
+            }
+            if (state == null) return null;
+            return hexOut(functions.tnumber_tavg_finalfn(state));
+        }
+
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    // ------------------------------------------------------------------
     // tTextMin / tTextMax — temporal aggregates on ttext
     // Returns: ttext hex-WKB
     // ------------------------------------------------------------------
@@ -489,6 +540,183 @@ public final class AggregateUDAFs {
     }
 
     // ------------------------------------------------------------------
+    // setUnion - union of sets into a set
+    // MEOS: set_union_transfn + set_union_finalfn
+    // Returns: set hex-WKB
+    // ------------------------------------------------------------------
+    public static final class SetUnionFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+
+        @Override public String finish(String buf) {
+            MeosThread.ensureReady();
+            String[] hexes = entries(buf);
+            if (hexes.length == 0) return null;
+            Pointer state = null;
+            for (String hex : hexes) {
+                Pointer inp = functions.set_from_hexwkb(hex);
+                if (inp == null) continue;
+                Pointer next = functions.set_union_transfn(state, inp);
+                MeosMemory.free(inp);
+                state = next;
+            }
+            if (state == null) return null;
+            return setHex(functions.set_union_finalfn(state));
+        }
+
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    // ------------------------------------------------------------------
+    // spanUnion - union of spans into a span set
+    // MEOS: span_union_transfn + spanset_union_finalfn
+    // Returns: spanset hex-WKB
+    // ------------------------------------------------------------------
+    public static final class SpanUnionFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+
+        @Override public String finish(String buf) {
+            MeosThread.ensureReady();
+            String[] hexes = entries(buf);
+            if (hexes.length == 0) return null;
+            Pointer state = null;
+            for (String hex : hexes) {
+                Pointer inp = functions.span_from_hexwkb(hex);
+                if (inp == null) continue;
+                Pointer next = functions.span_union_transfn(state, inp);
+                MeosMemory.free(inp);
+                state = next;
+            }
+            if (state == null) return null;
+            return spansetHex(functions.spanset_union_finalfn(state));
+        }
+
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    // ------------------------------------------------------------------
+    // merge - merge temporal values that do not overlap into one temporal
+    // MEOS: temporal_merge_transfn + temporal_tagg_finalfn
+    // Returns: temporal hex-WKB
+    // ------------------------------------------------------------------
+    public static final class MergeFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+
+        @Override public String finish(String buf) {
+            MeosThread.ensureReady();
+            String[] hexes = entries(buf);
+            if (hexes.length == 0) return null;
+            Pointer state = null;
+            for (String hex : hexes) {
+                Pointer inp = functions.temporal_from_hexwkb(hex);
+                if (inp == null) continue;
+                Pointer next = functions.temporal_merge_transfn(state, inp);
+                MeosMemory.free(inp);
+                state = next;
+            }
+            if (state == null) return null;
+            return hexOut(functions.temporal_tagg_finalfn(state));
+        }
+
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    // ------------------------------------------------------------------
+    // Windowed aggregates - a temporal aggregate over a sliding window.
+    // MobilityDB's wMax/wMin/wSum/wAvg take a constant window interval; Spark
+    // UDAFs are single-input, so each row carries "temporalHex|intervalText"
+    // (the interval is constant across the group). MEOS: *_w*_transfn(state,
+    // temporal, interval) + temporal_tagg_finalfn. Returns: temporal hex-WKB.
+    // ------------------------------------------------------------------
+    public abstract static class WindowedFn extends Aggregator<String, String, String>
+            implements Serializable {
+        /** Apply the type-specific windowed transition function. */
+        protected abstract Pointer transfn(Pointer state, Pointer temporal, Pointer interval);
+
+        /** Finalize the aggregate state (skiplist final; overridden for avg). */
+        protected Pointer finalfn(Pointer state) {
+            return functions.temporal_tagg_finalfn(state);
+        }
+
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String enc) { return append(buf, enc); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+
+        @Override public String finish(String buf) {
+            MeosThread.ensureReady();
+            String[] rows = entries(buf);
+            if (rows.length == 0) return null;
+            Pointer state = null;
+            for (String enc : rows) {
+                int bar = enc.indexOf('|');
+                if (bar < 0) continue;
+                Pointer t = functions.temporal_from_hexwkb(enc.substring(0, bar));
+                if (t == null) continue;
+                Pointer interval = functions.interval_in(enc.substring(bar + 1), -1);
+                if (interval == null) { MeosMemory.free(t); continue; }
+                Pointer next = transfn(state, t, interval);
+                MeosMemory.free(t);
+                state = next;
+            }
+            if (state == null) return null;
+            return hexOut(finalfn(state));
+        }
+
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    public static final class WIntMaxFn extends WindowedFn {
+        @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
+            return functions.tint_wmax_transfn(s, t, i);
+        }
+    }
+    public static final class WFloatMaxFn extends WindowedFn {
+        @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
+            return functions.tfloat_wmax_transfn(s, t, i);
+        }
+    }
+    public static final class WIntMinFn extends WindowedFn {
+        @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
+            return functions.tint_wmin_transfn(s, t, i);
+        }
+    }
+    public static final class WFloatMinFn extends WindowedFn {
+        @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
+            return functions.tfloat_wmin_transfn(s, t, i);
+        }
+    }
+    public static final class WIntSumFn extends WindowedFn {
+        @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
+            return functions.tint_wsum_transfn(s, t, i);
+        }
+    }
+    public static final class WFloatSumFn extends WindowedFn {
+        @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
+            return functions.tfloat_wsum_transfn(s, t, i);
+        }
+    }
+    public static final class WAvgFn extends WindowedFn {
+        @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
+            return functions.tnumber_wavg_transfn(s, t, i);
+        }
+        @Override protected Pointer finalfn(Pointer state) {
+            return functions.tnumber_tavg_finalfn(state);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // REGISTRATION
     // ------------------------------------------------------------------
 
@@ -502,9 +730,20 @@ public final class AggregateUDAFs {
         spark.udf().register("tFloatMin", org.apache.spark.sql.functions.udaf(new TFloatMinFn(), Encoders.STRING()));
         spark.udf().register("tFloatMax", org.apache.spark.sql.functions.udaf(new TFloatMaxFn(), Encoders.STRING()));
         spark.udf().register("tFloatSum", org.apache.spark.sql.functions.udaf(new TFloatSumFn(), Encoders.STRING()));
+        spark.udf().register("tAvg",      org.apache.spark.sql.functions.udaf(new TAvgFn(),      Encoders.STRING()));
         spark.udf().register("tTextMin",  org.apache.spark.sql.functions.udaf(new TTextMinFn(),  Encoders.STRING()));
         spark.udf().register("tTextMax",  org.apache.spark.sql.functions.udaf(new TTextMaxFn(),  Encoders.STRING()));
         spark.udf().register("tCentroid", org.apache.spark.sql.functions.udaf(new TCentroidFn(), Encoders.STRING()));
         spark.udf().register("tExtent",   org.apache.spark.sql.functions.udaf(new TExtentFn(),   Encoders.STRING()));
+        spark.udf().register("setUnion",  org.apache.spark.sql.functions.udaf(new SetUnionFn(),  Encoders.STRING()));
+        spark.udf().register("spanUnion", org.apache.spark.sql.functions.udaf(new SpanUnionFn(), Encoders.STRING()));
+        spark.udf().register("merge",     org.apache.spark.sql.functions.udaf(new MergeFn(),     Encoders.STRING()));
+        spark.udf().register("wIntMax",   org.apache.spark.sql.functions.udaf(new WIntMaxFn(),   Encoders.STRING()));
+        spark.udf().register("wFloatMax", org.apache.spark.sql.functions.udaf(new WFloatMaxFn(), Encoders.STRING()));
+        spark.udf().register("wIntMin",   org.apache.spark.sql.functions.udaf(new WIntMinFn(),   Encoders.STRING()));
+        spark.udf().register("wFloatMin", org.apache.spark.sql.functions.udaf(new WFloatMinFn(), Encoders.STRING()));
+        spark.udf().register("wIntSum",   org.apache.spark.sql.functions.udaf(new WIntSumFn(),   Encoders.STRING()));
+        spark.udf().register("wFloatSum", org.apache.spark.sql.functions.udaf(new WFloatSumFn(), Encoders.STRING()));
+        spark.udf().register("wAvg",      org.apache.spark.sql.functions.udaf(new WAvgFn(),      Encoders.STRING()));
     }
 }

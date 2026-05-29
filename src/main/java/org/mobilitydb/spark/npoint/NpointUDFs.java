@@ -62,6 +62,7 @@ import java.util.List;
  */
 public final class NpointUDFs {
 
+
     private NpointUDFs() {}
 
     // interpType enum (meos.h): INTERP_NONE=0, DISCRETE=1, STEP=2, LINEAR=3

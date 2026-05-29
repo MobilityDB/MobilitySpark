@@ -57,6 +57,7 @@ import java.util.HexFormat;
  */
 public final class CbufferUDFs {
 
+
     private CbufferUDFs() {}
 
     // interpType enum (meos.h): INTERP_NONE=0, DISCRETE=1, STEP=2, LINEAR=3

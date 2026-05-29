@@ -35,6 +35,8 @@ jobs:
       - name: Install libmeos runtime dependencies
         run: |
           sudo apt-get update -qq
+          # proj-data + libh3-1 are required by the th3index libmeos.so:
+          # libmeos NEEDs libh3.so.1, and geodetic transforms need PROJ data.
           sudo apt-get install -y libjson-c5 libgeos-c1t64 libproj25 proj-data libgsl27 libh3-1
 
       - name: Set up libmeos.so and LD_LIBRARY_PATH
