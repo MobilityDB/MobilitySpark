@@ -136,8 +136,35 @@ public final class MobilitySparkSession implements AutoCloseable {
         RestrictionUDFs.registerAll(spark);
         TransformUDFs.registerAll(spark);
         AggregateUDAFs.registerAll(spark);
-        org.mobilitydb.spark.h3.Th3IndexUDFs.registerAll(spark);
+        // Optional th3index family. It lives in its own package and is included
+        // by default; passing -DH3=OFF drops that package from compilation,
+        // mirroring the MEOS/MobilityDB CMake option. An excluded package is
+        // absent from the classpath, so registerFamily skips it with zero
+        // residue — the Java analogue of the C `#if H3` compile guard.
+        registerFamily(spark, "org.mobilitydb.spark.h3.Th3IndexUDFs");
         return new MobilitySparkSession();
+    }
+
+    /**
+     * Registers an optional family's UDFs by reflectively invoking its static
+     * {@code registerAll(SparkSession)} method. When the family was excluded at
+     * build time its class is absent from the classpath, so registration is
+     * skipped — the Java analogue of the MEOS {@code #if H3} compile guard.
+     * Any other reflective failure indicates a wiring error and is rethrown.
+     */
+    private static void registerFamily(SparkSession spark, String className) {
+        final Class<?> cls;
+        try {
+            cls = Class.forName(className);
+        } catch (ClassNotFoundException excluded) {
+            return; // family disabled at build time (e.g. -DH3=OFF)
+        }
+        try {
+            cls.getMethod("registerAll", SparkSession.class).invoke(null, spark);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(
+                "Failed to register temporal family " + className, e);
+        }
     }
 
     /**

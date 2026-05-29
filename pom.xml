@@ -60,6 +60,16 @@
 
     <build>
         <plugins>
+            <!-- Declared so the exclude-h3 profile below can attach the
+                 th3index source <excludes>. The th3index family lives in its
+                 own package and is included by default; passing -DH3=OFF
+                 excludes it from compilation, mirroring the MEOS/MobilityDB
+                 CMake option. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
             <!-- Produce a fat jar that includes jnr-ffi + JMEOS -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -118,4 +128,41 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- The th3index family is selectable at build time, mirroring the
+         MEOS/MobilityDB CMake option. It is included by default; pass -DH3=OFF
+         to drop its package from compilation. Reflective registration in
+         MobilitySparkSession then omits the absent registrar, so the type
+         disappears from the UDF surface with zero residue. Disabling H3 also
+         drops the BerlinMOD demo and examples that materialise the th3index
+         trip column, since they reference the th3index surface.
+
+           mvn package            # includes th3index
+           mvn package -DH3=OFF   # drops th3index + its demo -->
+    <profiles>
+        <profile>
+            <id>exclude-h3</id>
+            <activation>
+                <property><name>H3</name><value>OFF</value></property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.children="append">
+                                <exclude>**/spark/h3/**</exclude>
+                                <exclude>**/spark/demo/**</exclude>
+                                <exclude>**/spark/examples/N03BerlinMOD.java</exclude>
+                            </excludes>
+                            <testExcludes combine.children="append">
+                                <testExclude>**/NativeMemoryLeakTest.java</testExclude>
+                            </testExcludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

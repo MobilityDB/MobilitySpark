@@ -73,6 +73,16 @@ jobs:
       - name: Compile
         run: mvn -B compile
 
+      - name: Verify the H3 flag excludes the th3index package
+        run: |
+          mvn -B clean compile -DH3=OFF
+          for f in h3 demo; do
+            if [ -d "target/classes/org/mobilitydb/spark/$f" ]; then
+              echo "ERROR: $f package compiled despite -DH3=OFF"; exit 1
+            fi
+          done
+          mvn -B clean compile
+
       - name: Unit tests
         run: mvn -B test
 
