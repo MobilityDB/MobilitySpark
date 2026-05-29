@@ -76,6 +76,9 @@ jobs:
       - name: Unit tests
         run: mvn -B test
 
+      - name: Portable bare-name parity gate (RFC #920 — 29/29, 0 unbacked)
+        run: python3 scripts/portable_parity.py --mspark .
+
       - name: Native crash diagnostics
         if: failure()
         run: |

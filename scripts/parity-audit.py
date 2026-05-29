@@ -26,14 +26,14 @@ import sys
 from datetime import date
 
 
-# Type families currently deferred from the active parity sweep.
-# Re-included once the temporal/geo surface stabilises.
-DEFERRED_FAMILIES = {
-    "npoint",
-    "cbuffer",
-    "pose",
-    "rgeo",
-}
+# Type families deferred from the active parity sweep.
+#
+# EMPTY BY INVARIANT. cbuffer / npoint / pose / rgeo are FULL user-facing
+# temporal types and ARE in scope — covered like every other family (RFC
+# #920; MobilityDB#1075 aliases all six). They must never be excluded from
+# the parity headline. Re-deferring any of them is incomplete work, not an
+# accepted end state. Keep this set empty.
+DEFERRED_FAMILIES = set()
 
 
 # Whole SQL sections that are PG-only (no Spark equivalent exists).
@@ -50,6 +50,15 @@ OUT_OF_SCOPE_SECTIONS = {
     "geo/073_tpoint_gist.in.sql",             # GiST support
     "geo/074_tgeo_spgist.in.sql",             # SPGiST support
     "geo/074_tpoint_spgist.in.sql",           # SPGiST support
+    # Sibling-family index plumbing — GiST/GIN opclass-support callbacks
+    # (consistent / extract_query / extract_value / triconsistent), the
+    # exact same PG-only class already excluded for temporal/geo above.
+    # No Spark equivalent: index access methods are PG-internal.
+    "cbuffer/166_tcbuffer_indexes.in.sql",    # GiST support
+    "npoint/092_tnpoint_gin.in.sql",          # GIN support
+    "npoint/098_tnpoint_indexes.in.sql",      # GiST support
+    "pose/114_tpose_indexes.in.sql",          # GiST support
+    "rgeo/134_trgeo_indexes.in.sql",          # GiST support
 }
 
 
@@ -370,10 +379,18 @@ def write_report(out_path, mdb_section_funcs, mdb_section_op_count,
         f"appendix B; not counted in the headline."
     )
     lines.append("")
-    lines.append(
-        f"**Deferred families** ({', '.join(sorted(DEFERRED_FAMILIES))}) "
-        "appear in appendix C and are also excluded from the headline."
-    )
+    if DEFERRED_FAMILIES:
+        lines.append(
+            f"**Deferred families** ({', '.join(sorted(DEFERRED_FAMILIES))}) "
+            "appear in appendix C and are also excluded from the headline."
+        )
+    else:
+        lines.append(
+            "**All six type families in scope** (temporal, geo, cbuffer, "
+            "npoint, pose, rgeo). None is deferred or excluded from the "
+            "headline — they are full user-facing temporal types covered "
+            "like every other family (RFC #920; MobilityDB#1075)."
+        )
     lines.append("")
     lines.append(
         "**Methodology**: parsed `CREATE FUNCTION` from "
@@ -442,10 +459,15 @@ def write_report(out_path, mdb_section_funcs, mdb_section_op_count,
         "aggregate transition/combine/final/serialize callbacks, planner "
         "hooks (`_sel`, `_joinsel`, `_supportfn`, `_analyze`), text/binary "
         "I/O helpers (`_in`, `_out`, `_recv`, `_send`), type modifier "
-        "helpers, the `999_oid_cache` PG catalog hook, and PG geometric "
-        "type constructors (`019_geo_constructors`).  None of them have "
-        "Spark equivalents and they should not be implemented; listed "
-        "here only for completeness."
+        "helpers, the `999_oid_cache` PG catalog hook, PG geometric "
+        "type constructors (`019_geo_constructors`), and the sibling-family "
+        "GiST/GIN index opclass-support callbacks "
+        "(`cbuffer/166_tcbuffer_indexes`, `npoint/092_tnpoint_gin`, "
+        "`npoint/098_tnpoint_indexes`, `pose/114_tpose_indexes`, "
+        "`rgeo/134_trgeo_indexes` — the same index-plumbing class already "
+        "excluded for temporal/geo).  None of them have Spark equivalents "
+        "and they should not be implemented; listed here only for "
+        "completeness."
     )
     lines.append("")
     if out_of_scope_results:

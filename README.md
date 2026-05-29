@@ -1,175 +1,317 @@
-MobilitySpark
-=============
+# MobilitySpark
 
-[MEOS (Mobility Engine, Open Source)](https://www.libmeos.org/) is a C library that enables the
-manipulation of temporal and spatiotemporal data based on
-[MobilityDB](https://mobilitydb.com/)'s data types and functions.
+An open-source large-scale geospatial trajectory data analytics platform based on [Spark](https://spark.apache.org/).
 
-MobilitySpark is a binding for [Apache Spark](https://spark.apache.org/) built on top of MEOS
-via [JMEOS](https://github.com/MobilityDB/JMEOS) (the Java binding for MEOS).
+::: note 📝
 
-<img src="doc/images/mobilitydb-logo.svg" width="200" alt="MobilityDB Logo" />
+MobilitySpark explores the advantages of [MobilityDB](https://github.com/MobilityDB/MobilityDB) datatypes and functions in the Spark environment. However, it should be noted that the current implementation is not a full implementation and is still far from complete.
 
-The MobilityDB project is developed by the Computer & Decision Engineering Department of the
-[Université libre de Bruxelles](https://www.ulb.be/) (ULB) under the direction of
-[Prof. Esteban Zimányi](http://cs.ulb.ac.be/members/esteban/).
-ULB is an OGC Associate Member and member of the OGC Moving Feature Standard Working Group
-([MF-SWG](https://www.ogc.org/projects/groups/movfeatswg)).
+:::
 
-<img src="doc/images/OGC_Associate_Member_3DR.png" width="100" alt="OGC Associate Member Logo" />
+<img src="images/mobilitydb-logo.svg" width="200" alt="MobilityDB Logo" />
 
----
+The MobilityDB project is developed by the Computer & Decision Engineering Department of the [Université libre de Bruxelles](https://www.ulb.be/) (ULB) under the direction of [Prof. Esteban Zimányi](http://cs.ulb.ac.be/members/esteban/). ULB is an OGC Associate Member and member of the OGC Moving Feature Standard Working Group ([MF-SWG](https://www.ogc.org/projects/groups/movfeatswg)).
 
-## 1. Requirements
+<img src="images/OGC_Associate_Member_3DR.png" width="100" alt="OGC Associate Member Logo" />
 
-- **Java 21** (OpenJDK or Temurin)
-- **Apache Maven 3.8+**
-- **Apache Spark 3.5** (provided at runtime; not needed to compile)
-- **JMEOS 1.4** — bundled in `libs/JMEOS-1.4.jar`
-  (the Java binding for MEOS 1.4; includes `libmeos.so` for Linux).
-  A small `MeosNative.java` supplement covers ~70 MEOS-1.4-renamed
-  symbols not yet in the released JAR.
+More information about MobilityDB, including publications, presentations, etc., can be found in the MobilityDB [website](https://mobilitydb.com).
 
----
 
-## 2. Building MobilitySpark
+## Table of Contents
 
-### Clone the repository
+- [Features](https://github.com/MobilityDB/MobilitySpark#features)
+- [Requirement](https://github.com/MobilityDB/MobilitySpark#requirements)
+- [Installation](https://github.com/MobilityDB/MobilitySpark#build-the-project)
+- [Usage](https://github.com/MobilityDB/MobilitySpark#usage)
+- [Understanding SparkMeos](https://github.com/MobilityDB/MobilitySpark#understanding-sparkmeos)
+    - [The Code Structure](https://github.com/MobilityDB/MobilitySpark#the-code-structure)
+    - [UDTs](https://github.com/MobilityDB/MobilitySpark#udts)
+    - [UDFs](https://github.com/MobilityDB/MobilitySpark#udfs)
+- [Future Work](https://github.com/MobilityDB/MobilitySpark#future-work)
 
-```sh
-git clone https://github.com/MobilityDB/MobilitySpark.git
-cd MobilitySpark
+## Features
+
+- ✅ Common user-defined-type (UDT) implementation, defined as MeosDatatype.
+    - Includes instantiation of some MobilityDB types such as PeriodUDT, PeriodSetUDT, TimestampSetUDT.
+- 📝 Some functions defined as UDF’s.
+- 🌟 Examples.
+
+## Requirements
+
+- 🚀 MobilityDB installed with MEOS
+- 🔧 JMEOS working version
+- ⚡ Spark 3.4.0
+- 📝 Maven 4
+- ☕ Java 17 (recommended)
+
+## Usage
+
+### Build the project
+
+First, make sure to have installed Maven in your machine. In case of MacOS, you can install via [Homebrew](https://formulae.brew.sh/formula/maven). The other step will be to install MobilityDB with MEOS in your machine, as the meos library files are required. To install MobilityDB with MEOS please follow the following instructions in your terminal:
+
+```bash
+git clone https://github.com/MobilityDB/MobilityDB
+mkdir MobilityDB/build
+cd MobilityDB/build
+**cmake -D MEOS=ON.. // This flag is important, to indicate the installer to build with the meos tools.**
+make
+sudo make install
 ```
 
-### Compile
+Once done, we can proceed to build the project. Spark will be downloaded as a maven dependency automatically, and JMEOS is already packaged within the project.
 
-```sh
-mvn compile
-```
+To build the project using Maven command-line tools, follow these steps:
 
-### Package (fat jar for `spark-submit`)
+1. Open a terminal or command prompt.
+2. Navigate to the directory where the project's `pom.xml` file is located.
+3. Run the command `mvn clean install` to build the project and create the JAR file.
+4. Once the build is complete, the JAR file can be found in the `target` directory.
 
-```sh
-mvn package -DskipTests
-```
+Note that you may need to have Maven installed on your system in order to run the command.
 
-The fat jar is written to `target/mobilityspark-0.1.0-SNAPSHOT-spark.jar`.
+### Set up Intellij IDEA (Optional)
 
----
-
-## 3. Using MobilitySpark
-
-### 3.1. Initialise MEOS and register UDFs
+Additionally, if you are using Intellij IDEA you can use similar setup to run your spark project.
 
 ```java
-SparkSession spark = SparkSession.builder().master("local[2]").getOrCreate();
-try (MobilitySparkSession ms = MobilitySparkSession.create(spark)) {
-    // All UDFs are now available in Spark SQL
-    spark.sql("SELECT atTime(trip, TIMESTAMP '2020-01-01 00:30:00') FROM trips").show();
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Spark" type="Application" factoryName="Application">
+    <envs>
+      <env name="SPARK_LOCAL_IP" value="10.93.44.4" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="org.mobiltydb.Examples.AISDatasetExample" />
+    <module name="SparkMeos" />
+    <option name="PROGRAM_PARAMETERS" value="-c spark.driver.bindAddress=127.0.0.1" />
+    <option name="VM_PARAMETERS" value="--add-exports=java.base/sun.nio.ch=ALL-UNNAMED " />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
+```
+
+### Running the examples
+
+::: note 📝
+
+Please note that the examples provided in MobilitySpark are for simple demonstration purposes only. They do not represent a full implementation of the MEOS functionality and should not be used as such. However, they do provide a good starting point for understanding how Spark interacts with MEOS.
+
+:::
+
+Once you have built the project run the command:
+
+```bash
+java --add-exports java.base/sun.nio.ch=ALL-UNNAMED \
+     --add-exports java.base/sun.security.action=ALL-UNNAMED \
+     --add-opens java.base/java.nio=ALL-UNNAMED \
+     --add-opens java.base/java.lang=ALL-UNNAMED \
+     -cp target/classes/ org.mobiltydb.Examples.<EXAMPLE>
+```
+
+where <EXAMPLE>, is the name of the example class to execute.
+
+It is recommended though to run the example directly in IntelliJ idea with the following VM configurations:
+
+```bash
+--add-exports
+java.base/sun.nio.ch=ALL-UNNAMED
+--add-exports
+java.base/sun.security.action=ALL-UNNAMED
+--add-opens
+java.base/java.nio=ALL-UNNAMED
+--add-opens
+java.base/java.lang=ALL-UNNAMED
+```
+
+### AIS Dataset
+
+We also implemented AIS Dataset example.
+
+```java
+// Read AIS Dataset
+        ais = ais.withColumn("point", callUDF("tGeogPointIn", col("latitude"), col("longitude"), col("t")))
+                        .withColumn("sog", callUDF("tFloatIn", col("sog"), col("t")));
+        ais = ais.drop("latitude", "longitude");
+        ais.show();
+```
+
+In the example, we did aggregation using spark and custom UDF from SparkMeos to assemble the dataset.
+
+```java
+// Assemble AIS Dataset
+        Dataset<Row> trajectories = ais.groupBy("mmsi")
+                .agg(callUDF("tGeogPointSeqIn", functions.collect_list(col("point"))).as("trajectory"),
+                        callUDF("tFloatSeqIn", functions.collect_list(col("sog"))).as("sog"));
+        trajectories.show();
+```
+
+Furthermore, we did simple analytics.
+
+```java
+Dataset<Row> originalCounts = ais.groupBy("mmsi")
+                .count()
+                .withColumnRenamed("count", "original #points");
+
+        Dataset<Row> instantsCounts = trajectories
+                .withColumn("SparkMEOS #points", callUDF("tGeogPointSeqNumInstant", trajectories.col("trajectory")));
+
+        Dataset<Row> startTimeStamp = trajectories
+                .withColumn("Start Timestamp", callUDF("tGeogPointSeqStartTimestamp", trajectories.col("trajectory")));
+
+        originalCounts.join(instantsCounts, "mmsi").join(startTimeStamp, "mmsi").
+                select("mmsi", "SparkMEOS #points", "original #points", "Start Timestamp").show();
+```
+
+## Understanding SparkMeos
+
+### The Code Structure
+
+The SparkMeos project is divided mainly into two folders: `UDTs` and `UDFs`, as well as a `utils` folder. The `UDTs` folder contains the user-defined types that have been implemented in the project, while the `UDFs` folder contains the user-defined functions. The `utils` folder contains utility classes that are used throughout the project.
+
+This structure allows for easy organization and management of the project's components, making it easier to maintain and further develop the project.
+
+### UDTs
+
+The `MeosDatatype<T>` class in SparkMeos is the core class of the project. It has the signature `public abstract class MeosDatatype<T> extends UserDefinedType<T>`. All UDTs in SparkMeos should inherit from this class to implement their behavior. The class assumes that all Meos datatypes utilize a BinaryType datatype for standardization purposes. The serialization and deserialization methods are already implemented in the class, and the only methods that need to be redefined when creating a `MeosDatatype<T>` are `userClass()`, specifying the JMEOS class that this datatype is linked to, and `fromString(String s)`, to create the object from a string.
+
+For example, let’s evaluate the implementation of the PeriodUDT:
+
+```java
+@SQLUserDefinedType(udt = PeriodUDT.class)
+public class PeriodUDT extends MeosDatatype<Period> {
+    /**
+     * Provides the Java class associated with this UDT.
+     * @return The Period class type.
+     */
+    @Override
+    public Class<Period> userClass() {
+        return Period.class;
+    }
+    @Override
+    protected Period fromString(String s) throws SQLException{
+        return new Period(s);
+    }
 }
 ```
 
-### 3.2. Available UDFs
+The previous code block is written in Java and defines the implementation of the `PeriodUDT` user-defined type in the SparkMeos project. It includes the class signature, annotations, and inheritance of the `MeosDatatype` class, which is the core class of the project. The `PeriodUDT` class overrides two methods, `userClass()` and `fromString(String s)`, to specify the JMEOS class that this datatype is linked to and to create the object from a string, respectively. The `@SQLUserDefinedType` annotation is used to specify the UDT class that the `PeriodUDT` class is associated with.
 
-MobilitySpark covers **100% of MobilityDB's active addressable SQL surface**
-(858/858 functions) — the same audit methodology runs against MobilityDuck
-to keep both bindings in lockstep. See
-[`docs/parity-100.md`](docs/parity-100.md) for the achievement note,
-[`docs/parity-status.md`](docs/parity-status.md) for the per-section
-coverage report (regenerable via `python3 scripts/parity-audit.py`),
-and the comprehensive UDF inventory in [PR #5](https://github.com/MobilityDB/MobilitySpark/pull/5).
+Now we can instantiate a Period datatype in Spark!
 
-A small sample (every UDF group in MobilityDB has a Spark equivalent):
+```java
+meos_initialize("UTC");
 
-| UDF | Signature | Description |
-|-----|-----------|-------------|
-| `atTime` | `(STRING, TIMESTAMP) → STRING` | Restrict tgeompoint to a timestamp |
-| `eIntersects` | `(STRING, STRING) → BOOLEAN` | Ever intersects a geometry |
-| `nearestApproachDistance` | `(STRING, STRING) → DOUBLE` | Min distance at any common instant |
-| `eDwithin` | `(STRING, STRING, DOUBLE) → BOOLEAN` | Ever within given distance |
-| `spaceTimeTiles` | `(STRING, DOUBLE×3, STRING, STRING, TIMESTAMP, BOOLEAN) → ARRAY<STRING>` | Multidimensional tiling for parallel partitioning |
-| `tfloatSeqSetGaps` | `(ARRAY<STRING>, STRING, DOUBLE, STRING) → STRING` | Build a tfloat sequence-set with gap detection |
+        SparkSession spark = SparkSession
+                .builder()
+                .appName("Java Spark SQL basic example")
+                .config("spark.master", "local")
+                .getOrCreate();
 
-All tgeompoint values are stored as **hex-WKB strings** (output of `temporal_as_hexwkb`).
-Geometry values are **hex-EWKB strings** (output of `geo_as_hexewkb`).
-Set / span / spanset / tbox / stbox values follow the same hex-encoding convention.
+        UDTRegistrator.registerUDTs(spark);
+        //UDFRegistrator.registerUDFs(spark);
+        PeriodUDFRegistrator.registerAllUDFs(spark);
+        // Create some example Period objects
+        OffsetDateTime now = OffsetDateTime.now();
+        Period period1 = new Period(now, now.plusHours(1));
+        Period period2 = new Period(now.plusHours(1), now.plusHours(3));
+        Period period3 = new Period(now.plusHours(2), now.plusHours(3));
 
-### 3.3. Portable SQL (BerlinMOD benchmark)
+        List<Row> data = Arrays.asList(
+                RowFactory.create(period1),
+                RowFactory.create(period2),
+                RowFactory.create(period3)
+        );
 
-The SQL queries in `berlinmod/` use **named functions only** — no operator symbols — so the
-same file runs unchanged on MobilityDB (PostgreSQL), MobilityDuck (DuckDB), and MobilitySpark
-(Spark SQL). This is the portability contract defined in
-[Discussion #861](https://github.com/MobilityDB/MobilityDB/discussions/861).
+        StructType schema = new StructType()
+                .add("period", new PeriodUDT());
 
-Run the demo:
+        // Create a DataFrame with a single column of Periods
+        Dataset<Row> df = spark.createDataFrame(data, schema);
 
-```sh
-spark-submit --class org.mobilitydb.spark.demo.BerlinMODDemo \
-    target/mobilityspark-0.1.0-SNAPSHOT-spark.jar
+        // Register the DataFrame as a temporary view
+        df.createOrReplaceTempView("Periods");
+
+        // Use Spark SQL to query the view
+        Dataset<Row> result = spark.sql("SELECT * FROM Periods");
+
+        System.out.println("Example 1: Show all Periods.");
+        df.printSchema();
+        // Show the result
+        result.show(false);
+
+meos_finalize();
 ```
 
-### 3.4. Sample queries
+The previous code shows how to instantiate a `Period` datatype in Spark, create a `DataFrame` with a single column of `Periods`, register the `DataFrame` as a temporary view, and use Spark SQL to query the view. The resulting `DataFrame` is then printed to the console. The `meos_initialize` and `meos_finalize` functions are used to initialize and finalize the JMEOS middleware, respectively. However let me highlight some important things when using SparkMeos:
 
-Restrict a trip to a query instant:
-```sql
-SELECT atTime(trip, TIMESTAMP '2020-01-01 00:30:00+00') AS pos FROM Trips;
+- `meos_initialize()` and `meos_finalize()` functions are used to initialize and finalize the JMEOS middleware, respectively. These functions should always be called before and after using the JMEOS middleware.
+- Registering the datatypes and UDFs using the respective registrators (`UDTRegistrator.registerUDTs()` and `UDFRegistrator.registerUDFs()`) is necessary for Spark to recognize and use the UDTs and UDFs in the project.
+
+This will print something similar to:
+
+```bash
+Example 1: Show all Periods.
+root
+ |-- period: period (nullable = true)
+
+23/08/28 10:33:33 INFO CodeGenerator: Code generated in 224.520375 ms
+23/08/28 10:33:34 INFO CodeGenerator: Code generated in 75.834833 ms
++------------------------------------------------+
+|period                                          |
++------------------------------------------------+
+|[2023-08-28 10:33:31+02, 2023-08-28 11:33:31+02)|
+|[2023-08-28 11:33:31+02, 2023-08-28 13:33:31+02)|
+|[2023-08-28 12:33:31+02, 2023-08-28 13:33:31+02)|
++------------------------------------------------+
 ```
 
-Find vehicles that ever passed a query point:
-```sql
-SELECT DISTINCT v.licence
-FROM Vehicles v JOIN Trips t ON t.vehId = v.vehId
-JOIN QueryPoints p ON eIntersects(t.trip, p.geom);
+Notice how the Spark schema now recognizes the period datatype.
+
+### UDFs
+
+Each UDT in SparkMeos needs to register its own UDFs in Spark because Spark does not automatically recognize the functions defined in the UDT class. By registering the UDFs, Spark is able to recognize and use them in SQL queries and data manipulation operations. Additionally, registering the UDFs allows for a more organized and modular approach to defining functions in the project, making it easier to maintain and modify as necessary.
+
+Given the extensive number of functions in MobilityDB, this POC only implements a few of these functions.
+
+For example:
+
+```java
+spark.sql(
+	"SELECT periodExpand(" +
+								"stringToPeriod('[2023-08-07 14:10:49+02, 2023-08-07 15:10:49+02)'), " +
+                "stringToPeriod('[2019-09-08 02:00:01+02, 2019-09-10 02:00:01+02)')) " +
+	"as period"
+).show(false);
 ```
 
-Minimum nearest-approach distance between vehicle pairs:
-```sql
-SELECT MIN(nearestApproachDistance(t1.trip, t2.trip)) AS min_dist
-FROM Trips t1 JOIN Trips t2 ON t1.vehId < t2.vehId;
-```
+The `spark.sql()` command shown queries Spark to execute a SQL statement. In this particular example, the SQL statement is selecting a UDF called `periodExpand()` that takes two arguments, which are two periods converted from strings using the `stringToPeriod()` function. The `periodExpand()` function returns a third period that has the lower bound of the earliest period and the upper bound of the latest period. The resulting period is then displayed as an output using the `show()` function.
 
----
+As well as with the UDT’s, each UDF should be registered, this happens when calling `UDFRegistrator.registerUDFs(spark);`. 
 
-## 4. Running the tests
+## Unit Test
 
-Unit tests run without a Spark session (each UDF is a plain Java lambda):
+Currently, we have implemented small unittest for our project. However, the unittest only works for Intellij IDEA and will fail if we run them through maven. We are currently disabling the unittest in the build configuration.
 
-```sh
-mvn test
-```
+## Future Work
 
----
+Since this is only a POC to demonstrate that MobilityDB and MEOS can be ported into Spark, we want to highlight the next steps and future work to achieve a full implementation:
 
-## 5. Examples
-
-Numbered examples mirror the MEOS C examples (`meos/examples/01_hello_world.c`, etc.):
-
-| Class | Description |
-|-------|-------------|
-| `N01HelloWorld` | Round-trip a tgeompoint through hex-WKB |
-| `N03BerlinMOD` | BerlinMOD Q1/Q3/Q4/Q5/Q6 portable SQL |
-
-Run with:
-```sh
-spark-submit --class org.mobilitydb.spark.examples.N01HelloWorld \
-    target/mobilityspark-0.1.0-SNAPSHOT-spark.jar
-```
-
----
-
-## 6. Project structure
-
-```
-src/main/java/org/mobilitydb/spark/
-  MobilitySparkSession.java   — entry point: init MEOS + register all UDFs
-  temporal/TemporalUDFs.java  — atTime and other time-axis UDFs
-  geo/GeoUDFs.java            — eIntersects, nearestApproachDistance, eDwithin
-  examples/N01HelloWorld.java — hello-world example
-  examples/N03BerlinMOD.java  — BerlinMOD portable SQL demo
-  demo/BerlinMODDemo.java     — Q1/Q3/Q4/Q5/Q6 implementation
-  udfs/TemporalUDFs.java      — convenience facade (registerAll)
-
-berlinmod/                    — portable SQL files (RFC #861)
-libs/JMEOS-1.3.jar            — JMEOS 1.3 (includes libmeos.so)
-tools/scripts/                — license header checker
-```
+- **Complete implementation and integration of MEOS data types into SparkMEOS.**
+    - This includes the core, basic, boxes, temporal, and time data types from JMEOS.
+    - So far, we have implemented the time data types as well as some extra few.
+- **Generation of the UDFs with MobilityDB syntax.**
+    - The currently implementation wraps some of the functions either into a UDF1 or UDF2 class, but wrapping all the existing functions will be an almost impossible task to do.
+    - A proposal is to create a UDF generator script that, just like in JMEOS, creates all the UDFs based on the expected data and return type.
+    - Since some of the functions can return many different data types, future implementations should take into account the use of function overloading and polymorphism to fit into Spark SQL this behavior. This is achievable since all UDTs use MeosDatatype<T> under the hood, and also each instance of T follows the hierarchy defined in JMEOS.
+- **************Proper UDT implementation**************
+    - Right now, we have abstraction called MeosDataType for implementing the UDT, and able to implement MEOS DataType as UDT in Spark. In the future we want to extend the abstraction of Meos DataType by implementing the base type like Temporal, Sequence, etc as an UDT interface to allow polymorphism.
+- **Creation of the JDBC Spark / Postgres Dialect with the UDTs.**
+    - Initial work in this has been explored (please see the jdbc-controller branch), but a more robust and satisfactory implementation is needed.
+    - We need to implement a Dialect that correctly maps each UDT to its MobilityDB equivalent. For example we need to map period to PeriodUDT and perform the necessary transformations.
+        - This happens under the JdbcDialect class from Spark. It is necessary to override some of this class’ methods such as getCatalystType for table reading and getJdbcType for table writing.
+        - The PostgresDriver should also be extended to handle and register first the UDT datatypes, or map the UDT datatypes to their corresponding PGObject (which is implemented in the JMEOS datatypes).
+- **Implementing MobilityDB’s optimizations into Spark Catalyst.**
+    - This point will represent very extensive work but critical to exploit the benefits of Spark and distributed computing to it’s maximum.
+        - Catalyst is Spark’s optimizer. All queries go through it to generate an execution plan.
+        - It will be critical to implement distribution behavior to reduce random shuffling when executing operations in Spark. For instance, we can partition MobilityDB’s datatypes by 2 different approaches: by time or by geographic position. In the case of position, catalyst should implement the partition strategy to process data belonging to the same tile in the same cluster.

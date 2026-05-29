@@ -1,102 +1,113 @@
-# MobilitySpark — 100% MobilityDB SQL parity
+# MobilitySpark — portable dialect parity & MobilityDB SQL surface
 
-**Achieved**: 2026-05-10. Audit: 858/858 active addressable functions covered.
-Tests: 907/907 green. Audit script + per-section report regenerable from the
-repo (see [`docs/parity-status.md`](parity-status.md) and
-[`scripts/parity-audit.py`](../scripts/parity-audit.py)).
+Two parity axes, both audited from the repo, both with **all six type
+families in scope** — `temporal`, `geo`, `cbuffer`, `npoint`, `pose`,
+`rgeo`. No family is deferred or excluded from any headline.
 
-This is one milestone in a cross-platform parity program — MobilitySpark
-took its turn first; MobilityDuck and the other bindings progress on the
-same audit methodology and timeline.
-
----
-
-## What "100% active parity" means
-
-The MobilityDB SQL surface (1,179 names + many overloads) is partitioned by
-the parity audit into three buckets:
-
-| Bucket | Examples | This release |
-|--------|---|---|
-| **Active addressable** | Every function a Spark UDF can semantically reproduce | **858 — all covered** |
-| **Out of scope** (321) | PG plumbing (`*_in/_out/_recv/_send`, `_transfn/_combinefn/_finalfn`, GiST/SPGiST opclasses, `_cmp/_eq/_ne/_lt/_le/_gt/_ge/_hash`), PG built-in range types (`range`, `multirange`), PG-extension-only entry points (`create_trip` BerlinMOD generator, `transform_gk` SECONDO bridge) | excluded by design |
-| **Deferred families** | cbuffer, npoint, pose, rgeo | next phase |
-
-PostGIS types `BOX2D` / `BOX3D` are *not* OOS — PostGIS is embedded in MEOS
-so `box2d` / `box3d` UDFs are real, returning the PostGIS text format.
-
-The same audit methodology runs against MobilityDuck via
-`MobilityDuck/scripts/parity-audit.py`; the OOS classifications listed here
-should propagate to that script in lockstep so both bindings show
-consistent gap inventories.
+| Axis | State | Gate |
+|---|---|---|
+| **Portable bare-name dialect** (RFC #920 — the cross-engine contract) | **29/29 canonical bare names registered, 0 unbacked, all six families — 100%** | [`scripts/portable_parity.py`](../scripts/portable_parity.py) |
+| **MobilityDB SQL surface** (every `CREATE FUNCTION`, snake→camel match) | **1571/1577 active addressable covered (99.6%)** — every section 100% except the `v_clip` ABI gap below; all six families counted | [`scripts/parity-audit.py`](../scripts/parity-audit.py) → [`parity-status.md`](parity-status.md) |
 
 ---
 
-## What's now in MobilitySpark
+## Portable bare-name dialect (this is 100%)
 
-### New UDF classes
+Single source of truth: `MobilityDB/MEOS-API meta/portable-aliases.json`
+(vendored read-only at [`meta/portable-aliases.json`](../meta/portable-aliases.json),
+RFC #920, discussion MobilityDB#861, native in MobilityDB#1075). It maps
+**29 SQL operator symbols to 29 portable bare function names**,
+type-agnostically.
 
-| Class | Coverage |
-|---|---|
-| `TPointSTBoxOpsUDFs`, `TBoxOpsUDFs`, `SpansetOpsUDFs` | 104 cross-type positional / topological predicates |
-| `TemporalCompUDFs`, `TemporalBoxOpsUDFs` | 56 temporal comparison + cross-type box predicates |
-| `AlwaysSpatialRelsUDFs`, `SetOpsUDFs` | a-family spatial rels, set algebra |
-| `IOAliasUDFs` | 100+ typed `*From{HexWKB,Binary,Text,EWKT,EWKB,MFJSON}` |
-| `SubtypeConstructorUDFs`, `AccessorAliasUDFs` | typed Inst / Seq / SeqSet aliases, span / spanset accessors, PostGIS `box2d` / `box3d`, mobilitydb version |
-| `BucketUDFs`, `GeoAffineUDFs` | scalar bucketing, affine transformations (translate / rotate / transscale) |
-| `TileUDFs` | **multidimensional tiling for parallel processing** — `spaceTiles`, `spaceTimeTiles`, `timeTiles`, `valueTiles`, `valueTimeTiles`, `*Boxes`, `*Split`, single-tile `getValueTile` / `getValueTimeTile` / `getTBoxTimeTile` / `getSpaceTile` / `getSpaceTimeTile`, `geoMeasure`, `asMVTGeom`, `makeSimple` |
-| `SeqSetGapsUDFs` | `tbool` / `tint` / `tfloat` / `ttext` / `tgeompoint` / `tgeogpoint` / `tgeometry` / `tgeographySeqSetGaps` — closes the long-standing user request from [MobilityDB issue #187](https://github.com/MobilityDB/MobilityDB/issues/187) |
+[`PortableOperatorAliasUDFs`](../src/main/java/org/mobilitydb/spark/portable/PortableOperatorAliasUDFs.java)
+registers all 29 bare names as Spark-SQL UDFs, each **reusing the
+operator's own existing backing field verbatim** (equivalence by
+construction — the alias *is* the operator's backing, it cannot drift).
+The backings chosen are the MEOS superclass entrypoints
+(`*_temporal_temporal`, `*_tspatial_tspatial`, `t*_temporal_temporal`,
+`tdistance_tgeo_tgeo`, `nad_tgeo_*`), which libmeos dispatches internally
+for any temporal value carried in the type-erased hex-WKB string — so
+`tcbuffer` / `tnpoint` / `tpose` / `trgeometry` are covered by
+construction alongside `temporal` and `geo`. The type-qualified
+operator spellings they supersede 1:1 (`temporalBefore`, `tnumberLeft`,
+`teqTemporal`, …) are dropped — the bare name is the portable contract.
 
-### Supplementary JNR-FFI interface (`MeosNative.java`)
+`python3 scripts/portable_parity.py` gates this: **29/29 backed, 0
+unbacked, 100%** (same prefix logic as MobilityDB/MEOS-API
+`portable_parity.py`).
 
-JMEOS-1.4 was generated from an earlier MEOS API snapshot, so ~70 MEOS
-1.4-renamed or internal-API symbols are bound directly via a supplementary
-JNR-FFI interface. When JMEOS is regenerated against MEOS 1.4, these
-calls migrate back to `functions.*`.
+---
+
+## MobilityDB SQL surface (99.6%)
+
+The full MobilityDB SQL surface is partitioned by `scripts/parity-audit.py`
+into:
+
+| Bucket | This release |
+|--------|---|
+| **Active addressable** (any function a Spark UDF can semantically reproduce — **all six families**) | **1571 / 1577 covered (99.6%)** |
+| **Out of scope** (PG plumbing: `*_in/_out/_recv/_send`, `_transfn/_combinefn/_finalfn`, GiST/SPGiST/GIN index opclasses, `_cmp/_eq/.../_hash`, PG range types, PG-extension-only entry points) | excluded by mechanism, not by family |
+
+PostGIS `BOX2D`/`BOX3D` are *not* out of scope — PostGIS is embedded in
+MEOS, so `box2d`/`box3d` UDFs are real.
+
+The `cbuffer` / `npoint` / `pose` / `rgeo` typed per-family UDF surface is
+implemented (`CbufferUDFs`, `NpointUDFs`, `PoseUDFs`, `RgeoUDFs`), reusing
+each function's own MEOS C symbol via the `MeosNative` raw-FFI / generic
+`functions.*` pattern — no reimplementation. Every active section is at
+100% with two structural exceptions:
+
+- **Index-plumbing exception (documented, uniform with temporal/geo).**
+  The GiST/GIN opclass-support callbacks of
+  `cbuffer/166_tcbuffer_indexes`, `npoint/092_tnpoint_gin`,
+  `npoint/098_tnpoint_indexes`, `pose/114_tpose_indexes`,
+  `rgeo/134_trgeo_indexes` are out of scope — the same PG-only index
+  access-method class already excluded for `temporal/043_temporal_gist`,
+  `geo/073_tgeo_gist`, etc. Index methods are PG-internal; Spark has no
+  equivalent.
+
+- **`rgeo/133_trgeo_vclip` — MEOS-library ABI gap (6 functions).**
+  The `v_clip_*` user surface is implemented only in the `mobilitydb`
+  PostgreSQL extension (`VClip_*` `MODULE_PATHNAME` wrappers), not in the
+  MEOS C library MobilitySpark links. `lib/libmeos.so` exports only the
+  low-level kernels `v_clip_tpoly_point` / `v_clip_tpoly_tpoly`, which
+  take raw PostGIS `LWPOLY*`/`LWPOINT*`/`Pose*` structs plus
+  out-parameters — there is no `GSERIALIZED`/`Temporal` entry point
+  reachable from the hex-WKB string convention — and the other four
+  (`v_clip_poly_point`, `v_clip_poly_poly`, `v_clip_tpoly_poly`,
+  `v_clip_tpoly_tpoint`) are not exported at all. These six are recorded
+  as a documented gap and intentionally **not stubbed**: binding them
+  requires an `extern "C"` GSERIALIZED/Temporal-level v-clip entry point
+  to be added to MEOS upstream (proposed fix: export
+  `v_clip_trgeo_geo` / `v_clip_trgeo_trgeo` wrappers that accept
+  `GSERIALIZED`/`Temporal` and a `TimestampTz`, returning the scalar
+  clip distance — mirroring the existing `tdistance_trgeo_*` exports).
+
+Re-run `python3 scripts/parity-audit.py --mdb ../MobilityDB --mspark .`
+to regenerate [`parity-status.md`](parity-status.md); `DEFERRED_FAMILIES`
+is empty by invariant (cbuffer/npoint/pose/rgeo never deferred).
 
 ---
 
 ## Why this matters for the ecosystem
 
-- **Portable SQL benchmark** — the BerlinMOD Q1–Q17 + binary roundtrip
-  benchmark now runs unchanged across MobilityDB (PG), MobilityDuck
-  (DuckDB), and MobilitySpark (Spark). The same `.sql` file, the same
-  expected output. Cross-platform performance comparisons become an
-  apples-to-apples exercise.
-- **Edge-to-cloud pipeline** — the TemporalParquet RFC realisation
-  (MobilityDuck quickstart producer → MobilityDB legacy ingest →
-  MobilitySpark Parquet lake consumer) is now backed by a complete UDF
-  surface on the cloud side. See
-  [`docs/beta-testing-edge-to-cloud.md`](beta-testing-edge-to-cloud.md)
-  for the cross-platform beta program.
-- **Audit methodology** — `scripts/parity-audit.py` is reusable. The
-  same script (with binding-specific source-parsing) runs against
-  MobilityDuck. The OOS classifications discovered here (PG range types,
-  BerlinMOD generator, SECONDO bridge, btree opclass support) apply
-  ecosystem-wide.
-
----
-
-## What's deferred (and why)
-
-The four "deferred families" — `cbuffer`, `npoint`, `pose`, `rgeo` —
-together represent ~250 additional functions. They're stable in MEOS
-and MobilityDB but are domain-specific (circular buffers, network
-points, spatial poses, rigid geometries). They will be added in a follow-
-up sweep using the same audit methodology after the active surface
-stabilises in production use.
+- **One reference, every engine.** A user learns the 29 bare names once;
+  MobilityDB (native, #1075), MobilityDuck, and MobilitySpark expose the
+  identical dialect. The BerlinMOD Q1–Q17 portable SQL runs unchanged
+  across all three.
+- **Equivalence by construction.** Every alias reuses the operator's own
+  backing C symbol — no reimplementation, no second code path, no drift.
+- **Reusable audit.** `scripts/parity-audit.py` (surface) and
+  `scripts/portable_parity.py` (dialect) regenerate from the repo and run
+  in CI; both keep all six families in scope.
 
 ---
 
 ## How to verify
 
 ```bash
-git checkout feat/jmeos-1.3-berlinmod-poc
-mvn test                              # 907/907 should pass
+mvn test                                   # full unit suite (CI: Linux green)
+python3 scripts/portable_parity.py         # 29/29, 0 unbacked  (exit 0)
 python3 scripts/parity-audit.py \
-    --mdb /path/to/MobilityDB \
-    --mspark .                        # writes docs/parity-status.md
+    --mdb ../MobilityDB --mspark .          # regenerates docs/parity-status.md
 ```
-
-The audit reports `858/858 (100.0%)` against the active surface. Per-section
-breakdown (51 sections, all 100%) lives at `docs/parity-status.md`.

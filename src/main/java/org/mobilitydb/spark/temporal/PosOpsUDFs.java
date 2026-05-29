@@ -454,35 +454,17 @@ public final class PosOpsUDFs {
     // ------------------------------------------------------------------
 
     public static void registerAll(SparkSession spark) {
-        // time-direction: temporal ↔ temporal
-        spark.udf().register("temporalBefore",        temporalBefore,        DataTypes.BooleanType);
-        spark.udf().register("temporalAfter",         temporalAfter,         DataTypes.BooleanType);
-        spark.udf().register("temporalOverbefore",    temporalOverbefore,    DataTypes.BooleanType);
-        spark.udf().register("temporalOverafter",     temporalOverafter,     DataTypes.BooleanType);
-        // time-direction: temporal ↔ tstzspan
+        // The portable bare names before/after/overbefore/overafter (time)
+        // and left/right/overleft/overright/below/above/overbelow/overabove/
+        // front/back/overfront/overback (space) supersede the type-qualified
+        // temporal*/tnumber*/tpoint* spellings 1:1 and are registered by
+        // org.mobilitydb.spark.portable.PortableOperatorAliasUDFs, which
+        // reuses the very backing fields below. The distinct
+        // temporal ↔ tstzspan argument-class surface has no single bare
+        // spelling and is retained here.
         spark.udf().register("temporalBeforeSpan",    temporalBeforeSpan,    DataTypes.BooleanType);
         spark.udf().register("temporalAfterSpan",     temporalAfterSpan,     DataTypes.BooleanType);
         spark.udf().register("temporalOverbeforeSpan",temporalOverbeforeSpan,DataTypes.BooleanType);
         spark.udf().register("temporalOverafterSpan", temporalOverafterSpan, DataTypes.BooleanType);
-        // value-direction: tnumber ↔ tnumber
-        spark.udf().register("tnumberLeft",           tnumberLeft,           DataTypes.BooleanType);
-        spark.udf().register("tnumberRight",          tnumberRight,          DataTypes.BooleanType);
-        spark.udf().register("tnumberOverleft",       tnumberOverleft,       DataTypes.BooleanType);
-        spark.udf().register("tnumberOverright",      tnumberOverright,      DataTypes.BooleanType);
-        // spatial x-axis: tpoint ↔ tpoint
-        spark.udf().register("tpointLeft",            tpointLeft,            DataTypes.BooleanType);
-        spark.udf().register("tpointRight",           tpointRight,           DataTypes.BooleanType);
-        spark.udf().register("tpointOverleft",        tpointOverleft,        DataTypes.BooleanType);
-        spark.udf().register("tpointOverright",       tpointOverright,       DataTypes.BooleanType);
-        // spatial y-axis: tpoint ↔ tpoint
-        spark.udf().register("tpointBelow",           tpointBelow,           DataTypes.BooleanType);
-        spark.udf().register("tpointAbove",           tpointAbove,           DataTypes.BooleanType);
-        spark.udf().register("tpointOverbelow",       tpointOverbelow,       DataTypes.BooleanType);
-        spark.udf().register("tpointOverabove",       tpointOverabove,       DataTypes.BooleanType);
-        // spatial z-axis (3D): tpoint ↔ tpoint
-        spark.udf().register("tpointFront",           tpointFront,           DataTypes.BooleanType);
-        spark.udf().register("tpointBack",            tpointBack,            DataTypes.BooleanType);
-        spark.udf().register("tpointOverfront",       tpointOverfront,       DataTypes.BooleanType);
-        spark.udf().register("tpointOverback",        tpointOverback,        DataTypes.BooleanType);
     }
 }

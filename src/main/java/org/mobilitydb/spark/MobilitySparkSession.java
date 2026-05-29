@@ -137,6 +137,14 @@ public final class MobilitySparkSession implements AutoCloseable {
         TransformUDFs.registerAll(spark);
         AggregateUDAFs.registerAll(spark);
         org.mobilitydb.spark.h3.Th3IndexUDFs.registerAll(spark);
+        // Sibling temporal families (cbuffer / npoint / pose / rgeo)
+        org.mobilitydb.spark.cbuffer.CbufferUDFs.registerAll(spark);
+        org.mobilitydb.spark.npoint.NpointUDFs.registerAll(spark);
+        org.mobilitydb.spark.pose.PoseUDFs.registerAll(spark);
+        org.mobilitydb.spark.rgeo.RgeoUDFs.registerAll(spark);
+        // Portable bare-name operator dialect (RFC #920) — registered last
+        // so the 29 canonical bare names are the authoritative spelling.
+        org.mobilitydb.spark.portable.PortableOperatorAliasUDFs.registerAll(spark);
         return new MobilitySparkSession();
     }
 
