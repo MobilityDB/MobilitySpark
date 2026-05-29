@@ -65,6 +65,96 @@ and the platform routes to the appropriate MEOS function.
 
 ---
 
+## Three-tier index framework
+
+Each query can be benchmarked under three configurations, isolating the
+contribution of different acceleration mechanisms:
+
+| Tier | What it measures | Acceleration enabled | Platforms |
+|---|---|---|---|
+| **1 — baseline** | Common-denominator: same `th3index` columnar prefilter, same query plan on every engine | `th3index` column + its GiST index (PG) / its row-by-row evaluation (Duck, Spark) | PG, Duck, **Spark** |
+| **2 — native-only** | Engine-native spatial index in isolation | GiST/SP-GiST on `trip` (PG); TRTREE multi-entry on `Trip` (Duck) — **no `th3index` prefilter** | PG, Duck |
+| **3 — combined** | Best-of-platform, production-realistic | `th3index` + native spatial index, both available to the planner | PG, Duck |
+
+**Why Spark is excluded from Tiers 2 / 3:** Spark SQL has no native spatial
+index of its own; forcing it to "compete" without `th3index` would measure
+lack-of-feature, not engine performance. Tier 1 is the only honest
+measurement on Spark — with the caveat that Trips × Trips queries
+(Q5/Q6/Q10/Q16) need explicit Spark-side mitigations (next section) to
+turn the row-by-row O(N²) prefilter into a tractable equi-join.
+
+### NxN mitigations on Spark (Q5, Q6, Q10, Q16)
+
+The four Trips × Trips queries don't fit Spark's no-spatial-index model
+naturally. Two complementary mitigations are wired in this benchmark:
+
+1. **Broadcast hints in the portable SQL** (`/*+ BROADCAST(...) */`).
+   Spark recognises the hint and pins the listed small/filtered tables to
+   every executor; PostgreSQL and DuckDB treat the `/*+ ... */` block as
+   an ordinary comment, so the SQL stays byte-identical and portable.
+   Lands ~10-100× speedup when one side of a Trips × Trips join is
+   licence-filtered (Q10/Q16).
+2. **Spark-optimised query variants** (`q05_spark.sql`, `q06_spark.sql`,
+   `q10_spark.sql`, `q16_spark.sql`). These explode each trip's
+   `th3index` into one row per H3 cell via `explode(th3IndexValues(...))`
+   and then run the spatial prefilter as an **equi-join on the cell
+   column** — which Spark accelerates natively (sort-merge / shuffle
+   hash). The expensive `tDwithin` / `minDistance` / `eDwithin` then
+   runs on the much smaller deduplicated candidate set. Lands
+   ~100-1000× speedup vs. the portable form on Spark.
+
+The MobilitySpark bench runner (`bench/bench_mspark.sh` →
+`BerlinMODBench`) auto-prefers `<query>_spark.sql` over `<query>.sql` when
+present; PG and DuckDB runners always use the portable file. Variants
+are semantically equivalent: same input, same output, same scientific
+question — just expressed in the form Spark's engine can accelerate.
+
+### Tier applicability per query
+
+| Query | Spatial-rel against | Tier 1 | Tier 2 | Tier 3 |
+|---|---|:-:|:-:|:-:|
+| Q1, Q3 | none / temporal-only | all 3 | n/a | n/a |
+| Q2, Q4 | small-dim spatial (QueryPoints / QueryRegions) | all 3 | PG, Duck | PG, Duck |
+| Q5, Q6, Q10, Q16 | **Trips × Trips** | all 3 (Spark: slow but plan-comparable) | PG, Duck | PG, Duck |
+| Q7, Q8 | temporal-only | all 3 | n/a | n/a |
+| Q9, Q11-Q15, Q17 | small-dim spatial / temporal | all 3 | PG, Duck | PG, Duck |
+| QRT | round-trip I/O | all 3 | n/a | n/a |
+
+### How to run a specific tier
+
+```bash
+# Tier 1 (default — baseline th3index prefilter, all 3 engines)
+bench/bench_mbdb.sh   --tier 1
+bench/bench_mduck.sh  --tier 1
+bench/bench_mspark.sh           # tier 1 implicit — Spark is tier-1 only
+
+# Tier 2 (native spatial index in isolation; no th3index prefilter)
+bench/bench_mbdb.sh   --tier 2
+bench/bench_mduck.sh  --tier 2
+
+# Tier 3 (production-realistic; both)
+bench/bench_mbdb.sh   --tier 3
+bench/bench_mduck.sh  --tier 3
+```
+
+The runner writes the tier into each result JSON's `tier` field so reports
+can pivot results by configuration.
+
+### MobilityDuck TRTREE dependency
+
+Tiers 2 / 3 on MobilityDuck use the new `TRTREE` multi-entry index. The
+loader's `CREATE INDEX … USING TRTREE` requires MobilityDuck PRs
+[#143](https://github.com/MobilityDB/MobilityDuck/pull/143) (multi-entry
+TRTREE) and
+[#144](https://github.com/MobilityDB/MobilityDuck/pull/144) (constant-geometry
+spatial-rel pushdown) to be present in the loaded extension. Pin your local
+MobilityDuck install to those branches (or use the
+[v1.0-preview-100pct release](https://github.com/estebanzimanyi/MobilityDuck/releases/tag/v1.0-preview-100pct)
+bundle, which can be updated to include them) before running with
+`--tier 2` or `--tier 3`.
+
+---
+
 ## Shared dataset
 
 `data/` contains CSV files that all three platforms load:
@@ -150,6 +240,64 @@ createdb berlinmod_portability
 
 ```bash
 ./berlinmod/run_mspark.sh [spark-submit-binary]
+```
+
+---
+
+## Producing the comparison artifacts (table + bar chart)
+
+After running all three benchmark scripts at the tiers of interest, the
+results JSON files live under `bench/results/`:
+
+```text
+bench/results/mbdb.tier1.json   bench/results/mbdb.tier3.json
+bench/results/mduck.tier1.json  bench/results/mduck.tier3.json
+bench/results/mspark.tier1.json
+```
+
+(Spark only has Tier 1; PG / Duck may have any subset of Tiers 1 / 2 / 3.)
+
+Generate the markdown table:
+
+```bash
+python3 bench/report.py --results bench/results --output bench/results/report.md
+```
+
+Generate the grouped bar chart (queries × (platform, tier)):
+
+```bash
+# Default linear scale; useful when timings are within ~1-2 orders of magnitude
+python3 bench/chart.py --results bench/results --output bench/results/chart.png
+
+# Log scale; mandatory when Spark NxN queries dominate the dynamic range
+python3 bench/chart.py --results bench/results --output bench/results/chart.png --log
+```
+
+`chart.py` requires `matplotlib` (`pip install matplotlib`). The PNG is
+self-contained — paste it into a GitHub Discussion, README, or paper.
+Each bar group is one query; within each group bars are ordered
+MobilityDB → MobilityDuck → MobilitySpark, with tier shading inside each
+family (Tier 1 lightest, Tier 3 darkest).
+
+### Full reproducibility recipe — one platform at all tiers
+
+```bash
+# MobilityDB at all three tiers
+./bench/bench_mbdb.sh --tier 1 --output bench/results/mbdb.tier1.json
+./bench/bench_mbdb.sh --tier 2 --output bench/results/mbdb.tier2.json --no-load
+./bench/bench_mbdb.sh --tier 3 --output bench/results/mbdb.tier3.json --no-load
+
+# MobilityDuck at all three tiers (requires PRs #143 + #144 in the loaded extension)
+./bench/bench_mduck.sh --tier 1 --output bench/results/mduck.tier1.json
+./bench/bench_mduck.sh --tier 2 --output bench/results/mduck.tier2.json --no-load
+./bench/bench_mduck.sh --tier 3 --output bench/results/mduck.tier3.json --no-load
+
+# MobilitySpark — Tier 1 only
+./bench/bench_mspark.sh --output bench/results/mspark.tier1.json
+
+# Then generate the artifacts
+python3 bench/report.py --results bench/results --output bench/results/report.md
+python3 bench/chart.py  --results bench/results --output bench/results/chart.png --log
 ```
 
 Or manually:

@@ -188,16 +188,34 @@ public final class BerlinMODBench {
 
             // Time each query — flush results after every query so a crash
             // still leaves a valid JSON file with the timings collected so far.
+            //
+            // Spark-optimised variants: when a `<query>_spark.sql` file exists
+            // next to `<query>.sql`, prefer it.  These variants use UNNEST +
+            // equi-join on H3 cells (via `th3IndexValues(trip_h3)`) to convert
+            // the portable-SQL row-by-row Cartesian prefilter into an
+            // equi-join — which Spark accelerates natively.  This mitigates
+            // the O(N²) cost of the Trips × Trips queries (Q5/Q6/Q10/Q16) on
+            // Spark, which has no spatial index.  PG / DuckDB are not
+            // affected — they keep running the portable `<query>.sql`.  See
+            // berlinmod/README.md "NxN mitigations on Spark" for details.
             for (String q : queryList) {
-                Path sqlFile = Paths.get(sqlDir, q + ".sql");
-                if (!Files.exists(sqlFile)) {
+                Path sparkVariant = Paths.get(sqlDir, q + "_spark.sql");
+                Path portable     = Paths.get(sqlDir, q + ".sql");
+                Path sqlFile;
+                String variantTag = "";
+                if (Files.exists(sparkVariant)) {
+                    sqlFile = sparkVariant;
+                    variantTag = " [spark]";
+                } else if (Files.exists(portable)) {
+                    sqlFile = portable;
+                } else {
                     System.out.printf("  [skip] %s — SQL file not found%n", q);
                     continue;
                 }
                 String sql = preprocessForSpark(stripComments(Files.readString(sqlFile)));
                 List<Long> qTimes = new ArrayList<>(runs);
 
-                System.out.printf("  timing %-6s: ", q);
+                System.out.printf("  timing %-6s%s: ", q, variantTag);
                 for (int run = 0; run < runs; run++) {
                     try {
                         long t0 = System.currentTimeMillis();
@@ -289,6 +307,7 @@ public final class BerlinMODBench {
         sb.append("{\n");
         sb.append("  \"platform\": \"mobilityspark\",\n");
         sb.append("  \"version\": \"").append(escapeJson(version)).append("\",\n");
+        sb.append("  \"tier\": 1,\n");
         sb.append("  \"data_vehicles\": ").append(vehicles).append(",\n");
         sb.append("  \"data_trips\": ").append(trips).append(",\n");
         sb.append("  \"runs\": ").append(runs).append(",\n");

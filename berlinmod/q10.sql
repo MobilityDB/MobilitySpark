@@ -15,7 +15,8 @@
 -- distance threshold (cell edge ≈ 1.2 km, well above 3 m).
 
 WITH Temp AS (
-  SELECT l.licence AS licence1, t2.vehId AS car2Id,
+  SELECT /*+ BROADCAST(l, v1, t1) */
+         l.licence AS licence1, t2.vehId AS car2Id,
          whenTrue(tDwithin(t1.trip, t2.trip, 3.0)) AS periods,
          t1.tripId AS tripId1, t2.tripId AS tripId2
   FROM   QueryLicences l
@@ -29,3 +30,9 @@ SELECT licence1, car2Id, periods
 FROM   Temp
 WHERE  periods IS NOT NULL
 ORDER  BY licence1, car2Id, tripId1, tripId2;
+-- The `/*+ BROADCAST(l, v1, t1) */` block is a Spark SQL hint forcing the
+-- QueryLicences-filtered t1 side (~10 vehicles' trips) to be broadcast to
+-- every executor, so the t1 × t2 join becomes a broadcast-hash join over
+-- the much larger t2.  Without this hint Spark would shuffle 10K × 10K
+-- candidate pairs on a non-equi join.  PostgreSQL and DuckDB treat the
+-- hint as an ordinary block comment.

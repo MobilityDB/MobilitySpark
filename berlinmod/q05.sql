@@ -23,7 +23,8 @@
 --
 --   everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)
 
-SELECT l1.licence AS licence1,
+SELECT /*+ BROADCAST(l1, v1, l2, v2) */
+       l1.licence AS licence1,
        l2.licence AS licence2,
        MIN(minDistance(t1.trip, t2.trip)) AS min_dist
 FROM   QueryLicences l1
@@ -35,3 +36,7 @@ JOIN   Trips    t2  ON  t2.vehId   = v2.vehId
 WHERE  everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)
 GROUP  BY l1.licence, l2.licence
 ORDER  BY l1.licence, l2.licence;
+-- The `/*+ BROADCAST(...) */` block is a Spark SQL hint forcing the four
+-- small dimension tables onto every executor.  PostgreSQL and DuckDB treat
+-- it as an ordinary block comment, so the SQL stays byte-identical and
+-- portable across the three platforms.

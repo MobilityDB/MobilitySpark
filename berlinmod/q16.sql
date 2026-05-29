@@ -16,7 +16,8 @@
 --   aDisjoint(tgeompoint, tgeompoint) → bool    (always spatially disjoint)
 --   stbox(geometry, tstzspan) → stbox           (GiST index pre-filter)
 
-SELECT p.periodId, p.period, r.regionId,
+SELECT /*+ BROADCAST(l1, v1, l2, v2, p, r) */
+       p.periodId, p.period, r.regionId,
        l1.licence AS licence1, l2.licence AS licence2
 FROM   QueryLicences l1
 JOIN   Vehicles      v1 ON v1.licence = l1.licence
