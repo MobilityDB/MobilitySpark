@@ -91,6 +91,23 @@ public final class MobilitySparkSession implements AutoCloseable {
 
     private static final AtomicBoolean SRS_CSV_REGISTERED = new AtomicBoolean(false);
 
+    /**
+     * Fully-qualified registrar classes for the optional extended temporal-type
+     * families, in registration order. A family whose build flag is OFF
+     * (e.g. {@code -DCBUFFER=OFF}) is excluded from compilation, so its class is
+     * absent from the classpath and {@link #registerFamily} skips it — the Java
+     * analogue of the MEOS {@code #if CBUFFER} compile guard. The flag names
+     * mirror the MobilityDB/MEOS CMake options (CBUFFER / NPOINT / POSE / RGEO /
+     * H3).
+     */
+    private static final String[] EXTENDED_FAMILY_REGISTRARS = {
+        "org.mobilitydb.spark.h3.Th3IndexUDFs",
+        "org.mobilitydb.spark.cbuffer.CbufferUDFs",
+        "org.mobilitydb.spark.npoint.NpointUDFs",
+        "org.mobilitydb.spark.pose.PoseUDFs",
+        "org.mobilitydb.spark.rgeo.RgeoUDFs",
+    };
+
     private MobilitySparkSession() {}
 
     public static MobilitySparkSession create(SparkSession spark) {
@@ -136,16 +153,42 @@ public final class MobilitySparkSession implements AutoCloseable {
         RestrictionUDFs.registerAll(spark);
         TransformUDFs.registerAll(spark);
         AggregateUDAFs.registerAll(spark);
-        org.mobilitydb.spark.h3.Th3IndexUDFs.registerAll(spark);
-        // Sibling temporal families (cbuffer / npoint / pose / rgeo)
-        org.mobilitydb.spark.cbuffer.CbufferUDFs.registerAll(spark);
-        org.mobilitydb.spark.npoint.NpointUDFs.registerAll(spark);
-        org.mobilitydb.spark.pose.PoseUDFs.registerAll(spark);
-        org.mobilitydb.spark.rgeo.RgeoUDFs.registerAll(spark);
+        // Optional extended temporal-type families (h3 / cbuffer / npoint /
+        // pose / rgeo). Each family lives in its own package, included or
+        // excluded at build time by the matching flag (-DH3=OFF, -DCBUFFER=OFF,
+        // -DNPOINT=OFF, -DPOSE=OFF, -DRGEO=OFF), mirroring the MEOS/MobilityDB
+        // CMake options. An excluded package is dropped from compilation, so its
+        // registrar class is absent and registerFamily skips it with zero
+        // residue.
+        for (String family : EXTENDED_FAMILY_REGISTRARS) {
+            registerFamily(spark, family);
+        }
         // Portable bare-name operator dialect (RFC #920) — registered last
         // so the 29 canonical bare names are the authoritative spelling.
         org.mobilitydb.spark.portable.PortableOperatorAliasUDFs.registerAll(spark);
         return new MobilitySparkSession();
+    }
+
+    /**
+     * Registers an optional family's UDFs by reflectively invoking its static
+     * {@code registerAll(SparkSession)} method. When the family was excluded at
+     * build time its class is absent from the classpath, so registration is
+     * skipped — the Java analogue of the MEOS {@code #if CBUFFER} compile guard.
+     * Any other reflective failure indicates a wiring error and is rethrown.
+     */
+    private static void registerFamily(SparkSession spark, String className) {
+        final Class<?> cls;
+        try {
+            cls = Class.forName(className);
+        } catch (ClassNotFoundException excluded) {
+            return; // family disabled at build time (e.g. -DCBUFFER=OFF)
+        }
+        try {
+            cls.getMethod("registerAll", SparkSession.class).invoke(null, spark);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(
+                "Failed to register temporal family " + className, e);
+        }
     }
 
     /**

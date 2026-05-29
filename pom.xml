@@ -60,6 +60,18 @@
 
     <build>
         <plugins>
+            <!-- Declared so the optional-family profiles below can attach
+                 per-family source <excludes>. The optional extended
+                 temporal-type families (cbuffer / npoint / pose / rgeo / h3)
+                 each live in their own package and are included by default;
+                 passing -DCBUFFER=OFF / -DNPOINT=OFF / -DPOSE=OFF / -DRGEO=OFF /
+                 -DH3=OFF excludes that family's sources from compilation,
+                 mirroring the MEOS/MobilityDB CMake options. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
             <!-- Produce a fat jar that includes jnr-ffi + JMEOS -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -118,4 +130,122 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- Optional extended temporal-type families, selectable at build time.
+         The flag names mirror the MEOS/MobilityDB CMake options. Each family is
+         included by default; pass -D<FAMILY>=OFF to drop that family's package
+         from compilation. Reflective registration in MobilitySparkSession then
+         omits the absent registrar, so the type disappears from the UDF surface
+         with zero residue while the other families remain. RGEO depends on
+         POSE, so disabling POSE also drops rgeo (mirrors CMAKE_DEPENDENT_OPTION).
+         Disabling H3 also drops the BerlinMOD demo and examples that materialise
+         the th3index trip column, since they reference the th3index surface.
+
+           mvn package                           # all families
+           mvn package -DCBUFFER=OFF             # everything except cbuffer
+           mvn package -DNPOINT=OFF -DPOSE=OFF   # drops npoint, pose and rgeo
+           mvn package -DH3=OFF                  # drops th3index + its demo -->
+    <profiles>
+        <profile>
+            <id>exclude-cbuffer</id>
+            <activation>
+                <property><name>CBUFFER</name><value>OFF</value></property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.children="append">
+                                <exclude>**/spark/cbuffer/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>exclude-npoint</id>
+            <activation>
+                <property><name>NPOINT</name><value>OFF</value></property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.children="append">
+                                <exclude>**/spark/npoint/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>exclude-pose</id>
+            <activation>
+                <property><name>POSE</name><value>OFF</value></property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.children="append">
+                                <exclude>**/spark/pose/**</exclude>
+                                <exclude>**/spark/rgeo/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>exclude-rgeo</id>
+            <activation>
+                <property><name>RGEO</name><value>OFF</value></property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.children="append">
+                                <exclude>**/spark/rgeo/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>exclude-h3</id>
+            <activation>
+                <property><name>H3</name><value>OFF</value></property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.children="append">
+                                <exclude>**/spark/h3/**</exclude>
+                                <exclude>**/spark/demo/**</exclude>
+                                <exclude>**/spark/examples/N03BerlinMOD.java</exclude>
+                            </excludes>
+                            <testExcludes combine.children="append">
+                                <testExclude>**/NativeMemoryLeakTest.java</testExclude>
+                            </testExcludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

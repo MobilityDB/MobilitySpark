@@ -73,6 +73,16 @@ jobs:
       - name: Compile
         run: mvn -B compile
 
+      - name: Verify optional-family flags exclude their packages
+        run: |
+          mvn -B clean compile -DCBUFFER=OFF -DNPOINT=OFF -DPOSE=OFF -DRGEO=OFF -DH3=OFF
+          for f in cbuffer npoint pose rgeo h3; do
+            if [ -d "target/classes/org/mobilitydb/spark/$f" ]; then
+              echo "ERROR: $f package compiled despite -D${f^^}=OFF"; exit 1
+            fi
+          done
+          mvn -B clean compile
+
       - name: Unit tests
         run: mvn -B test
 
