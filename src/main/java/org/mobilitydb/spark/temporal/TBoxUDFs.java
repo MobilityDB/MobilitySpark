@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.apache.spark.sql.SparkSession;
@@ -62,7 +62,7 @@ public final class TBoxUDFs {
     // milliseconds from Unix epoch (1970-01-01) to PG epoch (2000-01-01)
     private static Pointer tboxPtr(String hex) {
         if (hex == null) return null;
-        return functions.tbox_from_hexwkb(hex);
+        return GeneratedFunctions.tbox_from_hexwkb(hex);
     }
 
     // ------------------------------------------------------------------
@@ -75,7 +75,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            return functions.tbox_hasx(p);
+            return GeneratedFunctions.tbox_hasx(p);
         };
 
     public static final UDF1<String, Boolean> tboxHast =
@@ -84,7 +84,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            return functions.tbox_hast(p);
+            return GeneratedFunctions.tbox_hast(p);
         };
 
     // ------------------------------------------------------------------
@@ -97,7 +97,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tbox_xmin(p);
+            Pointer r = GeneratedFunctions.tbox_xmin(p);
             return r == null ? null : r.getDouble(0);
         };
 
@@ -107,7 +107,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tbox_xmax(p);
+            Pointer r = GeneratedFunctions.tbox_xmax(p);
             return r == null ? null : r.getDouble(0);
         };
 
@@ -117,7 +117,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tbox_xmin_inc(p);
+            Pointer r = GeneratedFunctions.tbox_xmin_inc(p);
             return r == null ? null : r.getByte(0) != 0;
         };
 
@@ -127,7 +127,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tbox_xmax_inc(p);
+            Pointer r = GeneratedFunctions.tbox_xmax_inc(p);
             return r == null ? null : r.getByte(0) != 0;
         };
 
@@ -141,7 +141,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tbox_tmin(p);
+            Pointer r = GeneratedFunctions.tbox_tmin(p);
             if (r == null) return null;
             return new java.sql.Timestamp(r.getLong(0) / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS);
         };
@@ -152,7 +152,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tbox_tmax(p);
+            Pointer r = GeneratedFunctions.tbox_tmax(p);
             if (r == null) return null;
             return new java.sql.Timestamp(r.getLong(0) / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS);
         };
@@ -163,7 +163,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tbox_tmin_inc(p);
+            Pointer r = GeneratedFunctions.tbox_tmin_inc(p);
             return r == null ? null : r.getByte(0) != 0;
         };
 
@@ -173,7 +173,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tbox_tmax_inc(p);
+            Pointer r = GeneratedFunctions.tbox_tmax_inc(p);
             return r == null ? null : r.getByte(0) != 0;
         };
 
@@ -187,9 +187,9 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer span = functions.tbox_to_intspan(p);
+            Pointer span = GeneratedFunctions.tbox_to_intspan(p);
             if (span == null) return null;
-            return functions.span_as_hexwkb(span, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(span, (byte) 0);
         };
 
     public static final UDF1<String, String> tboxToFloatspan =
@@ -198,9 +198,9 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer span = functions.tbox_to_floatspan(p);
+            Pointer span = GeneratedFunctions.tbox_to_floatspan(p);
             if (span == null) return null;
-            return functions.span_as_hexwkb(span, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(span, (byte) 0);
         };
 
     public static final UDF1<String, String> tboxToTstzspan =
@@ -209,9 +209,9 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer span = functions.tbox_to_tstzspan(p);
+            Pointer span = GeneratedFunctions.tbox_to_tstzspan(p);
             if (span == null) return null;
-            return functions.span_as_hexwkb(span, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(span, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -224,13 +224,13 @@ public final class TBoxUDFs {
         (spanHex) -> {
             if (spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(spanHex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(spanHex);
             if (p == null) return null;
-            Pointer tb = functions.span_to_tbox(p);
+            Pointer tb = GeneratedFunctions.span_to_tbox(p);
             if (tb == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
-                return functions.tbox_as_hexwkb(tb, (byte) 0, rt.getMemoryManager().allocateDirect(8));
+                return GeneratedFunctions.tbox_as_hexwkb(tb, (byte) 0, rt.getMemoryManager().allocateDirect(8));
             } finally {
                 MeosMemory.free(tb);
             }
@@ -242,13 +242,13 @@ public final class TBoxUDFs {
         (spansetHex) -> {
             if (spansetHex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(spansetHex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(spansetHex);
             if (p == null) return null;
-            Pointer tb = functions.spanset_to_tbox(p);
+            Pointer tb = GeneratedFunctions.spanset_to_tbox(p);
             if (tb == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
-                return functions.tbox_as_hexwkb(tb, (byte) 0, rt.getMemoryManager().allocateDirect(8));
+                return GeneratedFunctions.tbox_as_hexwkb(tb, (byte) 0, rt.getMemoryManager().allocateDirect(8));
             } finally {
                 MeosMemory.free(tb);
             }
@@ -260,13 +260,13 @@ public final class TBoxUDFs {
         (setHex) -> {
             if (setHex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(setHex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(setHex);
             if (p == null) return null;
-            Pointer tb = functions.set_to_tbox(p);
+            Pointer tb = GeneratedFunctions.set_to_tbox(p);
             if (tb == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
-                return functions.tbox_as_hexwkb(tb, (byte) 0, rt.getMemoryManager().allocateDirect(8));
+                return GeneratedFunctions.tbox_as_hexwkb(tb, (byte) 0, rt.getMemoryManager().allocateDirect(8));
             } finally {
                 MeosMemory.free(tb);
             }
@@ -289,7 +289,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tboxfloat_xmin(p);
+            Pointer r = GeneratedFunctions.tboxfloat_xmin(p);
             return r == null ? null : r.getDouble(0);
         };
 
@@ -299,7 +299,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tboxfloat_xmax(p);
+            Pointer r = GeneratedFunctions.tboxfloat_xmax(p);
             return r == null ? null : r.getDouble(0);
         };
 
@@ -309,7 +309,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tboxint_xmin(p);
+            Pointer r = GeneratedFunctions.tboxint_xmin(p);
             return r == null ? null : r.getInt(0);
         };
 
@@ -319,7 +319,7 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.tboxint_xmax(p);
+            Pointer r = GeneratedFunctions.tboxint_xmax(p);
             return r == null ? null : r.getInt(0);
         };
 
@@ -335,12 +335,12 @@ public final class TBoxUDFs {
         (numspanHex, tstzspanHex) -> {
             if (numspanHex == null && tstzspanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer numspan  = numspanHex  != null ? functions.span_from_hexwkb(numspanHex)  : null;
-            Pointer tstzspan = tstzspanHex != null ? functions.span_from_hexwkb(tstzspanHex) : null;
-            Pointer result = functions.tbox_make(numspan, tstzspan);
+            Pointer numspan  = numspanHex  != null ? GeneratedFunctions.span_from_hexwkb(numspanHex)  : null;
+            Pointer tstzspan = tstzspanHex != null ? GeneratedFunctions.span_from_hexwkb(tstzspanHex) : null;
+            Pointer result = GeneratedFunctions.tbox_make(numspan, tstzspan);
             if (result == null) return null;
             try {
-                return functions.tbox_as_hexwkb(result, (byte) 0,
+                return GeneratedFunctions.tbox_as_hexwkb(result, (byte) 0,
                     Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8));
             } finally {
                 MeosMemory.free(result);
@@ -355,10 +355,10 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             long pgMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
             OffsetDateTime odt = OffsetDateTime.ofInstant(Instant.ofEpochSecond(pgMicros, 0), ZoneOffset.UTC);
-            Pointer result = functions.timestamptz_to_tbox(odt);
+            Pointer result = GeneratedFunctions.timestamptz_to_tbox(odt);
             if (result == null) return null;
             try {
-                return functions.tbox_as_hexwkb(result, (byte) 0,
+                return GeneratedFunctions.tbox_as_hexwkb(result, (byte) 0,
                     Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8));
             } finally {
                 MeosMemory.free(result);
@@ -371,14 +371,14 @@ public final class TBoxUDFs {
         (spanHex, ts) -> {
             if (spanHex == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer span = functions.span_from_hexwkb(spanHex);
+            Pointer span = GeneratedFunctions.span_from_hexwkb(spanHex);
             if (span == null) return null;
             long pgMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
             OffsetDateTime odt = OffsetDateTime.ofInstant(Instant.ofEpochSecond(pgMicros, 0), ZoneOffset.UTC);
-            Pointer result = functions.numspan_timestamptz_to_tbox(span, odt);
+            Pointer result = GeneratedFunctions.numspan_timestamptz_to_tbox(span, odt);
             if (result == null) return null;
             try {
-                return functions.tbox_as_hexwkb(result, (byte) 0,
+                return GeneratedFunctions.tbox_as_hexwkb(result, (byte) 0,
                     Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8));
             } finally {
                 MeosMemory.free(result);
@@ -398,12 +398,12 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) return null;
-            Pointer result = functions.tbox_expand_time(p, iv);
+            Pointer result = GeneratedFunctions.tbox_expand_time(p, iv);
             if (result == null) return null;
             try {
-                return functions.tbox_as_hexwkb(result, (byte) 0,
+                return GeneratedFunctions.tbox_as_hexwkb(result, (byte) 0,
                     Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8));
             } finally {
                 MeosMemory.free(result);
@@ -421,7 +421,7 @@ public final class TBoxUDFs {
             Pointer result = org.mobilitydb.spark.MeosNative.INSTANCE.tfloatbox_expand(p, v);
             if (result == null) return null;
             try {
-                return functions.tbox_as_hexwkb(result, (byte) 0,
+                return GeneratedFunctions.tbox_as_hexwkb(result, (byte) 0,
                     Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8));
             } finally {
                 MeosMemory.free(result);
@@ -439,7 +439,7 @@ public final class TBoxUDFs {
             Pointer result = org.mobilitydb.spark.MeosNative.INSTANCE.tintbox_expand(p, v);
             if (result == null) return null;
             try {
-                return functions.tbox_as_hexwkb(result, (byte) 0,
+                return GeneratedFunctions.tbox_as_hexwkb(result, (byte) 0,
                     Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8));
             } finally {
                 MeosMemory.free(result);
@@ -455,12 +455,12 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer shiftIv = shiftStr != null ? functions.pg_interval_in(shiftStr, -1) : null;
-            Pointer scaleIv = scaleStr != null ? functions.pg_interval_in(scaleStr, -1) : null;
-            Pointer result = functions.tbox_shift_scale_time(p, shiftIv, scaleIv);
+            Pointer shiftIv = shiftStr != null ? GeneratedFunctions.pg_interval_in(shiftStr, -1) : null;
+            Pointer scaleIv = scaleStr != null ? GeneratedFunctions.pg_interval_in(scaleStr, -1) : null;
+            Pointer result = GeneratedFunctions.tbox_shift_scale_time(p, shiftIv, scaleIv);
             if (result == null) return null;
             try {
-                return functions.tbox_as_hexwkb(result, (byte) 0,
+                return GeneratedFunctions.tbox_as_hexwkb(result, (byte) 0,
                     Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8));
             } finally {
                 MeosMemory.free(result);
@@ -479,12 +479,12 @@ public final class TBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = tboxPtr(hex);
             if (p == null) return null;
-            Pointer result = functions.tbox_round(p, maxDecimals);
+            Pointer result = GeneratedFunctions.tbox_round(p, maxDecimals);
             if (result == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
-                return functions.tbox_as_hexwkb(result, (byte) 0, sizeOut);
+                return GeneratedFunctions.tbox_as_hexwkb(result, (byte) 0, sizeOut);
             } finally {
                 MeosMemory.free(result);
             }
@@ -569,7 +569,7 @@ public final class TBoxUDFs {
             Pointer r = fn.apply(p1, p2);
             if (r == null) return null;
             try {
-                return functions.tbox_as_hexwkb(r, (byte) 0, rt.getMemoryManager().allocateDirect(8));
+                return GeneratedFunctions.tbox_as_hexwkb(r, (byte) 0, rt.getMemoryManager().allocateDirect(8));
             } finally { MeosMemory.free(r); }
         } finally {
             MeosMemory.free(p1);
@@ -578,10 +578,10 @@ public final class TBoxUDFs {
     }
 
     public static final UDF2<String, String, String> intersectionTboxTbox =
-        (h1, h2) -> tboxBinOp(h1, h2, functions::intersection_tbox_tbox);
+        (h1, h2) -> tboxBinOp(h1, h2, GeneratedFunctions::intersection_tbox_tbox);
 
     public static final UDF2<String, String, String> unionTboxTbox =
-        (h1, h2) -> tboxBinOp(h1, h2, (p1, p2) -> functions.union_tbox_tbox(p1, p2, false));
+        (h1, h2) -> tboxBinOp(h1, h2, (p1, p2) -> GeneratedFunctions.union_tbox_tbox(p1, p2, false));
 
     // ------------------------------------------------------------------
     // TBox positional predicates  (tbox, tbox) → Boolean
@@ -604,28 +604,28 @@ public final class TBoxUDFs {
     // ------------------------------------------------------------------
 
     public static final UDF2<String, String, Boolean> tboxContains =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::contains_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::contains_tbox_tbox);
     public static final UDF2<String, String, Boolean> tboxContained =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::contained_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::contained_tbox_tbox);
     public static final UDF2<String, String, Boolean> tboxOverlaps =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::overlaps_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::overlaps_tbox_tbox);
 
     public static final UDF2<String, String, Boolean> tboxLeft =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::left_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::left_tbox_tbox);
     public static final UDF2<String, String, Boolean> tboxOverleft =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::overleft_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::overleft_tbox_tbox);
     public static final UDF2<String, String, Boolean> tboxRight =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::right_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::right_tbox_tbox);
     public static final UDF2<String, String, Boolean> tboxOverright =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::overright_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::overright_tbox_tbox);
     public static final UDF2<String, String, Boolean> tboxBefore =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::before_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::before_tbox_tbox);
     public static final UDF2<String, String, Boolean> tboxOverbefore =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::overbefore_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::overbefore_tbox_tbox);
     public static final UDF2<String, String, Boolean> tboxAfter =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::after_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::after_tbox_tbox);
     public static final UDF2<String, String, Boolean> tboxOverafter =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::overafter_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::overafter_tbox_tbox);
     public static final UDF2<String, String, Boolean> tboxAdjacent =
-        (h1, h2) -> tboxBoolOp(h1, h2, functions::adjacent_tbox_tbox);
+        (h1, h2) -> tboxBoolOp(h1, h2, GeneratedFunctions::adjacent_tbox_tbox);
 }

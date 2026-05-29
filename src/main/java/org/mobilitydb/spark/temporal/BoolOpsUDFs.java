@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -58,7 +58,7 @@ public final class BoolOpsUDFs {
     private static String hexOut(Pointer r) {
         if (r == null) return null;
         try {
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         } finally {
             MeosMemory.free(r);
         }
@@ -73,10 +73,10 @@ public final class BoolOpsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tnot_tbool(ptr));
+                return hexOut(GeneratedFunctions.tnot_tbool(ptr));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -90,10 +90,10 @@ public final class BoolOpsUDFs {
         (s, v) -> {
             if (s == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tand_tbool_bool(ptr, v));
+                return hexOut(GeneratedFunctions.tand_tbool_bool(ptr, v));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -102,10 +102,10 @@ public final class BoolOpsUDFs {
         (v, s) -> {
             if (v == null || s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tand_bool_tbool(v, ptr));
+                return hexOut(GeneratedFunctions.tand_bool_tbool(v, ptr));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -114,13 +114,13 @@ public final class BoolOpsUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    return hexOut(functions.tand_tbool_tbool(p1, p2));
+                    return hexOut(GeneratedFunctions.tand_tbool_tbool(p1, p2));
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -135,10 +135,10 @@ public final class BoolOpsUDFs {
         (s, v) -> {
             if (s == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tor_tbool_bool(ptr, v));
+                return hexOut(GeneratedFunctions.tor_tbool_bool(ptr, v));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -147,10 +147,10 @@ public final class BoolOpsUDFs {
         (v, s) -> {
             if (v == null || s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tor_bool_tbool(v, ptr));
+                return hexOut(GeneratedFunctions.tor_bool_tbool(v, ptr));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -159,13 +159,13 @@ public final class BoolOpsUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    return hexOut(functions.tor_tbool_tbool(p1, p2));
+                    return hexOut(GeneratedFunctions.tor_tbool_tbool(p1, p2));
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -181,13 +181,13 @@ public final class BoolOpsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tbool_when_true(ptr);
+                Pointer r = GeneratedFunctions.tbool_when_true(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.spanset_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -206,16 +206,16 @@ public final class BoolOpsUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    Pointer r = functions.teq_temporal_temporal(p1, p2);
+                    Pointer r = GeneratedFunctions.teq_temporal_temporal(p1, p2);
                     if (r == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                     } finally {
                         MeosMemory.free(r);
                     }
@@ -231,16 +231,16 @@ public final class BoolOpsUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    Pointer r = functions.tne_temporal_temporal(p1, p2);
+                    Pointer r = GeneratedFunctions.tne_temporal_temporal(p1, p2);
                     if (r == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                     } finally {
                         MeosMemory.free(r);
                     }
@@ -256,16 +256,16 @@ public final class BoolOpsUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    Pointer r = functions.tlt_temporal_temporal(p1, p2);
+                    Pointer r = GeneratedFunctions.tlt_temporal_temporal(p1, p2);
                     if (r == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                     } finally {
                         MeosMemory.free(r);
                     }
@@ -281,16 +281,16 @@ public final class BoolOpsUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    Pointer r = functions.tle_temporal_temporal(p1, p2);
+                    Pointer r = GeneratedFunctions.tle_temporal_temporal(p1, p2);
                     if (r == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                     } finally {
                         MeosMemory.free(r);
                     }
@@ -306,16 +306,16 @@ public final class BoolOpsUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    Pointer r = functions.tgt_temporal_temporal(p1, p2);
+                    Pointer r = GeneratedFunctions.tgt_temporal_temporal(p1, p2);
                     if (r == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                     } finally {
                         MeosMemory.free(r);
                     }
@@ -331,16 +331,16 @@ public final class BoolOpsUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    Pointer r = functions.tge_temporal_temporal(p1, p2);
+                    Pointer r = GeneratedFunctions.tge_temporal_temporal(p1, p2);
                     if (r == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                     } finally {
                         MeosMemory.free(r);
                     }

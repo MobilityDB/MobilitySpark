@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -65,16 +65,16 @@ public final class RestrictionUDFs {
         (s, spanHex) -> {
             if (s == null || spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer spanPtr = functions.span_from_hexwkb(spanHex);
+                Pointer spanPtr = GeneratedFunctions.span_from_hexwkb(spanHex);
                 if (spanPtr == null) return null;
                 try {
-                    Pointer result = functions.temporal_at_tstzspan(tptr, spanPtr);
+                    Pointer result = GeneratedFunctions.temporal_at_tstzspan(tptr, spanPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -92,16 +92,16 @@ public final class RestrictionUDFs {
         (s, spansetHex) -> {
             if (s == null || spansetHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer ssPtr = functions.spanset_from_hexwkb(spansetHex);
+                Pointer ssPtr = GeneratedFunctions.spanset_from_hexwkb(spansetHex);
                 if (ssPtr == null) return null;
                 try {
-                    Pointer result = functions.temporal_at_tstzspanset(tptr, ssPtr);
+                    Pointer result = GeneratedFunctions.temporal_at_tstzspanset(tptr, ssPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -119,16 +119,16 @@ public final class RestrictionUDFs {
         (s, tstzsetHex) -> {
             if (s == null || tstzsetHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer setptr = functions.set_from_hexwkb(tstzsetHex);
+                Pointer setptr = GeneratedFunctions.set_from_hexwkb(tstzsetHex);
                 if (setptr == null) return null;
                 try {
-                    Pointer result = functions.temporal_at_tstzset(tptr, setptr);
+                    Pointer result = GeneratedFunctions.temporal_at_tstzset(tptr, setptr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -146,16 +146,16 @@ public final class RestrictionUDFs {
         (s, tstzsetHex) -> {
             if (s == null || tstzsetHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer setptr = functions.set_from_hexwkb(tstzsetHex);
+                Pointer setptr = GeneratedFunctions.set_from_hexwkb(tstzsetHex);
                 if (setptr == null) return null;
                 try {
-                    Pointer result = functions.temporal_minus_tstzset(tptr, setptr);
+                    Pointer result = GeneratedFunctions.temporal_minus_tstzset(tptr, setptr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -173,16 +173,16 @@ public final class RestrictionUDFs {
         (s, spanHex) -> {
             if (s == null || spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer spanptr = functions.span_from_hexwkb(spanHex);
+                Pointer spanptr = GeneratedFunctions.span_from_hexwkb(spanHex);
                 if (spanptr == null) return null;
                 try {
-                    Pointer result = functions.temporal_minus_tstzspan(tptr, spanptr);
+                    Pointer result = GeneratedFunctions.temporal_minus_tstzspan(tptr, spanptr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -200,16 +200,16 @@ public final class RestrictionUDFs {
         (s, ssHex) -> {
             if (s == null || ssHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer ssptr = functions.spanset_from_hexwkb(ssHex);
+                Pointer ssptr = GeneratedFunctions.spanset_from_hexwkb(ssHex);
                 if (ssptr == null) return null;
                 try {
-                    Pointer result = functions.temporal_minus_tstzspanset(tptr, ssptr);
+                    Pointer result = GeneratedFunctions.temporal_minus_tstzspanset(tptr, ssptr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -231,16 +231,16 @@ public final class RestrictionUDFs {
         (s, spanHex) -> {
             if (s == null || spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer spanptr = functions.span_from_hexwkb(spanHex);
+                Pointer spanptr = GeneratedFunctions.span_from_hexwkb(spanHex);
                 if (spanptr == null) return null;
                 try {
-                    Pointer result = functions.temporal_delete_tstzspan(tptr, spanptr, false);
+                    Pointer result = GeneratedFunctions.temporal_delete_tstzspan(tptr, spanptr, false);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -258,16 +258,16 @@ public final class RestrictionUDFs {
         (s, ssHex) -> {
             if (s == null || ssHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer ssptr = functions.spanset_from_hexwkb(ssHex);
+                Pointer ssptr = GeneratedFunctions.spanset_from_hexwkb(ssHex);
                 if (ssptr == null) return null;
                 try {
-                    Pointer result = functions.temporal_delete_tstzspanset(tptr, ssptr, false);
+                    Pointer result = GeneratedFunctions.temporal_delete_tstzspanset(tptr, ssptr, false);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -285,16 +285,16 @@ public final class RestrictionUDFs {
         (s, setHex) -> {
             if (s == null || setHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer sptr = functions.set_from_hexwkb(setHex);
+                Pointer sptr = GeneratedFunctions.set_from_hexwkb(setHex);
                 if (sptr == null) return null;
                 try {
-                    Pointer result = functions.temporal_delete_tstzset(tptr, sptr, false);
+                    Pointer result = GeneratedFunctions.temporal_delete_tstzset(tptr, sptr, false);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -312,16 +312,16 @@ public final class RestrictionUDFs {
         (s, ts) -> {
             if (s == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
                 long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
-                Pointer result = functions.temporal_delete_timestamptz(tptr, odt, false);
+                Pointer result = GeneratedFunctions.temporal_delete_timestamptz(tptr, odt, false);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -340,16 +340,16 @@ public final class RestrictionUDFs {
         (s, ts) -> {
             if (s == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
                 long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
-                Pointer result = functions.temporal_at_timestamptz(tptr, odt);
+                Pointer result = GeneratedFunctions.temporal_at_timestamptz(tptr, odt);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -364,16 +364,16 @@ public final class RestrictionUDFs {
         (s, ts) -> {
             if (s == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
                 long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
-                Pointer result = functions.temporal_minus_timestamptz(tptr, odt);
+                Pointer result = GeneratedFunctions.temporal_minus_timestamptz(tptr, odt);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -392,13 +392,13 @@ public final class RestrictionUDFs {
         (s, value) -> {
             if (s == null || value == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer result = functions.tfloat_at_value(tptr, value);
+                Pointer result = GeneratedFunctions.tfloat_at_value(tptr, value);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -413,13 +413,13 @@ public final class RestrictionUDFs {
         (s, value) -> {
             if (s == null || value == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer result = functions.tfloat_minus_value(tptr, value);
+                Pointer result = GeneratedFunctions.tfloat_minus_value(tptr, value);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -434,13 +434,13 @@ public final class RestrictionUDFs {
         (s, value) -> {
             if (s == null || value == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer result = functions.tint_at_value(tptr, value);
+                Pointer result = GeneratedFunctions.tint_at_value(tptr, value);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -455,13 +455,13 @@ public final class RestrictionUDFs {
         (s, value) -> {
             if (s == null || value == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer result = functions.tint_minus_value(tptr, value);
+                Pointer result = GeneratedFunctions.tint_minus_value(tptr, value);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -480,16 +480,16 @@ public final class RestrictionUDFs {
         (s, spanHex) -> {
             if (s == null || spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer spanPtr = functions.span_from_hexwkb(spanHex);
+                Pointer spanPtr = GeneratedFunctions.span_from_hexwkb(spanHex);
                 if (spanPtr == null) return null;
                 try {
-                    Pointer result = functions.tnumber_at_span(tptr, spanPtr);
+                    Pointer result = GeneratedFunctions.tnumber_at_span(tptr, spanPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -507,16 +507,16 @@ public final class RestrictionUDFs {
         (s, spanHex) -> {
             if (s == null || spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer spanPtr = functions.span_from_hexwkb(spanHex);
+                Pointer spanPtr = GeneratedFunctions.span_from_hexwkb(spanHex);
                 if (spanPtr == null) return null;
                 try {
-                    Pointer result = functions.tnumber_minus_span(tptr, spanPtr);
+                    Pointer result = GeneratedFunctions.tnumber_minus_span(tptr, spanPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -534,16 +534,16 @@ public final class RestrictionUDFs {
         (s, spansetHex) -> {
             if (s == null || spansetHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer ssPtr = functions.spanset_from_hexwkb(spansetHex);
+                Pointer ssPtr = GeneratedFunctions.spanset_from_hexwkb(spansetHex);
                 if (ssPtr == null) return null;
                 try {
-                    Pointer result = functions.tnumber_at_spanset(tptr, ssPtr);
+                    Pointer result = GeneratedFunctions.tnumber_at_spanset(tptr, ssPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -561,16 +561,16 @@ public final class RestrictionUDFs {
         (s, spansetHex) -> {
             if (s == null || spansetHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer ssPtr = functions.spanset_from_hexwkb(spansetHex);
+                Pointer ssPtr = GeneratedFunctions.spanset_from_hexwkb(spansetHex);
                 if (ssPtr == null) return null;
                 try {
-                    Pointer result = functions.tnumber_minus_spanset(tptr, ssPtr);
+                    Pointer result = GeneratedFunctions.tnumber_minus_spanset(tptr, ssPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -592,13 +592,13 @@ public final class RestrictionUDFs {
         (s, value) -> {
             if (s == null || value == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer result = functions.tbool_at_value(tptr, value);
+                Pointer result = GeneratedFunctions.tbool_at_value(tptr, value);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -613,13 +613,13 @@ public final class RestrictionUDFs {
         (s, value) -> {
             if (s == null || value == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer result = functions.tbool_minus_value(tptr, value);
+                Pointer result = GeneratedFunctions.tbool_minus_value(tptr, value);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -639,16 +639,16 @@ public final class RestrictionUDFs {
         (s, value) -> {
             if (s == null || value == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer txtptr = functions.cstring2text(value);
+                Pointer txtptr = GeneratedFunctions.cstring2text(value);
                 if (txtptr == null) return null;
                 try {
-                    Pointer result = functions.ttext_at_value(tptr, txtptr);
+                    Pointer result = GeneratedFunctions.ttext_at_value(tptr, txtptr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -666,16 +666,16 @@ public final class RestrictionUDFs {
         (s, value) -> {
             if (s == null || value == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer txtptr = functions.cstring2text(value);
+                Pointer txtptr = GeneratedFunctions.cstring2text(value);
                 if (txtptr == null) return null;
                 try {
-                    Pointer result = functions.ttext_minus_value(tptr, txtptr);
+                    Pointer result = GeneratedFunctions.ttext_minus_value(tptr, txtptr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -698,16 +698,16 @@ public final class RestrictionUDFs {
         (s, geomWkt) -> {
             if (s == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+                Pointer gsptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
                 if (gsptr == null) return null;
                 try {
-                    Pointer result = functions.tpoint_at_value(tptr, gsptr);
+                    Pointer result = GeneratedFunctions.tpoint_at_value(tptr, gsptr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -725,16 +725,16 @@ public final class RestrictionUDFs {
         (s, geomWkt) -> {
             if (s == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+                Pointer gsptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
                 if (gsptr == null) return null;
                 try {
-                    Pointer result = functions.tpoint_minus_value(tptr, gsptr);
+                    Pointer result = GeneratedFunctions.tpoint_minus_value(tptr, gsptr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -756,16 +756,16 @@ public final class RestrictionUDFs {
         (s, stboxHex) -> {
             if (s == null || stboxHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer boxPtr = functions.stbox_from_hexwkb(stboxHex);
+                Pointer boxPtr = GeneratedFunctions.stbox_from_hexwkb(stboxHex);
                 if (boxPtr == null) return null;
                 try {
-                    Pointer result = functions.tgeo_at_stbox(tptr, boxPtr, true);
+                    Pointer result = GeneratedFunctions.tgeo_at_stbox(tptr, boxPtr, true);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -783,16 +783,16 @@ public final class RestrictionUDFs {
         (s, stboxHex) -> {
             if (s == null || stboxHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer boxPtr = functions.stbox_from_hexwkb(stboxHex);
+                Pointer boxPtr = GeneratedFunctions.stbox_from_hexwkb(stboxHex);
                 if (boxPtr == null) return null;
                 try {
-                    Pointer result = functions.tgeo_minus_stbox(tptr, boxPtr, true);
+                    Pointer result = GeneratedFunctions.tgeo_minus_stbox(tptr, boxPtr, true);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -810,16 +810,16 @@ public final class RestrictionUDFs {
         (s, spanHex) -> {
             if (s == null || spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer spanPtr = functions.span_from_hexwkb(spanHex);
+                Pointer spanPtr = GeneratedFunctions.span_from_hexwkb(spanHex);
                 if (spanPtr == null) return null;
                 try {
-                    Pointer result = functions.tpoint_at_elevation(tptr, spanPtr);
+                    Pointer result = GeneratedFunctions.tpoint_at_elevation(tptr, spanPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -837,16 +837,16 @@ public final class RestrictionUDFs {
         (s, spanHex) -> {
             if (s == null || spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer spanPtr = functions.span_from_hexwkb(spanHex);
+                Pointer spanPtr = GeneratedFunctions.span_from_hexwkb(spanHex);
                 if (spanPtr == null) return null;
                 try {
-                    Pointer result = functions.tpoint_minus_elevation(tptr, spanPtr);
+                    Pointer result = GeneratedFunctions.tpoint_minus_elevation(tptr, spanPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -868,13 +868,13 @@ public final class RestrictionUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.temporal_at_max(ptr);
+                Pointer r = GeneratedFunctions.temporal_at_max(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -889,13 +889,13 @@ public final class RestrictionUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.temporal_at_min(ptr);
+                Pointer r = GeneratedFunctions.temporal_at_min(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -915,16 +915,16 @@ public final class RestrictionUDFs {
         (s, setHex) -> {
             if (s == null || setHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer setPtr = functions.set_from_hexwkb(setHex);
+                Pointer setPtr = GeneratedFunctions.set_from_hexwkb(setHex);
                 if (setPtr == null) return null;
                 try {
-                    Pointer result = functions.temporal_at_values(tptr, setPtr);
+                    Pointer result = GeneratedFunctions.temporal_at_values(tptr, setPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -942,16 +942,16 @@ public final class RestrictionUDFs {
         (s, setHex) -> {
             if (s == null || setHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer setPtr = functions.set_from_hexwkb(setHex);
+                Pointer setPtr = GeneratedFunctions.set_from_hexwkb(setHex);
                 if (setPtr == null) return null;
                 try {
-                    Pointer result = functions.temporal_minus_values(tptr, setPtr);
+                    Pointer result = GeneratedFunctions.temporal_minus_values(tptr, setPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -973,16 +973,16 @@ public final class RestrictionUDFs {
         (s, geomWkt) -> {
             if (s == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+                Pointer gsptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
                 if (gsptr == null) return null;
                 try {
-                    Pointer r = functions.tgeo_at_geom(tptr, gsptr);
+                    Pointer r = GeneratedFunctions.tgeo_at_geom(tptr, gsptr);
                     if (r == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                     } finally {
                         MeosMemory.free(r);
                     }
@@ -1000,16 +1000,16 @@ public final class RestrictionUDFs {
         (s, geomWkt) -> {
             if (s == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+                Pointer gsptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
                 if (gsptr == null) return null;
                 try {
-                    Pointer r = functions.tgeo_minus_geom(tptr, gsptr);
+                    Pointer r = GeneratedFunctions.tgeo_minus_geom(tptr, gsptr);
                     if (r == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                     } finally {
                         MeosMemory.free(r);
                     }

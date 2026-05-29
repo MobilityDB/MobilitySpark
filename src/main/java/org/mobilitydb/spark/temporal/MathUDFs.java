@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -55,7 +55,7 @@ public final class MathUDFs {
     private static String hexOut(Pointer r) {
         if (r == null) return null;
         try {
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         } finally {
             MeosMemory.free(r);
         }
@@ -72,10 +72,10 @@ public final class MathUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tnumber_abs(ptr));
+                return hexOut(GeneratedFunctions.tnumber_abs(ptr));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -83,10 +83,10 @@ public final class MathUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tnumber_delta_value(ptr));
+                return hexOut(GeneratedFunctions.tnumber_delta_value(ptr));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -94,10 +94,10 @@ public final class MathUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tnumber_angular_difference(ptr));
+                return hexOut(GeneratedFunctions.tnumber_angular_difference(ptr));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -105,10 +105,10 @@ public final class MathUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tpoint_angular_difference(ptr));
+                return hexOut(GeneratedFunctions.tpoint_angular_difference(ptr));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -122,10 +122,10 @@ public final class MathUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tfloat_exp(ptr));
+                return hexOut(GeneratedFunctions.tfloat_exp(ptr));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -133,10 +133,10 @@ public final class MathUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tfloat_ln(ptr));
+                return hexOut(GeneratedFunctions.tfloat_ln(ptr));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -144,10 +144,10 @@ public final class MathUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.tfloat_log10(ptr));
+                return hexOut(GeneratedFunctions.tfloat_log10(ptr));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -161,10 +161,10 @@ public final class MathUDFs {
         (s, v) -> {
             if (s == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.add_tint_int(ptr, v));
+                return hexOut(GeneratedFunctions.add_tint_int(ptr, v));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -172,10 +172,10 @@ public final class MathUDFs {
         (s, v) -> {
             if (s == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.sub_tint_int(ptr, v));
+                return hexOut(GeneratedFunctions.sub_tint_int(ptr, v));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -183,10 +183,10 @@ public final class MathUDFs {
         (s, v) -> {
             if (s == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.mult_tint_int(ptr, v));
+                return hexOut(GeneratedFunctions.mul_tint_int(ptr, v));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -194,10 +194,10 @@ public final class MathUDFs {
         (s, v) -> {
             if (s == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.div_tint_int(ptr, v));
+                return hexOut(GeneratedFunctions.div_tint_int(ptr, v));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -211,10 +211,10 @@ public final class MathUDFs {
         (s, v) -> {
             if (s == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.add_tfloat_float(ptr, v));
+                return hexOut(GeneratedFunctions.add_tfloat_float(ptr, v));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -222,10 +222,10 @@ public final class MathUDFs {
         (s, v) -> {
             if (s == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.sub_tfloat_float(ptr, v));
+                return hexOut(GeneratedFunctions.sub_tfloat_float(ptr, v));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -233,10 +233,10 @@ public final class MathUDFs {
         (s, v) -> {
             if (s == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.mult_tfloat_float(ptr, v));
+                return hexOut(GeneratedFunctions.mul_tfloat_float(ptr, v));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -244,10 +244,10 @@ public final class MathUDFs {
         (s, v) -> {
             if (s == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return hexOut(functions.div_tfloat_float(ptr, v));
+                return hexOut(GeneratedFunctions.div_tfloat_float(ptr, v));
             } finally { MeosMemory.free(ptr); }
         };
 
@@ -264,13 +264,13 @@ public final class MathUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    return hexOut(functions.add_tnumber_tnumber(p1, p2));
+                    return hexOut(GeneratedFunctions.add_tnumber_tnumber(p1, p2));
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -279,13 +279,13 @@ public final class MathUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    return hexOut(functions.sub_tnumber_tnumber(p1, p2));
+                    return hexOut(GeneratedFunctions.sub_tnumber_tnumber(p1, p2));
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -294,13 +294,13 @@ public final class MathUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    return hexOut(functions.mult_tnumber_tnumber(p1, p2));
+                    return hexOut(GeneratedFunctions.mul_tnumber_tnumber(p1, p2));
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -309,13 +309,13 @@ public final class MathUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    return hexOut(functions.div_tnumber_tnumber(p1, p2));
+                    return hexOut(GeneratedFunctions.div_tnumber_tnumber(p1, p2));
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };

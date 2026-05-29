@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -131,19 +131,19 @@ public final class ComparisonUDFs {
 
     // ---- cbuffer ----
     public static final UDF2<String, String, Boolean> cbufferEq =
-        ord(functions::cbuffer_from_hexwkb, functions::cbuffer_cmp, c -> c == 0);
+        ord(GeneratedFunctions::cbuffer_from_hexwkb, GeneratedFunctions::cbuffer_cmp, c -> c == 0);
     public static final UDF2<String, String, Boolean> cbufferNe =
-        ord(functions::cbuffer_from_hexwkb, functions::cbuffer_cmp, c -> c != 0);
+        ord(GeneratedFunctions::cbuffer_from_hexwkb, GeneratedFunctions::cbuffer_cmp, c -> c != 0);
     public static final UDF2<String, String, Boolean> cbufferLt =
-        ord(functions::cbuffer_from_hexwkb, functions::cbuffer_cmp, c -> c < 0);
+        ord(GeneratedFunctions::cbuffer_from_hexwkb, GeneratedFunctions::cbuffer_cmp, c -> c < 0);
     public static final UDF2<String, String, Boolean> cbufferLe =
-        ord(functions::cbuffer_from_hexwkb, functions::cbuffer_cmp, c -> c <= 0);
+        ord(GeneratedFunctions::cbuffer_from_hexwkb, GeneratedFunctions::cbuffer_cmp, c -> c <= 0);
     public static final UDF2<String, String, Boolean> cbufferGt =
-        ord(functions::cbuffer_from_hexwkb, functions::cbuffer_cmp, c -> c > 0);
+        ord(GeneratedFunctions::cbuffer_from_hexwkb, GeneratedFunctions::cbuffer_cmp, c -> c > 0);
     public static final UDF2<String, String, Boolean> cbufferGe =
-        ord(functions::cbuffer_from_hexwkb, functions::cbuffer_cmp, c -> c >= 0);
+        ord(GeneratedFunctions::cbuffer_from_hexwkb, GeneratedFunctions::cbuffer_cmp, c -> c >= 0);
     public static final UDF2<String, String, Integer> cbufferCmp =
-        cmpOp(functions::cbuffer_from_hexwkb, functions::cbuffer_cmp);
+        cmpOp(GeneratedFunctions::cbuffer_from_hexwkb, GeneratedFunctions::cbuffer_cmp);
     // cbuffer_hash / cbuffer_hash_extended are intentionally NOT bound:
     // MEOS hashes the embedded geometry's raw bytes (gserialized_hash /
     // VARDATA), which include uninitialized padding under malloc-based
@@ -155,166 +155,166 @@ public final class ComparisonUDFs {
 
     // ---- npoint ----
     public static final UDF2<String, String, Boolean> npointEq =
-        ord(functions::npoint_from_hexwkb, functions::npoint_cmp, c -> c == 0);
+        ord(GeneratedFunctions::npoint_from_hexwkb, GeneratedFunctions::npoint_cmp, c -> c == 0);
     public static final UDF2<String, String, Boolean> npointNe =
-        ord(functions::npoint_from_hexwkb, functions::npoint_cmp, c -> c != 0);
+        ord(GeneratedFunctions::npoint_from_hexwkb, GeneratedFunctions::npoint_cmp, c -> c != 0);
     public static final UDF2<String, String, Boolean> npointLt =
-        ord(functions::npoint_from_hexwkb, functions::npoint_cmp, c -> c < 0);
+        ord(GeneratedFunctions::npoint_from_hexwkb, GeneratedFunctions::npoint_cmp, c -> c < 0);
     public static final UDF2<String, String, Boolean> npointLe =
-        ord(functions::npoint_from_hexwkb, functions::npoint_cmp, c -> c <= 0);
+        ord(GeneratedFunctions::npoint_from_hexwkb, GeneratedFunctions::npoint_cmp, c -> c <= 0);
     public static final UDF2<String, String, Boolean> npointGt =
-        ord(functions::npoint_from_hexwkb, functions::npoint_cmp, c -> c > 0);
+        ord(GeneratedFunctions::npoint_from_hexwkb, GeneratedFunctions::npoint_cmp, c -> c > 0);
     public static final UDF2<String, String, Boolean> npointGe =
-        ord(functions::npoint_from_hexwkb, functions::npoint_cmp, c -> c >= 0);
+        ord(GeneratedFunctions::npoint_from_hexwkb, GeneratedFunctions::npoint_cmp, c -> c >= 0);
     public static final UDF2<String, String, Integer> npointCmp =
-        cmpOp(functions::npoint_from_hexwkb, functions::npoint_cmp);
+        cmpOp(GeneratedFunctions::npoint_from_hexwkb, GeneratedFunctions::npoint_cmp);
     public static final UDF1<String, Integer> npointHash =
-        hashOp(functions::npoint_from_hexwkb, functions::npoint_hash);
+        hashOp(GeneratedFunctions::npoint_from_hexwkb, GeneratedFunctions::npoint_hash);
     public static final UDF2<String, Long, Long> npointHashExtended =
-        hashExtOp(functions::npoint_from_hexwkb, functions::npoint_hash_extended);
+        hashExtOp(GeneratedFunctions::npoint_from_hexwkb, GeneratedFunctions::npoint_hash_extended);
 
     // ---- pose ----
     public static final UDF2<String, String, Boolean> poseEq =
-        ord(functions::pose_from_hexwkb, functions::pose_cmp, c -> c == 0);
+        ord(GeneratedFunctions::pose_from_hexwkb, GeneratedFunctions::pose_cmp, c -> c == 0);
     public static final UDF2<String, String, Boolean> poseNe =
-        ord(functions::pose_from_hexwkb, functions::pose_cmp, c -> c != 0);
+        ord(GeneratedFunctions::pose_from_hexwkb, GeneratedFunctions::pose_cmp, c -> c != 0);
     public static final UDF2<String, String, Boolean> poseLt =
-        ord(functions::pose_from_hexwkb, functions::pose_cmp, c -> c < 0);
+        ord(GeneratedFunctions::pose_from_hexwkb, GeneratedFunctions::pose_cmp, c -> c < 0);
     public static final UDF2<String, String, Boolean> poseLe =
-        ord(functions::pose_from_hexwkb, functions::pose_cmp, c -> c <= 0);
+        ord(GeneratedFunctions::pose_from_hexwkb, GeneratedFunctions::pose_cmp, c -> c <= 0);
     public static final UDF2<String, String, Boolean> poseGt =
-        ord(functions::pose_from_hexwkb, functions::pose_cmp, c -> c > 0);
+        ord(GeneratedFunctions::pose_from_hexwkb, GeneratedFunctions::pose_cmp, c -> c > 0);
     public static final UDF2<String, String, Boolean> poseGe =
-        ord(functions::pose_from_hexwkb, functions::pose_cmp, c -> c >= 0);
+        ord(GeneratedFunctions::pose_from_hexwkb, GeneratedFunctions::pose_cmp, c -> c >= 0);
     public static final UDF2<String, String, Integer> poseCmp =
-        cmpOp(functions::pose_from_hexwkb, functions::pose_cmp);
+        cmpOp(GeneratedFunctions::pose_from_hexwkb, GeneratedFunctions::pose_cmp);
     public static final UDF1<String, Integer> poseHash =
-        hashOp(functions::pose_from_hexwkb, functions::pose_hash);
+        hashOp(GeneratedFunctions::pose_from_hexwkb, GeneratedFunctions::pose_hash);
     public static final UDF2<String, Long, Long> poseHashExtended =
-        hashExtOp(functions::pose_from_hexwkb, functions::pose_hash_extended);
+        hashExtOp(GeneratedFunctions::pose_from_hexwkb, GeneratedFunctions::pose_hash_extended);
 
     // ---- nsegment ----
     public static final UDF2<String, String, Boolean> nsegmentEq =
-        ord(functions::nsegment_in, functions::nsegment_cmp, c -> c == 0);
+        ord(GeneratedFunctions::nsegment_in, GeneratedFunctions::nsegment_cmp, c -> c == 0);
     public static final UDF2<String, String, Boolean> nsegmentNe =
-        ord(functions::nsegment_in, functions::nsegment_cmp, c -> c != 0);
+        ord(GeneratedFunctions::nsegment_in, GeneratedFunctions::nsegment_cmp, c -> c != 0);
     public static final UDF2<String, String, Boolean> nsegmentLt =
-        ord(functions::nsegment_in, functions::nsegment_cmp, c -> c < 0);
+        ord(GeneratedFunctions::nsegment_in, GeneratedFunctions::nsegment_cmp, c -> c < 0);
     public static final UDF2<String, String, Boolean> nsegmentLe =
-        ord(functions::nsegment_in, functions::nsegment_cmp, c -> c <= 0);
+        ord(GeneratedFunctions::nsegment_in, GeneratedFunctions::nsegment_cmp, c -> c <= 0);
     public static final UDF2<String, String, Boolean> nsegmentGt =
-        ord(functions::nsegment_in, functions::nsegment_cmp, c -> c > 0);
+        ord(GeneratedFunctions::nsegment_in, GeneratedFunctions::nsegment_cmp, c -> c > 0);
     public static final UDF2<String, String, Boolean> nsegmentGe =
-        ord(functions::nsegment_in, functions::nsegment_cmp, c -> c >= 0);
+        ord(GeneratedFunctions::nsegment_in, GeneratedFunctions::nsegment_cmp, c -> c >= 0);
     public static final UDF2<String, String, Integer> nsegmentCmp =
-        cmpOp(functions::nsegment_in, functions::nsegment_cmp);
+        cmpOp(GeneratedFunctions::nsegment_in, GeneratedFunctions::nsegment_cmp);
 
     // ---- set ----
     public static final UDF2<String, String, Boolean> setEq =
-        ord(functions::set_from_hexwkb, functions::set_cmp, c -> c == 0);
+        ord(GeneratedFunctions::set_from_hexwkb, GeneratedFunctions::set_cmp, c -> c == 0);
     public static final UDF2<String, String, Boolean> setNe =
-        ord(functions::set_from_hexwkb, functions::set_cmp, c -> c != 0);
+        ord(GeneratedFunctions::set_from_hexwkb, GeneratedFunctions::set_cmp, c -> c != 0);
     public static final UDF2<String, String, Boolean> setLt =
-        ord(functions::set_from_hexwkb, functions::set_cmp, c -> c < 0);
+        ord(GeneratedFunctions::set_from_hexwkb, GeneratedFunctions::set_cmp, c -> c < 0);
     public static final UDF2<String, String, Boolean> setLe =
-        ord(functions::set_from_hexwkb, functions::set_cmp, c -> c <= 0);
+        ord(GeneratedFunctions::set_from_hexwkb, GeneratedFunctions::set_cmp, c -> c <= 0);
     public static final UDF2<String, String, Boolean> setGt =
-        ord(functions::set_from_hexwkb, functions::set_cmp, c -> c > 0);
+        ord(GeneratedFunctions::set_from_hexwkb, GeneratedFunctions::set_cmp, c -> c > 0);
     public static final UDF2<String, String, Boolean> setGe =
-        ord(functions::set_from_hexwkb, functions::set_cmp, c -> c >= 0);
+        ord(GeneratedFunctions::set_from_hexwkb, GeneratedFunctions::set_cmp, c -> c >= 0);
     public static final UDF2<String, String, Integer> setCmp =
-        cmpOp(functions::set_from_hexwkb, functions::set_cmp);
+        cmpOp(GeneratedFunctions::set_from_hexwkb, GeneratedFunctions::set_cmp);
     public static final UDF1<String, Integer> setHash =
-        hashOp(functions::set_from_hexwkb, functions::set_hash);
+        hashOp(GeneratedFunctions::set_from_hexwkb, GeneratedFunctions::set_hash);
     public static final UDF2<String, Long, Long> setHashExtended =
-        hashExtOp(functions::set_from_hexwkb, functions::set_hash_extended);
+        hashExtOp(GeneratedFunctions::set_from_hexwkb, GeneratedFunctions::set_hash_extended);
 
     // ---- span ----
     public static final UDF2<String, String, Boolean> spanEq =
-        ord(functions::span_from_hexwkb, functions::span_cmp, c -> c == 0);
+        ord(GeneratedFunctions::span_from_hexwkb, GeneratedFunctions::span_cmp, c -> c == 0);
     public static final UDF2<String, String, Boolean> spanNe =
-        ord(functions::span_from_hexwkb, functions::span_cmp, c -> c != 0);
+        ord(GeneratedFunctions::span_from_hexwkb, GeneratedFunctions::span_cmp, c -> c != 0);
     public static final UDF2<String, String, Boolean> spanLt =
-        ord(functions::span_from_hexwkb, functions::span_cmp, c -> c < 0);
+        ord(GeneratedFunctions::span_from_hexwkb, GeneratedFunctions::span_cmp, c -> c < 0);
     public static final UDF2<String, String, Boolean> spanLe =
-        ord(functions::span_from_hexwkb, functions::span_cmp, c -> c <= 0);
+        ord(GeneratedFunctions::span_from_hexwkb, GeneratedFunctions::span_cmp, c -> c <= 0);
     public static final UDF2<String, String, Boolean> spanGt =
-        ord(functions::span_from_hexwkb, functions::span_cmp, c -> c > 0);
+        ord(GeneratedFunctions::span_from_hexwkb, GeneratedFunctions::span_cmp, c -> c > 0);
     public static final UDF2<String, String, Boolean> spanGe =
-        ord(functions::span_from_hexwkb, functions::span_cmp, c -> c >= 0);
+        ord(GeneratedFunctions::span_from_hexwkb, GeneratedFunctions::span_cmp, c -> c >= 0);
     public static final UDF2<String, String, Integer> spanCmp =
-        cmpOp(functions::span_from_hexwkb, functions::span_cmp);
+        cmpOp(GeneratedFunctions::span_from_hexwkb, GeneratedFunctions::span_cmp);
     public static final UDF1<String, Integer> spanHash =
-        hashOp(functions::span_from_hexwkb, functions::span_hash);
+        hashOp(GeneratedFunctions::span_from_hexwkb, GeneratedFunctions::span_hash);
     public static final UDF2<String, Long, Long> spanHashExtended =
-        hashExtOp(functions::span_from_hexwkb, functions::span_hash_extended);
+        hashExtOp(GeneratedFunctions::span_from_hexwkb, GeneratedFunctions::span_hash_extended);
 
     // ---- spanset ----
     public static final UDF2<String, String, Boolean> spansetEq =
-        ord(functions::spanset_from_hexwkb, functions::spanset_cmp, c -> c == 0);
+        ord(GeneratedFunctions::spanset_from_hexwkb, GeneratedFunctions::spanset_cmp, c -> c == 0);
     public static final UDF2<String, String, Boolean> spansetNe =
-        ord(functions::spanset_from_hexwkb, functions::spanset_cmp, c -> c != 0);
+        ord(GeneratedFunctions::spanset_from_hexwkb, GeneratedFunctions::spanset_cmp, c -> c != 0);
     public static final UDF2<String, String, Boolean> spansetLt =
-        ord(functions::spanset_from_hexwkb, functions::spanset_cmp, c -> c < 0);
+        ord(GeneratedFunctions::spanset_from_hexwkb, GeneratedFunctions::spanset_cmp, c -> c < 0);
     public static final UDF2<String, String, Boolean> spansetLe =
-        ord(functions::spanset_from_hexwkb, functions::spanset_cmp, c -> c <= 0);
+        ord(GeneratedFunctions::spanset_from_hexwkb, GeneratedFunctions::spanset_cmp, c -> c <= 0);
     public static final UDF2<String, String, Boolean> spansetGt =
-        ord(functions::spanset_from_hexwkb, functions::spanset_cmp, c -> c > 0);
+        ord(GeneratedFunctions::spanset_from_hexwkb, GeneratedFunctions::spanset_cmp, c -> c > 0);
     public static final UDF2<String, String, Boolean> spansetGe =
-        ord(functions::spanset_from_hexwkb, functions::spanset_cmp, c -> c >= 0);
+        ord(GeneratedFunctions::spanset_from_hexwkb, GeneratedFunctions::spanset_cmp, c -> c >= 0);
     public static final UDF2<String, String, Integer> spansetCmp =
-        cmpOp(functions::spanset_from_hexwkb, functions::spanset_cmp);
+        cmpOp(GeneratedFunctions::spanset_from_hexwkb, GeneratedFunctions::spanset_cmp);
     public static final UDF1<String, Integer> spansetHash =
-        hashOp(functions::spanset_from_hexwkb, functions::spanset_hash);
+        hashOp(GeneratedFunctions::spanset_from_hexwkb, GeneratedFunctions::spanset_hash);
     public static final UDF2<String, Long, Long> spansetHashExtended =
-        hashExtOp(functions::spanset_from_hexwkb, functions::spanset_hash_extended);
+        hashExtOp(GeneratedFunctions::spanset_from_hexwkb, GeneratedFunctions::spanset_hash_extended);
 
     // ---- tbox ----
     public static final UDF2<String, String, Boolean> tboxEq =
-        ord(functions::tbox_from_hexwkb, functions::tbox_cmp, c -> c == 0);
+        ord(GeneratedFunctions::tbox_from_hexwkb, GeneratedFunctions::tbox_cmp, c -> c == 0);
     public static final UDF2<String, String, Boolean> tboxNe =
-        ord(functions::tbox_from_hexwkb, functions::tbox_cmp, c -> c != 0);
+        ord(GeneratedFunctions::tbox_from_hexwkb, GeneratedFunctions::tbox_cmp, c -> c != 0);
     public static final UDF2<String, String, Boolean> tboxLt =
-        ord(functions::tbox_from_hexwkb, functions::tbox_cmp, c -> c < 0);
+        ord(GeneratedFunctions::tbox_from_hexwkb, GeneratedFunctions::tbox_cmp, c -> c < 0);
     public static final UDF2<String, String, Boolean> tboxLe =
-        ord(functions::tbox_from_hexwkb, functions::tbox_cmp, c -> c <= 0);
+        ord(GeneratedFunctions::tbox_from_hexwkb, GeneratedFunctions::tbox_cmp, c -> c <= 0);
     public static final UDF2<String, String, Boolean> tboxGt =
-        ord(functions::tbox_from_hexwkb, functions::tbox_cmp, c -> c > 0);
+        ord(GeneratedFunctions::tbox_from_hexwkb, GeneratedFunctions::tbox_cmp, c -> c > 0);
     public static final UDF2<String, String, Boolean> tboxGe =
-        ord(functions::tbox_from_hexwkb, functions::tbox_cmp, c -> c >= 0);
+        ord(GeneratedFunctions::tbox_from_hexwkb, GeneratedFunctions::tbox_cmp, c -> c >= 0);
     public static final UDF2<String, String, Integer> tboxCmp =
-        cmpOp(functions::tbox_from_hexwkb, functions::tbox_cmp);
+        cmpOp(GeneratedFunctions::tbox_from_hexwkb, GeneratedFunctions::tbox_cmp);
     public static final UDF1<String, Integer> tboxHash =
-        hashOp(functions::tbox_from_hexwkb, functions::tbox_hash);
+        hashOp(GeneratedFunctions::tbox_from_hexwkb, GeneratedFunctions::tbox_hash);
     public static final UDF2<String, Long, Long> tboxHashExtended =
-        hashExtOp(functions::tbox_from_hexwkb, functions::tbox_hash_extended);
+        hashExtOp(GeneratedFunctions::tbox_from_hexwkb, GeneratedFunctions::tbox_hash_extended);
 
     // ---- stbox ----
     public static final UDF2<String, String, Boolean> stboxEq =
-        ord(functions::stbox_from_hexwkb, functions::stbox_cmp, c -> c == 0);
+        ord(GeneratedFunctions::stbox_from_hexwkb, GeneratedFunctions::stbox_cmp, c -> c == 0);
     public static final UDF2<String, String, Boolean> stboxNe =
-        ord(functions::stbox_from_hexwkb, functions::stbox_cmp, c -> c != 0);
+        ord(GeneratedFunctions::stbox_from_hexwkb, GeneratedFunctions::stbox_cmp, c -> c != 0);
     public static final UDF2<String, String, Boolean> stboxLt =
-        ord(functions::stbox_from_hexwkb, functions::stbox_cmp, c -> c < 0);
+        ord(GeneratedFunctions::stbox_from_hexwkb, GeneratedFunctions::stbox_cmp, c -> c < 0);
     public static final UDF2<String, String, Boolean> stboxLe =
-        ord(functions::stbox_from_hexwkb, functions::stbox_cmp, c -> c <= 0);
+        ord(GeneratedFunctions::stbox_from_hexwkb, GeneratedFunctions::stbox_cmp, c -> c <= 0);
     public static final UDF2<String, String, Boolean> stboxGt =
-        ord(functions::stbox_from_hexwkb, functions::stbox_cmp, c -> c > 0);
+        ord(GeneratedFunctions::stbox_from_hexwkb, GeneratedFunctions::stbox_cmp, c -> c > 0);
     public static final UDF2<String, String, Boolean> stboxGe =
-        ord(functions::stbox_from_hexwkb, functions::stbox_cmp, c -> c >= 0);
+        ord(GeneratedFunctions::stbox_from_hexwkb, GeneratedFunctions::stbox_cmp, c -> c >= 0);
     public static final UDF2<String, String, Integer> stboxCmp =
-        cmpOp(functions::stbox_from_hexwkb, functions::stbox_cmp);
+        cmpOp(GeneratedFunctions::stbox_from_hexwkb, GeneratedFunctions::stbox_cmp);
     public static final UDF1<String, Integer> stboxHash =
-        hashOp(functions::stbox_from_hexwkb, functions::stbox_hash);
+        hashOp(GeneratedFunctions::stbox_from_hexwkb, GeneratedFunctions::stbox_hash);
     public static final UDF2<String, Long, Long> stboxHashExtended =
-        hashExtOp(functions::stbox_from_hexwkb, functions::stbox_hash_extended);
+        hashExtOp(GeneratedFunctions::stbox_from_hexwkb, GeneratedFunctions::stbox_hash_extended);
 
     // ---- generic temporal (covers tbool/tint/tfloat/ttext/tgeompoint/
     //      tgeo/tcbuffer/tnpoint/tpose/trgeometry via the hex-WKB type tag) ----
     public static final UDF2<String, String, Integer> temporalCmp =
-        cmpOp(functions::temporal_from_hexwkb, functions::temporal_cmp);
+        cmpOp(GeneratedFunctions::temporal_from_hexwkb, GeneratedFunctions::temporal_cmp);
     public static final UDF1<String, Integer> temporalHash =
-        hashOp(functions::temporal_from_hexwkb, functions::temporal_hash);
+        hashOp(GeneratedFunctions::temporal_from_hexwkb, GeneratedFunctions::temporal_hash);
 
     public static void registerAll(SparkSession spark) {
         spark.udf().register("cbufferEq", cbufferEq, DataTypes.BooleanType);

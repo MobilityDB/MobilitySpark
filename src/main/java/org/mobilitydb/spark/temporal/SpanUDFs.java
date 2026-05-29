@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.api.java.UDF1;
@@ -64,9 +64,9 @@ public final class SpanUDFs {
         if (bytes == null) return null;
         MeosThread.ensureReady();
         String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-        Pointer ptr = functions.span_from_hexwkb(hex);
+        Pointer ptr = GeneratedFunctions.span_from_hexwkb(hex);
         if (ptr == null) return null;
-        return functions.span_as_hexwkb(ptr, (byte) 0);
+        return GeneratedFunctions.span_as_hexwkb(ptr, (byte) 0);
     }
 
     // ------------------------------------------------------------------
@@ -79,9 +79,9 @@ public final class SpanUDFs {
         if (bytes == null) return null;
         MeosThread.ensureReady();
         String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-        Pointer ptr = functions.spanset_from_hexwkb(hex);
+        Pointer ptr = GeneratedFunctions.spanset_from_hexwkb(hex);
         if (ptr == null) return null;
-        return functions.spanset_as_hexwkb(ptr, (byte) 0);
+        return GeneratedFunctions.spanset_as_hexwkb(ptr, (byte) 0);
     }
 
     // ------------------------------------------------------------------

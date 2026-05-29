@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.npoint;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
@@ -190,9 +190,9 @@ public final class NpointUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
 
@@ -202,7 +202,7 @@ public final class NpointUDFs {
             MeosThread.ensureReady();
             Pointer p = MeosNative.INSTANCE.npointset_in(s);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     public static final UDF1<String, String> npointsetFromEWKT = npointsetFromText;
@@ -212,9 +212,9 @@ public final class NpointUDFs {
             if (bytes == null) return null;
             MeosThread.ensureReady();
             String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     public static final UDF1<byte[], String> npointsetFromEWKB = npointsetFromBinary;
@@ -227,21 +227,21 @@ public final class NpointUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer set = functions.set_from_hexwkb(hex);
+            Pointer set = GeneratedFunctions.set_from_hexwkb(hex);
             if (set != null) {
                 try {
                     Pointer r = MeosNative.INSTANCE.npointset_routes(set);
                     if (r == null) return null;
-                    try { return functions.set_as_hexwkb(r, (byte) 0); }
+                    try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                     finally { MeosMemory.free(r); }
                 } finally { MeosMemory.free(set); }
             }
-            Pointer t = functions.temporal_from_hexwkb(hex);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (t == null) return null;
             try {
                 Pointer r = MeosNative.INSTANCE.tnpoint_routes(t);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(t); }
         };
@@ -263,7 +263,7 @@ public final class NpointUDFs {
                 long micros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 Pointer r = MeosNative.INSTANCE.tnpointinst_make(np, micros);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(np); }
         };
@@ -276,7 +276,7 @@ public final class NpointUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(hex);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (t == null) return null;
             try { return MeosNative.INSTANCE.tnpoint_route(t); }
             finally { MeosMemory.free(t); }
@@ -288,7 +288,7 @@ public final class NpointUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(hex);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (t == null) return null;
             try {
                 Pointer cnt = sizeOut();
@@ -311,9 +311,9 @@ public final class NpointUDFs {
         return hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -323,9 +323,9 @@ public final class NpointUDFs {
             if (bytes == null) return null;
             MeosThread.ensureReady();
             String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -337,12 +337,12 @@ public final class NpointUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequence(p, INTERP_LINEAR);
+                Pointer r = GeneratedFunctions.temporal_to_tsequence(p, INTERP_LINEAR);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -351,12 +351,12 @@ public final class NpointUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequenceset(p, INTERP_LINEAR);
+                Pointer r = GeneratedFunctions.temporal_to_tsequenceset(p, INTERP_LINEAR);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -371,7 +371,7 @@ public final class NpointUDFs {
             try {
                 for (int i = 0; i < n; i++) {
                     if (instants[i] == null) return null;
-                    insts[i] = functions.temporal_from_hexwkb(instants[i]);
+                    insts[i] = GeneratedFunctions.temporal_from_hexwkb(instants[i]);
                     if (insts[i] == null) return null;
                 }
                 Pointer buf = Runtime.getSystemRuntime().getMemoryManager()
@@ -379,12 +379,12 @@ public final class NpointUDFs {
                 for (int i = 0; i < n; i++) {
                     buf.putAddress(i * 8L, insts[i].address());
                 }
-                Pointer mt = (maxt == null) ? null : functions.pg_interval_in(maxt, -1);
+                Pointer mt = (maxt == null) ? null : GeneratedFunctions.pg_interval_in(maxt, -1);
                 try {
-                    Pointer r = functions.tsequenceset_make_gaps(buf, n,
+                    Pointer r = GeneratedFunctions.tsequenceset_make_gaps(buf, n,
                         INTERP_LINEAR, mt, -1.0);
                     if (r == null) return null;
-                    try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                    try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                     finally { MeosMemory.free(r); }
                 } finally {
                     if (mt != null) MeosMemory.free(mt);
@@ -417,7 +417,7 @@ public final class NpointUDFs {
             RidBigint fb, RidSet fs, RidTnpoint ft) {
         if (tnpHex == null || arg == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(tnpHex);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(tnpHex);
         if (t == null) return null;
         try {
             // bigint literal?
@@ -427,7 +427,7 @@ public final class NpointUDFs {
                 return fb.call(t, Long.parseLong(a), false);
             }
             // bigintset hex-WKB?
-            Pointer s = functions.set_from_hexwkb(a);
+            Pointer s = GeneratedFunctions.set_from_hexwkb(a);
             if (s != null) {
                 try {
                     if (fs == null) return null;
@@ -435,7 +435,7 @@ public final class NpointUDFs {
                 } finally { MeosMemory.free(s); }
             }
             // tnpoint hex-WKB
-            Pointer t2 = functions.temporal_from_hexwkb(a);
+            Pointer t2 = GeneratedFunctions.temporal_from_hexwkb(a);
             if (t2 == null) return null;
             try {
                 if (ft == null) return null;

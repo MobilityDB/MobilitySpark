@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -59,8 +59,8 @@ public final class TemporalBoxOpsUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.span_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.span_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return fn.apply(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
@@ -71,8 +71,8 @@ public final class TemporalBoxOpsUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.span_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.span_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return fn.apply(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
@@ -83,8 +83,8 @@ public final class TemporalBoxOpsUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return fn.apply(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
@@ -95,61 +95,61 @@ public final class TemporalBoxOpsUDFs {
     // tnumber × tnumber  (5)
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> tnumberAdjacentTnumber  = temporalTemporal(functions::adjacent_tnumber_tnumber);
-    public static final UDF2<String, String, Boolean> tnumberContainsTnumber  = temporalTemporal(functions::contains_tnumber_tnumber);
-    public static final UDF2<String, String, Boolean> tnumberContainedTnumber = temporalTemporal(functions::contained_tnumber_tnumber);
-    public static final UDF2<String, String, Boolean> tnumberOverlapsTnumber  = temporalTemporal(functions::overlaps_tnumber_tnumber);
-    public static final UDF2<String, String, Boolean> tnumberSameTnumber      = temporalTemporal(functions::same_tnumber_tnumber);
+    public static final UDF2<String, String, Boolean> tnumberAdjacentTnumber  = temporalTemporal(GeneratedFunctions::adjacent_tnumber_tnumber);
+    public static final UDF2<String, String, Boolean> tnumberContainsTnumber  = temporalTemporal(GeneratedFunctions::contains_tnumber_tnumber);
+    public static final UDF2<String, String, Boolean> tnumberContainedTnumber = temporalTemporal(GeneratedFunctions::contained_tnumber_tnumber);
+    public static final UDF2<String, String, Boolean> tnumberOverlapsTnumber  = temporalTemporal(GeneratedFunctions::overlaps_tnumber_tnumber);
+    public static final UDF2<String, String, Boolean> tnumberSameTnumber      = temporalTemporal(GeneratedFunctions::same_tnumber_tnumber);
 
     // ------------------------------------------------------------------
     // numspan × tnumber  (5)
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> numspanAdjacentTnumber  = spanTemporal(functions::adjacent_numspan_tnumber);
-    public static final UDF2<String, String, Boolean> numspanContainsTnumber  = spanTemporal(functions::contains_numspan_tnumber);
-    public static final UDF2<String, String, Boolean> numspanContainedTnumber = spanTemporal(functions::contained_numspan_tnumber);
-    public static final UDF2<String, String, Boolean> numspanOverlapsTnumber  = spanTemporal(functions::overlaps_numspan_tnumber);
-    public static final UDF2<String, String, Boolean> numspanSameTnumber      = spanTemporal(functions::same_numspan_tnumber);
+    public static final UDF2<String, String, Boolean> numspanAdjacentTnumber  = spanTemporal(GeneratedFunctions::adjacent_numspan_tnumber);
+    public static final UDF2<String, String, Boolean> numspanContainsTnumber  = spanTemporal(GeneratedFunctions::contains_numspan_tnumber);
+    public static final UDF2<String, String, Boolean> numspanContainedTnumber = spanTemporal(GeneratedFunctions::contained_numspan_tnumber);
+    public static final UDF2<String, String, Boolean> numspanOverlapsTnumber  = spanTemporal(GeneratedFunctions::overlaps_numspan_tnumber);
+    public static final UDF2<String, String, Boolean> numspanSameTnumber      = spanTemporal(GeneratedFunctions::same_numspan_tnumber);
 
     // ------------------------------------------------------------------
     // tnumber × numspan  (5)
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> tnumberAdjacentNumspan  = temporalSpan(functions::adjacent_tnumber_numspan);
-    public static final UDF2<String, String, Boolean> tnumberContainsNumspan  = temporalSpan(functions::contains_tnumber_numspan);
-    public static final UDF2<String, String, Boolean> tnumberContainedNumspan = temporalSpan(functions::contained_tnumber_numspan);
-    public static final UDF2<String, String, Boolean> tnumberOverlapsNumspan  = temporalSpan(functions::overlaps_tnumber_numspan);
-    public static final UDF2<String, String, Boolean> tnumberSameNumspan      = temporalSpan(functions::same_tnumber_numspan);
+    public static final UDF2<String, String, Boolean> tnumberAdjacentNumspan  = temporalSpan(GeneratedFunctions::adjacent_tnumber_numspan);
+    public static final UDF2<String, String, Boolean> tnumberContainsNumspan  = temporalSpan(GeneratedFunctions::contains_tnumber_numspan);
+    public static final UDF2<String, String, Boolean> tnumberContainedNumspan = temporalSpan(GeneratedFunctions::contained_tnumber_numspan);
+    public static final UDF2<String, String, Boolean> tnumberOverlapsNumspan  = temporalSpan(GeneratedFunctions::overlaps_tnumber_numspan);
+    public static final UDF2<String, String, Boolean> tnumberSameNumspan      = temporalSpan(GeneratedFunctions::same_tnumber_numspan);
 
     // ------------------------------------------------------------------
     // tstzspan × temporal  (5)
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> tstzspanAdjacentTemporal  = spanTemporal(functions::adjacent_tstzspan_temporal);
-    public static final UDF2<String, String, Boolean> tstzspanContainsTemporal  = spanTemporal(functions::contains_tstzspan_temporal);
-    public static final UDF2<String, String, Boolean> tstzspanContainedTemporal = spanTemporal(functions::contained_tstzspan_temporal);
-    public static final UDF2<String, String, Boolean> tstzspanOverlapsTemporal  = spanTemporal(functions::overlaps_tstzspan_temporal);
-    public static final UDF2<String, String, Boolean> tstzspanSameTemporal      = spanTemporal(functions::same_tstzspan_temporal);
+    public static final UDF2<String, String, Boolean> tstzspanAdjacentTemporal  = spanTemporal(GeneratedFunctions::adjacent_tstzspan_temporal);
+    public static final UDF2<String, String, Boolean> tstzspanContainsTemporal  = spanTemporal(GeneratedFunctions::contains_tstzspan_temporal);
+    public static final UDF2<String, String, Boolean> tstzspanContainedTemporal = spanTemporal(GeneratedFunctions::contained_tstzspan_temporal);
+    public static final UDF2<String, String, Boolean> tstzspanOverlapsTemporal  = spanTemporal(GeneratedFunctions::overlaps_tstzspan_temporal);
+    public static final UDF2<String, String, Boolean> tstzspanSameTemporal      = spanTemporal(GeneratedFunctions::same_tstzspan_temporal);
 
     // ------------------------------------------------------------------
     // temporal × tstzspan  (5)
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> temporalAdjacentTstzspan  = temporalSpan(functions::adjacent_temporal_tstzspan);
-    public static final UDF2<String, String, Boolean> temporalContainsTstzspan  = temporalSpan(functions::contains_temporal_tstzspan);
-    public static final UDF2<String, String, Boolean> temporalContainedTstzspan = temporalSpan(functions::contained_temporal_tstzspan);
-    public static final UDF2<String, String, Boolean> temporalOverlapsTstzspan  = temporalSpan(functions::overlaps_temporal_tstzspan);
-    public static final UDF2<String, String, Boolean> temporalSameTstzspan      = temporalSpan(functions::same_temporal_tstzspan);
+    public static final UDF2<String, String, Boolean> temporalAdjacentTstzspan  = temporalSpan(GeneratedFunctions::adjacent_temporal_tstzspan);
+    public static final UDF2<String, String, Boolean> temporalContainsTstzspan  = temporalSpan(GeneratedFunctions::contains_temporal_tstzspan);
+    public static final UDF2<String, String, Boolean> temporalContainedTstzspan = temporalSpan(GeneratedFunctions::contained_temporal_tstzspan);
+    public static final UDF2<String, String, Boolean> temporalOverlapsTstzspan  = temporalSpan(GeneratedFunctions::overlaps_temporal_tstzspan);
+    public static final UDF2<String, String, Boolean> temporalSameTstzspan      = temporalSpan(GeneratedFunctions::same_temporal_tstzspan);
 
     // ------------------------------------------------------------------
     // temporal × temporal  (5)
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> temporalAdjacentTemporal  = temporalTemporal(functions::adjacent_temporal_temporal);
-    public static final UDF2<String, String, Boolean> temporalContainsTemporal  = temporalTemporal(functions::contains_temporal_temporal);
-    public static final UDF2<String, String, Boolean> temporalContainedTemporal = temporalTemporal(functions::contained_temporal_temporal);
-    public static final UDF2<String, String, Boolean> temporalOverlapsTemporal  = temporalTemporal(functions::overlaps_temporal_temporal);
-    public static final UDF2<String, String, Boolean> temporalSameTemporal      = temporalTemporal(functions::same_temporal_temporal);
+    public static final UDF2<String, String, Boolean> temporalAdjacentTemporal  = temporalTemporal(GeneratedFunctions::adjacent_temporal_temporal);
+    public static final UDF2<String, String, Boolean> temporalContainsTemporal  = temporalTemporal(GeneratedFunctions::contains_temporal_temporal);
+    public static final UDF2<String, String, Boolean> temporalContainedTemporal = temporalTemporal(GeneratedFunctions::contained_temporal_temporal);
+    public static final UDF2<String, String, Boolean> temporalOverlapsTemporal  = temporalTemporal(GeneratedFunctions::overlaps_temporal_temporal);
+    public static final UDF2<String, String, Boolean> temporalSameTemporal      = temporalTemporal(GeneratedFunctions::same_temporal_temporal);
 
     public static void registerAll(SparkSession spark) {
         // tnumber × tnumber

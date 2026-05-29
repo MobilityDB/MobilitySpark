@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -57,13 +57,13 @@ public final class SimilarityUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    double d = functions.temporal_frechet_distance(p1, p2);
+                    double d = GeneratedFunctions.temporal_frechet_distance(p1, p2);
                     return (d == Double.MAX_VALUE) ? null : d;
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
@@ -81,13 +81,13 @@ public final class SimilarityUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    double d = functions.temporal_dyntimewarp_distance(p1, p2);
+                    double d = GeneratedFunctions.temporal_dyntimewarp_distance(p1, p2);
                     return (d == Double.MAX_VALUE) ? null : d;
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
@@ -105,13 +105,13 @@ public final class SimilarityUDFs {
         (s1, s2) -> {
             if (s1 == null || s2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(s1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(s2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
                 if (p2 == null) return null;
                 try {
-                    double d = functions.temporal_hausdorff_distance(p1, p2);
+                    double d = GeneratedFunctions.temporal_hausdorff_distance(p1, p2);
                     return (d == Double.MAX_VALUE) ? null : d;
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
@@ -138,9 +138,9 @@ public final class SimilarityUDFs {
         (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             org.mobilitydb.spark.MeosThread.ensureReady();
-            jnr.ffi.Pointer p1 = functions.temporal_from_hexwkb(h1);
+            jnr.ffi.Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(h1);
             if (p1 == null) return null;
-            jnr.ffi.Pointer p2 = functions.temporal_from_hexwkb(h2);
+            jnr.ffi.Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(h2);
             if (p2 == null) { org.mobilitydb.spark.MeosMemory.free(p1); return null; }
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -166,9 +166,9 @@ public final class SimilarityUDFs {
         (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             org.mobilitydb.spark.MeosThread.ensureReady();
-            jnr.ffi.Pointer p1 = functions.temporal_from_hexwkb(h1);
+            jnr.ffi.Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(h1);
             if (p1 == null) return null;
-            jnr.ffi.Pointer p2 = functions.temporal_from_hexwkb(h2);
+            jnr.ffi.Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(h2);
             if (p2 == null) { org.mobilitydb.spark.MeosMemory.free(p1); return null; }
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();

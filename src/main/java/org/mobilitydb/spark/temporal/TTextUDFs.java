@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -48,11 +48,11 @@ public final class TTextUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer r = functions.ttext_upper(p);
+            Pointer r = GeneratedFunctions.ttext_upper(p);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ttext_lower(ttext hex-WKB) → ttext hex-WKB
@@ -60,11 +60,11 @@ public final class TTextUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer r = functions.ttext_lower(p);
+            Pointer r = GeneratedFunctions.ttext_lower(p);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ttext_initcap(ttext hex-WKB) → ttext hex-WKB
@@ -72,11 +72,11 @@ public final class TTextUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer r = functions.ttext_initcap(p);
+            Pointer r = GeneratedFunctions.ttext_initcap(p);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -94,9 +94,9 @@ public final class TTextUDFs {
     // Helper: allocate a MEOS text* from a Java String.
     // Returns {textPtr, dummyTtext}; caller must MeosMemory.free() both.
     private static Pointer[] makeTextPtr(String val) {
-        Pointer dummy = functions.ttext_in(val + "@2000-01-01 00:00:00+00");
+        Pointer dummy = GeneratedFunctions.ttext_in(val + "@2000-01-01 00:00:00+00");
         if (dummy == null) return null;
-        Pointer textPtr = functions.ttext_value_n(dummy, 1);
+        Pointer textPtr = GeneratedFunctions.ttext_value_n(dummy, 1);
         if (textPtr == null) { MeosMemory.free(dummy); return null; }
         return new Pointer[]{textPtr, dummy};
     }
@@ -106,12 +106,12 @@ public final class TTextUDFs {
         MeosThread.ensureReady();
         Pointer[] tp = makeTextPtr(textVal);
         if (tp == null) return null;
-        Pointer tptr = functions.temporal_from_hexwkb(ttextHex);
+        Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(ttextHex);
         if (tptr == null) { MeosMemory.free(tp[0]); MeosMemory.free(tp[1]); return null; }
         try {
             Pointer result = fn.apply(tp[0], tptr);
             if (result == null) return null;
-            try { return functions.temporal_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         } finally {
             MeosMemory.free(tptr);
@@ -123,14 +123,14 @@ public final class TTextUDFs {
     private static String ttextCompareRev(String ttextHex, String textVal, java.util.function.BiFunction<Pointer, Pointer, Pointer> fn) {
         if (ttextHex == null || textVal == null) return null;
         MeosThread.ensureReady();
-        Pointer tptr = functions.temporal_from_hexwkb(ttextHex);
+        Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(ttextHex);
         if (tptr == null) return null;
         Pointer[] tp = makeTextPtr(textVal);
         if (tp == null) { MeosMemory.free(tptr); return null; }
         try {
             Pointer result = fn.apply(tptr, tp[0]);
             if (result == null) return null;
-            try { return functions.temporal_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         } finally {
             MeosMemory.free(tptr);
@@ -141,31 +141,31 @@ public final class TTextUDFs {
 
     // text op ttext
     public static final UDF2<String, String, String> teqTextTtext =
-        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::teq_text_ttext);
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, GeneratedFunctions::teq_text_ttext);
     public static final UDF2<String, String, String> tneTextTtext =
-        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::tne_text_ttext);
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, GeneratedFunctions::tne_text_ttext);
     public static final UDF2<String, String, String> tltTextTtext =
-        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::tlt_text_ttext);
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, GeneratedFunctions::tlt_text_ttext);
     public static final UDF2<String, String, String> tleTextTtext =
-        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::tle_text_ttext);
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, GeneratedFunctions::tle_text_ttext);
     public static final UDF2<String, String, String> tgtTextTtext =
-        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::tgt_text_ttext);
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, GeneratedFunctions::tgt_text_ttext);
     public static final UDF2<String, String, String> tgeTextTtext =
-        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, functions::tge_text_ttext);
+        (textVal, ttextHex) -> ttextCompare(textVal, ttextHex, GeneratedFunctions::tge_text_ttext);
 
     // ttext op text
     public static final UDF2<String, String, String> teqTtextText =
-        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::teq_ttext_text);
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, GeneratedFunctions::teq_ttext_text);
     public static final UDF2<String, String, String> tneTtextText =
-        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::tne_ttext_text);
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, GeneratedFunctions::tne_ttext_text);
     public static final UDF2<String, String, String> tltTtextText =
-        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::tlt_ttext_text);
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, GeneratedFunctions::tlt_ttext_text);
     public static final UDF2<String, String, String> tleTtextText =
-        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::tle_ttext_text);
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, GeneratedFunctions::tle_ttext_text);
     public static final UDF2<String, String, String> tgtTtextText =
-        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::tgt_ttext_text);
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, GeneratedFunctions::tgt_ttext_text);
     public static final UDF2<String, String, String> tgeTtextText =
-        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, functions::tge_ttext_text);
+        (ttextHex, textVal) -> ttextCompareRev(ttextHex, textVal, GeneratedFunctions::tge_ttext_text);
 
     public static void registerAll(SparkSession spark) {
         spark.udf().register("ttextUpper",   ttextUpper,   DataTypes.StringType);
@@ -202,14 +202,14 @@ public final class TTextUDFs {
         (setHex, txt) -> {
             if (setHex == null || txt == null) return null;
             MeosThread.ensureReady();
-            Pointer s = functions.set_from_hexwkb(setHex);
+            Pointer s = GeneratedFunctions.set_from_hexwkb(setHex);
             if (s == null) return null;
-            Pointer t = functions.cstring2text(txt);
+            Pointer t = GeneratedFunctions.cstring2text(txt);
             if (t == null) { MeosMemory.free(s); return null; }
             try {
-                Pointer r = functions.textcat_textset_text(s, t);
+                Pointer r = GeneratedFunctions.textcat_textset_text(s, t);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(s, t); }
         };
@@ -218,14 +218,14 @@ public final class TTextUDFs {
         (txt, setHex) -> {
             if (txt == null || setHex == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.cstring2text(txt);
+            Pointer t = GeneratedFunctions.cstring2text(txt);
             if (t == null) return null;
-            Pointer s = functions.set_from_hexwkb(setHex);
+            Pointer s = GeneratedFunctions.set_from_hexwkb(setHex);
             if (s == null) { MeosMemory.free(t); return null; }
             try {
-                Pointer r = functions.textcat_text_textset(t, s);
+                Pointer r = GeneratedFunctions.textcat_text_textset(t, s);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(t, s); }
         };
@@ -234,14 +234,14 @@ public final class TTextUDFs {
         (ttextHex, txt) -> {
             if (ttextHex == null || txt == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(ttextHex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(ttextHex);
             if (p == null) return null;
-            Pointer t = functions.cstring2text(txt);
+            Pointer t = GeneratedFunctions.cstring2text(txt);
             if (t == null) { MeosMemory.free(p); return null; }
             try {
                 Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.textcat_ttext_text(p, t);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p, t); }
         };
@@ -250,14 +250,14 @@ public final class TTextUDFs {
         (txt, ttextHex) -> {
             if (txt == null || ttextHex == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.cstring2text(txt);
+            Pointer t = GeneratedFunctions.cstring2text(txt);
             if (t == null) return null;
-            Pointer p = functions.temporal_from_hexwkb(ttextHex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(ttextHex);
             if (p == null) { MeosMemory.free(t); return null; }
             try {
                 Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.textcat_text_ttext(t, p);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(t, p); }
         };
@@ -266,14 +266,14 @@ public final class TTextUDFs {
         (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(h1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(h1);
             if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(h2);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
                 Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.textcat_ttext_ttext(p1, p2);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p1, p2); }
         };

@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
@@ -83,7 +83,7 @@ public final class AggregateUDAFs {
     private static String hexOut(Pointer r) {
         if (r == null) return null;
         try {
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         } finally {
             MeosMemory.free(r);
         }
@@ -94,7 +94,7 @@ public final class AggregateUDAFs {
         if (p == null) return null;
         try {
             Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-            return functions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
+            return GeneratedFunctions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
         } finally {
             MeosMemory.free(p);
         }
@@ -104,7 +104,7 @@ public final class AggregateUDAFs {
     private static String setHex(Pointer p) {
         if (p == null) return null;
         try {
-            return functions.set_as_hexwkb(p, (byte) 0);
+            return GeneratedFunctions.set_as_hexwkb(p, (byte) 0);
         } finally {
             MeosMemory.free(p);
         }
@@ -114,7 +114,7 @@ public final class AggregateUDAFs {
     private static String spansetHex(Pointer p) {
         if (p == null) return null;
         try {
-            return functions.spanset_as_hexwkb(p, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(p, (byte) 0);
         } finally {
             MeosMemory.free(p);
         }
@@ -144,14 +144,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.temporal_tcount_transfn(state, inp);
+                Pointer next = GeneratedFunctions.temporal_tcount_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -176,14 +176,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tbool_tand_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tbool_tand_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -208,14 +208,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tbool_tor_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tbool_tor_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -239,14 +239,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tint_tmin_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tint_tmin_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -265,14 +265,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tint_tmax_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tint_tmax_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -291,14 +291,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tint_tsum_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tint_tsum_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -322,14 +322,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tfloat_tmin_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tfloat_tmin_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -348,14 +348,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tfloat_tmax_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tfloat_tmax_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -374,14 +374,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tfloat_tsum_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tfloat_tsum_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -405,14 +405,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tnumber_tavg_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tnumber_tavg_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.tnumber_tavg_finalfn(state));
+            return hexOut(GeneratedFunctions.tnumber_tavg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -436,14 +436,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.ttext_tmin_transfn(state, inp);
+                Pointer next = GeneratedFunctions.ttext_tmin_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -462,14 +462,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.ttext_tmax_transfn(state, inp);
+                Pointer next = GeneratedFunctions.ttext_tmax_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -494,14 +494,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tpoint_tcentroid_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tpoint_tcentroid_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.tpoint_tcentroid_finalfn(state));
+            return hexOut(GeneratedFunctions.tpoint_tcentroid_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -526,9 +526,9 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.tspatial_extent_transfn(state, inp);
+                Pointer next = GeneratedFunctions.tspatial_extent_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
@@ -556,14 +556,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.set_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.set_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.set_union_transfn(state, inp);
+                Pointer next = GeneratedFunctions.set_union_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return setHex(functions.set_union_finalfn(state));
+            return setHex(GeneratedFunctions.set_union_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -587,14 +587,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.span_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.span_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.span_union_transfn(state, inp);
+                Pointer next = GeneratedFunctions.span_union_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return spansetHex(functions.spanset_union_finalfn(state));
+            return spansetHex(GeneratedFunctions.spanset_union_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -618,14 +618,14 @@ public final class AggregateUDAFs {
             if (hexes.length == 0) return null;
             Pointer state = null;
             for (String hex : hexes) {
-                Pointer inp = functions.temporal_from_hexwkb(hex);
+                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
                 if (inp == null) continue;
-                Pointer next = functions.temporal_merge_transfn(state, inp);
+                Pointer next = GeneratedFunctions.temporal_merge_transfn(state, inp);
                 MeosMemory.free(inp);
                 state = next;
             }
             if (state == null) return null;
-            return hexOut(functions.temporal_tagg_finalfn(state));
+            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -646,7 +646,7 @@ public final class AggregateUDAFs {
 
         /** Finalize the aggregate state (skiplist final; overridden for avg). */
         protected Pointer finalfn(Pointer state) {
-            return functions.temporal_tagg_finalfn(state);
+            return GeneratedFunctions.temporal_tagg_finalfn(state);
         }
 
         @Override public String zero() { return ""; }
@@ -661,9 +661,9 @@ public final class AggregateUDAFs {
             for (String enc : rows) {
                 int bar = enc.indexOf('|');
                 if (bar < 0) continue;
-                Pointer t = functions.temporal_from_hexwkb(enc.substring(0, bar));
+                Pointer t = GeneratedFunctions.temporal_from_hexwkb(enc.substring(0, bar));
                 if (t == null) continue;
-                Pointer interval = functions.interval_in(enc.substring(bar + 1), -1);
+                Pointer interval = GeneratedFunctions.interval_in(enc.substring(bar + 1), -1);
                 if (interval == null) { MeosMemory.free(t); continue; }
                 Pointer next = transfn(state, t, interval);
                 MeosMemory.free(t);
@@ -679,40 +679,40 @@ public final class AggregateUDAFs {
 
     public static final class WIntMaxFn extends WindowedFn {
         @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
-            return functions.tint_wmax_transfn(s, t, i);
+            return GeneratedFunctions.tint_wmax_transfn(s, t, i);
         }
     }
     public static final class WFloatMaxFn extends WindowedFn {
         @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
-            return functions.tfloat_wmax_transfn(s, t, i);
+            return GeneratedFunctions.tfloat_wmax_transfn(s, t, i);
         }
     }
     public static final class WIntMinFn extends WindowedFn {
         @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
-            return functions.tint_wmin_transfn(s, t, i);
+            return GeneratedFunctions.tint_wmin_transfn(s, t, i);
         }
     }
     public static final class WFloatMinFn extends WindowedFn {
         @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
-            return functions.tfloat_wmin_transfn(s, t, i);
+            return GeneratedFunctions.tfloat_wmin_transfn(s, t, i);
         }
     }
     public static final class WIntSumFn extends WindowedFn {
         @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
-            return functions.tint_wsum_transfn(s, t, i);
+            return GeneratedFunctions.tint_wsum_transfn(s, t, i);
         }
     }
     public static final class WFloatSumFn extends WindowedFn {
         @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
-            return functions.tfloat_wsum_transfn(s, t, i);
+            return GeneratedFunctions.tfloat_wsum_transfn(s, t, i);
         }
     }
     public static final class WAvgFn extends WindowedFn {
         @Override protected Pointer transfn(Pointer s, Pointer t, Pointer i) {
-            return functions.tnumber_wavg_transfn(s, t, i);
+            return GeneratedFunctions.tnumber_wavg_transfn(s, t, i);
         }
         @Override protected Pointer finalfn(Pointer state) {
-            return functions.tnumber_tavg_finalfn(state);
+            return GeneratedFunctions.tnumber_tavg_finalfn(state);
         }
     }
 

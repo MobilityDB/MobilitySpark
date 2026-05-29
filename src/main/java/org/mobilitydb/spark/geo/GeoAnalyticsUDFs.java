@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.geo;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.apache.spark.sql.SparkSession;
@@ -60,8 +60,8 @@ public final class GeoAnalyticsUDFs {
 
     // Convenience: decode a trip and extract its SRID from its bounding box
     private static int tripSrid(Pointer tptr) {
-        Pointer bbox = functions.tspatial_to_stbox(tptr);
-        return (bbox != null) ? functions.stbox_srid(bbox) : 0;
+        Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+        return (bbox != null) ? GeneratedFunctions.stbox_srid(bbox) : 0;
     }
 
     // ------------------------------------------------------------------
@@ -77,11 +77,11 @@ public final class GeoAnalyticsUDFs {
         (geomWkt, radius) -> {
             if (geomWkt == null || radius == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(geomWkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (g == null) return null;
-            Pointer r = functions.geom_buffer(g, radius, "");
+            Pointer r = GeneratedFunctions.geom_buffer(g, radius, "");
             if (r == null) return null;
-            return functions.geo_as_text(r, 15);
+            return GeneratedFunctions.geo_as_text(r, 15);
         };
 
     // geomConvexHull("MULTIPOINT((0 0),(1 1),(0 1))") → "POLYGON((0 0,0 1,1 1,0 0))"
@@ -89,11 +89,11 @@ public final class GeoAnalyticsUDFs {
         (geomWkt) -> {
             if (geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(geomWkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (g == null) return null;
-            Pointer r = functions.geom_convex_hull(g);
+            Pointer r = GeneratedFunctions.geom_convex_hull(g);
             if (r == null) return null;
-            return functions.geo_as_text(r, 15);
+            return GeneratedFunctions.geo_as_text(r, 15);
         };
 
     // geomIntersection("POLYGON(...)", "POLYGON(...)") → WKT of intersection
@@ -101,12 +101,12 @@ public final class GeoAnalyticsUDFs {
         (geomWkt1, geomWkt2) -> {
             if (geomWkt1 == null || geomWkt2 == null) return null;
             MeosThread.ensureReady();
-            Pointer g1 = functions.geo_from_text(geomWkt1, 0);
-            Pointer g2 = functions.geo_from_text(geomWkt2, 0);
+            Pointer g1 = GeneratedFunctions.geo_from_text(geomWkt1, 0);
+            Pointer g2 = GeneratedFunctions.geo_from_text(geomWkt2, 0);
             if (g1 == null || g2 == null) return null;
-            Pointer r = functions.geom_intersection2d(g1, g2);
+            Pointer r = GeneratedFunctions.geom_intersection2d(g1, g2);
             if (r == null) return null;
-            return functions.geo_as_text(r, 15);
+            return GeneratedFunctions.geo_as_text(r, 15);
         };
 
     // ------------------------------------------------------------------
@@ -121,11 +121,11 @@ public final class GeoAnalyticsUDFs {
         (trip, srid) -> {
             if (trip == null || srid == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer r = functions.tspatial_set_srid(tptr, srid);
+            Pointer r = GeneratedFunctions.tspatial_set_srid(tptr, srid);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // transform(trip, 4326) → trip reprojected to SRID 4326
@@ -133,11 +133,11 @@ public final class GeoAnalyticsUDFs {
         (trip, srid) -> {
             if (trip == null || srid == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer r = functions.tspatial_transform(tptr, srid);
+            Pointer r = GeneratedFunctions.tspatial_transform(tptr, srid);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -152,9 +152,9 @@ public final class GeoAnalyticsUDFs {
         (trip, maxdd) -> {
             if (trip == null || maxdd == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            return functions.tspatial_as_text(tptr, maxdd);
+            return GeneratedFunctions.tspatial_as_text(tptr, maxdd);
         };
 
     // asEWKT(trip, 6) → "[SRID=4326;POINT(...)@2020-01-01, ...]"
@@ -162,9 +162,9 @@ public final class GeoAnalyticsUDFs {
         (trip, maxdd) -> {
             if (trip == null || maxdd == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            return functions.tspatial_as_ewkt(tptr, maxdd);
+            return GeneratedFunctions.tspatial_as_ewkt(tptr, maxdd);
         };
 
     // ------------------------------------------------------------------
@@ -182,13 +182,13 @@ public final class GeoAnalyticsUDFs {
         (trip, zmin, zmax) -> {
             if (trip == null || zmin == null || zmax == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer zspan = functions.floatspan_make(zmin, zmax, true, true);
+            Pointer zspan = GeneratedFunctions.floatspan_make(zmin, zmax, true, true);
             if (zspan == null) return null;
-            Pointer r = functions.tpoint_at_elevation(tptr, zspan);
+            Pointer r = GeneratedFunctions.tpoint_at_elevation(tptr, zspan);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -207,14 +207,14 @@ public final class GeoAnalyticsUDFs {
         (geomWkt, trip) -> {
             if (geomWkt == null || trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             int srid = tripSrid(tptr);
-            Pointer g = functions.geo_from_text(geomWkt, srid);
+            Pointer g = GeneratedFunctions.geo_from_text(geomWkt, srid);
             if (g == null) return null;
-            Pointer r = functions.tcontains_geo_tgeo(g, tptr);
+            Pointer r = GeneratedFunctions.tcontains_geo_tgeo(g, tptr);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // tCovers(trip1, trip2) → tbool hex-WKB: true at instants where trip1 covers trip2
@@ -222,12 +222,12 @@ public final class GeoAnalyticsUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p1 == null || p2 == null) return null;
-            Pointer r = functions.tcovers_tgeo_tgeo(p1, p2);
+            Pointer r = GeneratedFunctions.tcovers_tgeo_tgeo(p1, p2);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // tDwithin(trip1, trip2, 100.0) → tbool hex-WKB: true at instants within 100 units
@@ -235,12 +235,12 @@ public final class GeoAnalyticsUDFs {
         (trip1, trip2, dist) -> {
             if (trip1 == null || trip2 == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p1 == null || p2 == null) return null;
-            Pointer r = functions.tdwithin_tgeo_tgeo(p1, p2, dist.doubleValue());
+            Pointer r = GeneratedFunctions.tdwithin_tgeo_tgeo(p1, p2, dist.doubleValue());
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -257,14 +257,14 @@ public final class GeoAnalyticsUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             int srid = tripSrid(tptr);
-            Pointer g = functions.geo_from_text(geomWkt, srid);
+            Pointer g = GeneratedFunctions.geo_from_text(geomWkt, srid);
             if (g == null) return null;
-            Pointer r = functions.bearing_tpoint_point(tptr, g, false);
+            Pointer r = GeneratedFunctions.bearing_tpoint_point(tptr, g, false);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // bearing(trip1, trip2) → tfloat hex-WKB, instantaneous bearing between trips
@@ -272,12 +272,12 @@ public final class GeoAnalyticsUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p1 == null || p2 == null) return null;
-            Pointer r = functions.bearing_tpoint_tpoint(p1, p2);
+            Pointer r = GeneratedFunctions.bearing_tpoint_tpoint(p1, p2);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -293,11 +293,11 @@ public final class GeoAnalyticsUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer g = functions.tpoint_twcentroid(tptr);
+            Pointer g = GeneratedFunctions.tpoint_twcentroid(tptr);
             if (g == null) return null;
-            return functions.geo_as_text(g, 15);
+            return GeneratedFunctions.geo_as_text(g, 15);
         };
 
     // ------------------------------------------------------------------
@@ -312,13 +312,13 @@ public final class GeoAnalyticsUDFs {
         (wkt1, wkt2) -> {
             if (wkt1 == null || wkt2 == null) return null;
             MeosThread.ensureReady();
-            Pointer g1 = functions.geo_from_text(wkt1, 0);
+            Pointer g1 = GeneratedFunctions.geo_from_text(wkt1, 0);
             if (g1 == null) return null;
             try {
-                Pointer g2 = functions.geo_from_text(wkt2, 0);
+                Pointer g2 = GeneratedFunctions.geo_from_text(wkt2, 0);
                 if (g2 == null) return null;
                 try {
-                    return functions.geo_same(g1, g2);
+                    return GeneratedFunctions.geo_same(g1, g2);
                 } finally {
                     MeosMemory.free(g2);
                 }
@@ -339,13 +339,13 @@ public final class GeoAnalyticsUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer gptr = functions.tgeo_convex_hull(tptr);
+                Pointer gptr = GeneratedFunctions.tgeo_convex_hull(tptr);
                 if (gptr == null) return null;
                 try {
-                    return functions.geo_as_hexewkb(gptr, null);
+                    return GeneratedFunctions.geo_as_hexewkb(gptr, null);
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -368,17 +368,17 @@ public final class GeoAnalyticsUDFs {
         (trip, distance) -> {
             if (trip == null || distance == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer stbox = functions.tspatial_to_stbox(tptr);
+                Pointer stbox = GeneratedFunctions.tspatial_to_stbox(tptr);
                 if (stbox == null) return null;
                 try {
-                    Pointer expanded = functions.stbox_expand_space(stbox, distance);
+                    Pointer expanded = GeneratedFunctions.stbox_expand_space(stbox, distance);
                     if (expanded == null) return null;
                     try {
                         Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                        return functions.stbox_as_hexwkb(expanded, (byte) 0, sizeOut);
+                        return GeneratedFunctions.stbox_as_hexwkb(expanded, (byte) 0, sizeOut);
                     } finally {
                         MeosMemory.free(expanded);
                     }
@@ -433,13 +433,13 @@ public final class GeoAnalyticsUDFs {
         tpointTransformPipeline = (trip, pipeline, srid, isForward) -> {
             if (trip == null || pipeline == null) return null;
             org.mobilitydb.spark.MeosThread.ensureReady();
-            jnr.ffi.Pointer t = functions.temporal_from_hexwkb(trip);
+            jnr.ffi.Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
             try {
-                jnr.ffi.Pointer r = functions.tspatial_transform_pipeline(t, pipeline,
+                jnr.ffi.Pointer r = GeneratedFunctions.tspatial_transform_pipeline(t, pipeline,
                     srid == null ? 0 : srid, isForward == null ? true : isForward);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { org.mobilitydb.spark.MeosMemory.free(r); }
             } finally { org.mobilitydb.spark.MeosMemory.free(t); }
         };
@@ -448,15 +448,15 @@ public final class GeoAnalyticsUDFs {
         stboxTransformPipeline = (stboxHex, pipeline, srid, isForward) -> {
             if (stboxHex == null || pipeline == null) return null;
             org.mobilitydb.spark.MeosThread.ensureReady();
-            jnr.ffi.Pointer s = functions.stbox_from_hexwkb(stboxHex);
+            jnr.ffi.Pointer s = GeneratedFunctions.stbox_from_hexwkb(stboxHex);
             if (s == null) return null;
             try {
-                jnr.ffi.Pointer r = functions.stbox_transform_pipeline(s, pipeline,
+                jnr.ffi.Pointer r = GeneratedFunctions.stbox_transform_pipeline(s, pipeline,
                     srid == null ? 0 : srid, isForward == null ? true : isForward);
                 if (r == null) return null;
                 try {
                     jnr.ffi.Pointer sizeOut = jnr.ffi.Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                    return functions.stbox_as_hexwkb(r, (byte) 0, sizeOut);
+                    return GeneratedFunctions.stbox_as_hexwkb(r, (byte) 0, sizeOut);
                 } finally { org.mobilitydb.spark.MeosMemory.free(r); }
             } finally { org.mobilitydb.spark.MeosMemory.free(s); }
         };
@@ -466,14 +466,14 @@ public final class GeoAnalyticsUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             org.mobilitydb.spark.MeosThread.ensureReady();
-            jnr.ffi.Pointer t = functions.temporal_from_hexwkb(trip);
+            jnr.ffi.Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            jnr.ffi.Pointer g = functions.geo_from_text(geomWkt, 0);
+            jnr.ffi.Pointer g = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (g == null) { org.mobilitydb.spark.MeosMemory.free(t); return null; }
             try {
                 jnr.ffi.Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.tpoint_minus_geom(t, g);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { org.mobilitydb.spark.MeosMemory.free(r); }
             } finally { org.mobilitydb.spark.MeosMemory.free(t, g); }
         };
@@ -483,7 +483,7 @@ public final class GeoAnalyticsUDFs {
         (trip) -> {
             if (trip == null) return null;
             org.mobilitydb.spark.MeosThread.ensureReady();
-            jnr.ffi.Pointer t = functions.temporal_from_hexwkb(trip);
+            jnr.ffi.Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
             try {
                 jnr.ffi.Pointer outBuf = jnr.ffi.Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);

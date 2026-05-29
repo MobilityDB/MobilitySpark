@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.pose;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
@@ -97,7 +97,7 @@ public final class PoseUDFs {
             try {
                 Pointer g = MeosNative.INSTANCE.pose_to_point(p);
                 if (g == null) return null;
-                try { return functions.geo_as_text(g, 15); }
+                try { return GeneratedFunctions.geo_as_text(g, 15); }
                 finally { MeosMemory.free(g); }
             } finally { MeosMemory.free(p); }
         };
@@ -190,9 +190,9 @@ public final class PoseUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
 
@@ -202,7 +202,7 @@ public final class PoseUDFs {
             MeosThread.ensureReady();
             Pointer p = MeosNative.INSTANCE.poseset_in(s);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     public static final UDF1<String, String> posesetFromEWKT = posesetFromText;
@@ -212,9 +212,9 @@ public final class PoseUDFs {
             if (bytes == null) return null;
             MeosThread.ensureReady();
             String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     public static final UDF1<byte[], String> posesetFromEWKB = posesetFromBinary;
@@ -229,15 +229,15 @@ public final class PoseUDFs {
         (tpointHex, trotHex) -> {
             if (tpointHex == null || trotHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tp = functions.temporal_from_hexwkb(tpointHex);
+            Pointer tp = GeneratedFunctions.temporal_from_hexwkb(tpointHex);
             if (tp == null) return null;
             try {
-                Pointer tr = functions.temporal_from_hexwkb(trotHex);
+                Pointer tr = GeneratedFunctions.temporal_from_hexwkb(trotHex);
                 if (tr == null) return null;
                 try {
                     Pointer r = MeosNative.INSTANCE.tpose_make(tp, tr);
                     if (r == null) return null;
-                    try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                    try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                     finally { MeosMemory.free(r); }
                 } finally { MeosMemory.free(tr); }
             } finally { MeosMemory.free(tp); }
@@ -262,14 +262,14 @@ public final class PoseUDFs {
                     Pointer tp = MeosNative.INSTANCE.tgeoinst_make(g, micros);
                     if (tp == null) return null;
                     try {
-                        Pointer tr = functions.tfloatinst_make(rot,
+                        Pointer tr = GeneratedFunctions.tfloatinst_make(rot,
                             java.time.Instant.ofEpochMilli(ts.getTime())
                                 .atOffset(java.time.ZoneOffset.UTC));
                         if (tr == null) return null;
                         try {
                             Pointer r = MeosNative.INSTANCE.tpose_make(tp, tr);
                             if (r == null) return null;
-                            try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                            try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                             finally { MeosMemory.free(r); }
                         } finally { MeosMemory.free(tr); }
                     } finally { MeosMemory.free(tp); }
@@ -281,9 +281,9 @@ public final class PoseUDFs {
         return hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -293,9 +293,9 @@ public final class PoseUDFs {
             if (bytes == null) return null;
             MeosThread.ensureReady();
             String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -306,7 +306,7 @@ public final class PoseUDFs {
             MeosThread.ensureReady();
             Pointer p = MeosNative.INSTANCE.tpose_in(s);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     public static final UDF1<String, String> tposeFromEWKT = tposeFromText;
@@ -317,7 +317,7 @@ public final class PoseUDFs {
             MeosThread.ensureReady();
             Pointer p = MeosNative.INSTANCE.tpose_from_mfjson(mfjson);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
 
@@ -329,12 +329,12 @@ public final class PoseUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequence(p, INTERP_LINEAR);
+                Pointer r = GeneratedFunctions.temporal_to_tsequence(p, INTERP_LINEAR);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -343,12 +343,12 @@ public final class PoseUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequenceset(p, INTERP_LINEAR);
+                Pointer r = GeneratedFunctions.temporal_to_tsequenceset(p, INTERP_LINEAR);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -363,7 +363,7 @@ public final class PoseUDFs {
             try {
                 for (int i = 0; i < n; i++) {
                     if (instants[i] == null) return null;
-                    insts[i] = functions.temporal_from_hexwkb(instants[i]);
+                    insts[i] = GeneratedFunctions.temporal_from_hexwkb(instants[i]);
                     if (insts[i] == null) return null;
                 }
                 Pointer buf = Runtime.getSystemRuntime().getMemoryManager()
@@ -371,12 +371,12 @@ public final class PoseUDFs {
                 for (int i = 0; i < n; i++) {
                     buf.putAddress(i * 8L, insts[i].address());
                 }
-                Pointer mt = (maxt == null) ? null : functions.pg_interval_in(maxt, -1);
+                Pointer mt = (maxt == null) ? null : GeneratedFunctions.pg_interval_in(maxt, -1);
                 try {
-                    Pointer r = functions.tsequenceset_make_gaps(buf, n,
+                    Pointer r = GeneratedFunctions.tsequenceset_make_gaps(buf, n,
                         INTERP_LINEAR, mt, -1.0);
                     if (r == null) return null;
-                    try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                    try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                     finally { MeosMemory.free(r); }
                 } finally {
                     if (mt != null) MeosMemory.free(mt);
@@ -399,12 +399,12 @@ public final class PoseUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer s = MeosNative.INSTANCE.tpose_points(p);
                 if (s == null) return null;
-                try { return functions.set_as_hexwkb(s, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(s, (byte) 0); }
                 finally { MeosMemory.free(s); }
             } finally { MeosMemory.free(p); }
         };
@@ -415,12 +415,12 @@ public final class PoseUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer r = MeosNative.INSTANCE.tpose_rotation(p);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };

@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.geo;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.apache.spark.sql.api.java.*;
@@ -72,23 +72,23 @@ public final class GeoUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer bbox = functions.tspatial_to_stbox(tptr);
-                boolean geodetic = (bbox != null && functions.stbox_isgeodetic(bbox));
-                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+                boolean geodetic = (bbox != null && GeneratedFunctions.stbox_isgeodetic(bbox));
+                int srid = (bbox != null) ? GeneratedFunctions.stbox_srid(bbox) : 0;
                 MeosMemory.free(bbox);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 if (geodetic) {
-                    Pointer geog = functions.geom_to_geog(gptr);
+                    Pointer geog = GeneratedFunctions.geom_to_geog(gptr);
                     MeosMemory.free(gptr);
                     gptr = geog;
                     if (gptr == null) return null;
                 }
                 try {
-                    return functions.eintersects_tgeo_geo(tptr, gptr) == 1;
+                    return GeneratedFunctions.eintersects_tgeo_geo(tptr, gptr) == 1;
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -107,13 +107,13 @@ public final class GeoUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
                 if (p2 == null) return null;
                 try {
-                    double dist = functions.nad_tgeo_tgeo(p1, p2);
+                    double dist = GeneratedFunctions.nad_tgeo_tgeo(p1, p2);
                     return (dist == Double.MAX_VALUE) ? null : dist;
                 } finally {
                     MeosMemory.free(p2);
@@ -135,13 +135,13 @@ public final class GeoUDFs {
         (trip1, trip2, dist) -> {
             if (trip1 == null || trip2 == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
                 if (p2 == null) return null;
                 try {
-                    return functions.edwithin_tgeo_tgeo(p1, p2, dist.doubleValue()) == 1;
+                    return GeneratedFunctions.edwithin_tgeo_tgeo(p1, p2, dist.doubleValue()) == 1;
                 } finally {
                     MeosMemory.free(p2);
                 }
@@ -162,10 +162,10 @@ public final class GeoUDFs {
         (wkt) -> {
             if (wkt == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.tgeompoint_in(wkt);
+            Pointer p = GeneratedFunctions.tgeompoint_in(wkt);
             if (p == null) return null;
             try {
-                return functions.temporal_as_hexwkb(p, (byte) 0);
+                return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
             } finally {
                 MeosMemory.free(p);
             }
@@ -184,13 +184,13 @@ public final class GeoUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer gptr = functions.tpoint_trajectory(tptr, true);
+                Pointer gptr = GeneratedFunctions.tpoint_trajectory(tptr, true);
                 if (gptr == null) return null;
                 try {
-                    return functions.geo_as_hexewkb(gptr, null);
+                    return GeneratedFunctions.geo_as_hexewkb(gptr, null);
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -210,16 +210,16 @@ public final class GeoUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer bbox = functions.tspatial_to_stbox(tptr);
-                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? GeneratedFunctions.stbox_srid(bbox) : 0;
                 MeosMemory.free(bbox);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return functions.edisjoint_tgeo_geo(tptr, gptr) == 1;
+                    return GeneratedFunctions.edisjoint_tgeo_geo(tptr, gptr) == 1;
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -240,16 +240,16 @@ public final class GeoUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer bbox = functions.tspatial_to_stbox(tptr);
-                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? GeneratedFunctions.stbox_srid(bbox) : 0;
                 MeosMemory.free(bbox);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return functions.etouches_tgeo_geo(tptr, gptr) == 1;
+                    return GeneratedFunctions.etouches_tgeo_geo(tptr, gptr) == 1;
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -269,16 +269,16 @@ public final class GeoUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer bbox = functions.tspatial_to_stbox(tptr);
-                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? GeneratedFunctions.stbox_srid(bbox) : 0;
                 MeosMemory.free(bbox);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return functions.ecovers_tgeo_geo(tptr, gptr) == 1;
+                    return GeneratedFunctions.ecovers_tgeo_geo(tptr, gptr) == 1;
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -297,13 +297,13 @@ public final class GeoUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
                 if (p2 == null) return null;
                 try {
-                    return functions.edisjoint_tgeo_tgeo(p1, p2) == 1;
+                    return GeneratedFunctions.edisjoint_tgeo_tgeo(p1, p2) == 1;
                 } finally {
                     MeosMemory.free(p2);
                 }
@@ -316,13 +316,13 @@ public final class GeoUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
                 if (p2 == null) return null;
                 try {
-                    return functions.eintersects_tgeo_tgeo(p1, p2) == 1;
+                    return GeneratedFunctions.eintersects_tgeo_tgeo(p1, p2) == 1;
                 } finally {
                     MeosMemory.free(p2);
                 }
@@ -344,16 +344,16 @@ public final class GeoUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer bbox = functions.tspatial_to_stbox(tptr);
-                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? GeneratedFunctions.stbox_srid(bbox) : 0;
                 MeosMemory.free(bbox);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return functions.aintersects_tgeo_geo(tptr, gptr) == 1;
+                    return GeneratedFunctions.aintersects_tgeo_geo(tptr, gptr) == 1;
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -366,16 +366,16 @@ public final class GeoUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer bbox = functions.tspatial_to_stbox(tptr);
-                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? GeneratedFunctions.stbox_srid(bbox) : 0;
                 MeosMemory.free(bbox);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return functions.adisjoint_tgeo_geo(tptr, gptr) == 1;
+                    return GeneratedFunctions.adisjoint_tgeo_geo(tptr, gptr) == 1;
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -395,13 +395,13 @@ public final class GeoUDFs {
         (trip1, trip2, dist) -> {
             if (trip1 == null || trip2 == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
                 if (p2 == null) return null;
                 try {
-                    return functions.adwithin_tgeo_tgeo(p1, p2, dist.doubleValue()) == 1;
+                    return GeneratedFunctions.adwithin_tgeo_tgeo(p1, p2, dist.doubleValue()) == 1;
                 } finally {
                     MeosMemory.free(p2);
                 }
@@ -414,16 +414,16 @@ public final class GeoUDFs {
         (trip, geomWkt, dist) -> {
             if (trip == null || geomWkt == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer bbox = functions.tspatial_to_stbox(tptr);
-                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? GeneratedFunctions.stbox_srid(bbox) : 0;
                 MeosMemory.free(bbox);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return functions.edwithin_tgeo_geo(tptr, gptr, dist.doubleValue()) == 1;
+                    return GeneratedFunctions.edwithin_tgeo_geo(tptr, gptr, dist.doubleValue()) == 1;
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -436,16 +436,16 @@ public final class GeoUDFs {
         (trip, geomWkt, dist) -> {
             if (trip == null || geomWkt == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer bbox = functions.tspatial_to_stbox(tptr);
-                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? GeneratedFunctions.stbox_srid(bbox) : 0;
                 MeosMemory.free(bbox);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return functions.adwithin_tgeo_geo(tptr, gptr, dist.doubleValue()) == 1;
+                    return GeneratedFunctions.adwithin_tgeo_geo(tptr, gptr, dist.doubleValue()) == 1;
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -466,16 +466,16 @@ public final class GeoUDFs {
         (geomWkt, trip) -> {
             if (geomWkt == null || trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer bbox = functions.tspatial_to_stbox(tptr);
-                int srid = (bbox != null) ? functions.stbox_srid(bbox) : 0;
+                Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+                int srid = (bbox != null) ? GeneratedFunctions.stbox_srid(bbox) : 0;
                 MeosMemory.free(bbox);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return functions.econtains_geo_tgeo(gptr, tptr) == 1;
+                    return GeneratedFunctions.econtains_geo_tgeo(gptr, tptr) == 1;
                 } finally {
                     MeosMemory.free(gptr);
                 }
@@ -494,10 +494,10 @@ public final class GeoUDFs {
         (wkt) -> {
             if (wkt == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.geo_from_text(wkt, 0);
+            Pointer p = GeneratedFunctions.geo_from_text(wkt, 0);
             if (p == null) return null;
             try {
-                return functions.geo_as_hexewkb(p, null);
+                return GeneratedFunctions.geo_as_hexewkb(p, null);
             } finally {
                 MeosMemory.free(p);
             }
@@ -513,13 +513,13 @@ public final class GeoUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer r = functions.tpoint_get_x(tptr);
+                Pointer r = GeneratedFunctions.tpoint_get_x(tptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -532,13 +532,13 @@ public final class GeoUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer r = functions.tpoint_get_y(tptr);
+                Pointer r = GeneratedFunctions.tpoint_get_y(tptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -551,20 +551,20 @@ public final class GeoUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
                 // tpoint_get_z raises a MEOS error for 2D points; guard with Z-presence check.
-                Pointer bbox = functions.tspatial_to_stbox(tptr);
-                if (bbox == null || !functions.stbox_hasz(bbox)) {
+                Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+                if (bbox == null || !GeneratedFunctions.stbox_hasz(bbox)) {
                     MeosMemory.free(bbox);
                     return null;
                 }
                 MeosMemory.free(bbox);
-                Pointer r = functions.tpoint_get_z(tptr);
+                Pointer r = GeneratedFunctions.tpoint_get_z(tptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -577,13 +577,13 @@ public final class GeoUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer r = functions.tpoint_cumulative_length(tptr);
+                Pointer r = GeneratedFunctions.tpoint_cumulative_length(tptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -604,16 +604,16 @@ public final class GeoUDFs {
         (trip, maxDist, minDuration) -> {
             if (trip == null || maxDist == null || minDuration == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer iv = functions.pg_interval_in(minDuration, -1);
+                Pointer iv = GeneratedFunctions.pg_interval_in(minDuration, -1);
                 if (iv == null) return null;
                 try {
-                    Pointer r = functions.temporal_stops(tptr, maxDist, iv);
+                    Pointer r = GeneratedFunctions.temporal_stops(tptr, maxDist, iv);
                     if (r == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(r, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                     } finally {
                         MeosMemory.free(r);
                     }
@@ -636,10 +636,10 @@ public final class GeoUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                return functions.tpoint_is_simple(tptr);
+                return GeneratedFunctions.tpoint_is_simple(tptr);
             } finally {
                 MeosMemory.free(tptr);
             }
@@ -655,16 +655,16 @@ public final class GeoUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
                 if (p2 == null) return null;
                 try {
-                    Pointer g = functions.shortestline_tgeo_tgeo(p1, p2);
+                    Pointer g = GeneratedFunctions.shortestline_tgeo_tgeo(p1, p2);
                     if (g == null) return null;
                     try {
-                        return functions.geo_as_text(g, 15);
+                        return GeneratedFunctions.geo_as_text(g, 15);
                     } finally {
                         MeosMemory.free(g);
                     }
@@ -687,13 +687,13 @@ public final class GeoUDFs {
         (trip, srid) -> {
             if (trip == null || srid == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer result = functions.tspatial_transform(tptr, srid);
+                Pointer result = GeneratedFunctions.tspatial_transform(tptr, srid);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -713,10 +713,10 @@ public final class GeoUDFs {
         (trip, precision) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                return functions.tspatial_as_text(tptr, precision != null ? precision : 15);
+                return GeneratedFunctions.tspatial_as_text(tptr, precision != null ? precision : 15);
             } finally {
                 MeosMemory.free(tptr);
             }
@@ -733,10 +733,10 @@ public final class GeoUDFs {
         (trip, precision) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                return functions.tspatial_as_ewkt(tptr, precision != null ? precision : 15);
+                return GeneratedFunctions.tspatial_as_ewkt(tptr, precision != null ? precision : 15);
             } finally {
                 MeosMemory.free(tptr);
             }
@@ -754,13 +754,13 @@ public final class GeoUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer stbox = functions.tspatial_to_stbox(tptr);
+                Pointer stbox = GeneratedFunctions.tspatial_to_stbox(tptr);
                 if (stbox == null) return null;
                 try {
-                    return functions.stbox_srid(stbox);
+                    return GeneratedFunctions.stbox_srid(stbox);
                 } finally {
                     MeosMemory.free(stbox);
                 }
@@ -780,13 +780,13 @@ public final class GeoUDFs {
         (trip, srid) -> {
             if (trip == null || srid == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer result = functions.tspatial_set_srid(tptr, srid);
+                Pointer result = GeneratedFunctions.tspatial_set_srid(tptr, srid);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -806,13 +806,13 @@ public final class GeoUDFs {
         (trip, decimals) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer result = functions.temporal_round(tptr, decimals != null ? decimals : 6);
+                Pointer result = GeneratedFunctions.temporal_round(tptr, decimals != null ? decimals : 6);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -833,14 +833,14 @@ public final class GeoUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer stbox = functions.tspatial_to_stbox(tptr);
+                Pointer stbox = GeneratedFunctions.tspatial_to_stbox(tptr);
                 if (stbox == null) return null;
                 try {
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                    return functions.stbox_as_hexwkb(stbox, (byte) 0, sizeOut);
+                    return GeneratedFunctions.stbox_as_hexwkb(stbox, (byte) 0, sizeOut);
                 } finally {
                     MeosMemory.free(stbox);
                 }
@@ -898,10 +898,10 @@ public final class GeoUDFs {
             if (wkt == null) return null;
             MeosThread.ensureReady();
             int prec = (precision == null) ? 15 : precision;
-            Pointer gptr = functions.geo_from_text(wkt, 0);
+            Pointer gptr = GeneratedFunctions.geo_from_text(wkt, 0);
             if (gptr == null) return null;
             try {
-                return functions.geo_as_ewkt(gptr, prec);
+                return GeneratedFunctions.geo_as_ewkt(gptr, prec);
             } finally {
                 MeosMemory.free(gptr);
             }
@@ -921,10 +921,10 @@ public final class GeoUDFs {
             MeosThread.ensureReady();
             int opts = (options == null) ? 0 : options;
             int prec = (precision == null) ? 9 : precision;
-            Pointer gptr = functions.geo_from_text(wkt, 0);
+            Pointer gptr = GeneratedFunctions.geo_from_text(wkt, 0);
             if (gptr == null) return null;
             try {
-                return functions.geo_as_geojson(gptr, opts, prec, null);
+                return GeneratedFunctions.geo_as_geojson(gptr, opts, prec, null);
             } finally {
                 MeosMemory.free(gptr);
             }
@@ -942,10 +942,10 @@ public final class GeoUDFs {
         (geojson) -> {
             if (geojson == null) return null;
             MeosThread.ensureReady();
-            Pointer gptr = functions.geo_from_geojson(geojson);
+            Pointer gptr = GeneratedFunctions.geo_from_geojson(geojson);
             if (gptr == null) return null;
             try {
-                return functions.geo_as_text(gptr, 15);
+                return GeneratedFunctions.geo_as_text(gptr, 15);
             } finally {
                 MeosMemory.free(gptr);
             }

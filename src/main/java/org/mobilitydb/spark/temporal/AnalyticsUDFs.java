@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -57,13 +57,13 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.temporal_derivative(ptr);
+                Pointer r = GeneratedFunctions.temporal_derivative(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -76,13 +76,13 @@ public final class AnalyticsUDFs {
         (s, maxdd) -> {
             if (s == null || maxdd == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.temporal_round(ptr, maxdd);
+                Pointer r = GeneratedFunctions.temporal_round(ptr, maxdd);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -95,13 +95,13 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tfloat_floor(ptr);
+                Pointer r = GeneratedFunctions.tfloat_floor(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -114,13 +114,13 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tfloat_ceil(ptr);
+                Pointer r = GeneratedFunctions.tfloat_ceil(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -133,13 +133,13 @@ public final class AnalyticsUDFs {
         (s, normalize) -> {
             if (s == null || normalize == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tfloat_degrees(ptr, normalize);
+                Pointer r = GeneratedFunctions.tfloat_degrees(ptr, normalize);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -152,13 +152,13 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tfloat_radians(ptr);
+                Pointer r = GeneratedFunctions.tfloat_radians(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -175,10 +175,10 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return functions.tnumber_integral(ptr);
+                return GeneratedFunctions.tnumber_integral(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -188,10 +188,10 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return functions.tnumber_twavg(ptr);
+                return GeneratedFunctions.tnumber_twavg(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -203,13 +203,13 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tnumber_trend(ptr);
+                Pointer r = GeneratedFunctions.tnumber_trend(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -226,10 +226,10 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return functions.tpoint_length(ptr);
+                return GeneratedFunctions.tpoint_length(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -239,13 +239,13 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tpoint_speed(ptr);
+                Pointer r = GeneratedFunctions.tpoint_speed(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -258,13 +258,13 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tpoint_azimuth(ptr);
+                Pointer r = GeneratedFunctions.tpoint_azimuth(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -277,13 +277,13 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tpoint_direction(ptr);
+                Pointer r = GeneratedFunctions.tpoint_direction(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -299,13 +299,13 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tpoint_cumulative_length(ptr);
+                Pointer r = GeneratedFunctions.tpoint_cumulative_length(ptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -321,13 +321,13 @@ public final class AnalyticsUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer gsPtr = functions.tgeo_traversed_area(ptr, false);
+                Pointer gsPtr = GeneratedFunctions.tgeo_traversed_area(ptr, false);
                 if (gsPtr == null) return null;
                 try {
-                    return functions.geo_as_text(gsPtr, 6);
+                    return GeneratedFunctions.geo_as_text(gsPtr, 6);
                 } finally {
                     MeosMemory.free(gsPtr);
                 }

@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -59,9 +59,9 @@ public final class IOAliasUDFs {
         return hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -70,9 +70,9 @@ public final class IOAliasUDFs {
         return hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.span_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.span_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -81,9 +81,9 @@ public final class IOAliasUDFs {
         return hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.spanset_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.spanset_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -92,9 +92,9 @@ public final class IOAliasUDFs {
         return hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -105,7 +105,7 @@ public final class IOAliasUDFs {
             MeosThread.ensureReady();
             Pointer p = ctor.apply(mfjson);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -165,23 +165,23 @@ public final class IOAliasUDFs {
 
     public static final UDF1<String, String> tgeometryFromMFJSON  = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeometry_from_mfjson);
     public static final UDF1<String, String> tgeographyFromMFJSON = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeography_from_mfjson);
-    public static final UDF1<String, String> tgeompointFromMFJSON = mfjsonToHex(functions::tgeompoint_from_mfjson);
-    public static final UDF1<String, String> tgeogpointFromMFJSON = mfjsonToHex(functions::tgeogpoint_from_mfjson);
+    public static final UDF1<String, String> tgeompointFromMFJSON = mfjsonToHex(GeneratedFunctions::tgeompoint_from_mfjson);
+    public static final UDF1<String, String> tgeogpointFromMFJSON = mfjsonToHex(GeneratedFunctions::tgeogpoint_from_mfjson);
 
     // ------------------------------------------------------------------
     // Temporal scalar text constructors (FromText / FromEWKT)
     // ------------------------------------------------------------------
 
-    public static final UDF1<String, String> tboolFromText  = mfjsonToHex(functions::tbool_in);
-    public static final UDF1<String, String> tintFromText   = mfjsonToHex(functions::tint_in);
-    public static final UDF1<String, String> tfloatFromText = mfjsonToHex(functions::tfloat_in);
-    public static final UDF1<String, String> ttextFromText  = mfjsonToHex(functions::ttext_in);
+    public static final UDF1<String, String> tboolFromText  = mfjsonToHex(GeneratedFunctions::tbool_in);
+    public static final UDF1<String, String> tintFromText   = mfjsonToHex(GeneratedFunctions::tint_in);
+    public static final UDF1<String, String> tfloatFromText = mfjsonToHex(GeneratedFunctions::tfloat_in);
+    public static final UDF1<String, String> ttextFromText  = mfjsonToHex(GeneratedFunctions::ttext_in);
 
     // Geo temporal text/EWKT constructors
-    public static final UDF1<String, String> tgeompointFromText  = mfjsonToHex(functions::tgeompoint_in);
-    public static final UDF1<String, String> tgeogpointFromText  = mfjsonToHex(functions::tgeogpoint_in);
-    public static final UDF1<String, String> tgeompointFromEWKT  = mfjsonToHex(functions::tgeompoint_in);
-    public static final UDF1<String, String> tgeogpointFromEWKT  = mfjsonToHex(functions::tgeogpoint_in);
+    public static final UDF1<String, String> tgeompointFromText  = mfjsonToHex(GeneratedFunctions::tgeompoint_in);
+    public static final UDF1<String, String> tgeogpointFromText  = mfjsonToHex(GeneratedFunctions::tgeogpoint_in);
+    public static final UDF1<String, String> tgeompointFromEWKT  = mfjsonToHex(GeneratedFunctions::tgeompoint_in);
+    public static final UDF1<String, String> tgeogpointFromEWKT  = mfjsonToHex(GeneratedFunctions::tgeogpoint_in);
     public static final UDF1<String, String> tgeometryFromText   = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeometry_in);
     public static final UDF1<String, String> tgeographyFromText  = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeography_in);
     public static final UDF1<String, String> tgeometryFromEWKT   = mfjsonToHex(org.mobilitydb.spark.MeosNative.INSTANCE::tgeometry_in);
@@ -197,9 +197,9 @@ public final class IOAliasUDFs {
             if (bytes == null) return null;
             MeosThread.ensureReady();
             String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -233,9 +233,9 @@ public final class IOAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 4); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 4); }
             finally { MeosMemory.free(p); }
         };
 
@@ -247,9 +247,9 @@ public final class IOAliasUDFs {
         return wkt -> {
             if (wkt == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.geomset_in(wkt);
+            Pointer p = GeneratedFunctions.geomset_in(wkt);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -258,9 +258,9 @@ public final class IOAliasUDFs {
         return wkt -> {
             if (wkt == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.geogset_in(wkt);
+            Pointer p = GeneratedFunctions.geogset_in(wkt);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -270,9 +270,9 @@ public final class IOAliasUDFs {
             if (bytes == null) return null;
             MeosThread.ensureReady();
             String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -296,11 +296,11 @@ public final class IOAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.tbox_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.tbox_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer sizeOut = jnr.ffi.Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                return functions.tbox_as_hexwkb(p, (byte) 0, sizeOut);
+                return GeneratedFunctions.tbox_as_hexwkb(p, (byte) 0, sizeOut);
             } finally { MeosMemory.free(p); }
         };
 
@@ -309,11 +309,11 @@ public final class IOAliasUDFs {
             if (bytes == null) return null;
             MeosThread.ensureReady();
             String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-            Pointer p = functions.tbox_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.tbox_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer sizeOut = jnr.ffi.Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                return functions.tbox_as_hexwkb(p, (byte) 0, sizeOut);
+                return GeneratedFunctions.tbox_as_hexwkb(p, (byte) 0, sizeOut);
             } finally { MeosMemory.free(p); }
         };
 
@@ -325,11 +325,11 @@ public final class IOAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.stbox_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.stbox_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer sizeOut = jnr.ffi.Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                return functions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
+                return GeneratedFunctions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
             } finally { MeosMemory.free(p); }
         };
 
@@ -338,11 +338,11 @@ public final class IOAliasUDFs {
             if (bytes == null) return null;
             MeosThread.ensureReady();
             String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-            Pointer p = functions.stbox_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.stbox_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer sizeOut = jnr.ffi.Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                return functions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
+                return GeneratedFunctions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
             } finally { MeosMemory.free(p); }
         };
 

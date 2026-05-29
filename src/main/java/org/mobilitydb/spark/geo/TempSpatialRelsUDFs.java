@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.geo;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -61,10 +61,10 @@ public final class TempSpatialRelsUDFs {
     private TempSpatialRelsUDFs() {}
 
     private static int tripSrid(Pointer tptr) {
-        Pointer bbox = functions.tspatial_to_stbox(tptr);
+        Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
         if (bbox == null) return 0;
         try {
-            return functions.stbox_srid(bbox);
+            return GeneratedFunctions.stbox_srid(bbox);
         } finally {
             MeosMemory.free(bbox);
         }
@@ -73,7 +73,7 @@ public final class TempSpatialRelsUDFs {
     private static String tempHexOut(Pointer r) {
         if (r == null) return null;
         try {
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         } finally {
             MeosMemory.free(r);
         }
@@ -92,14 +92,14 @@ public final class TempSpatialRelsUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
                 int srid = tripSrid(tptr);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return tempHexOut(functions.tdisjoint_tgeo_geo(tptr, gptr));
+                    return tempHexOut(GeneratedFunctions.tdisjoint_tgeo_geo(tptr, gptr));
                 } finally { MeosMemory.free(gptr); }
             } finally { MeosMemory.free(tptr); }
         };
@@ -116,14 +116,14 @@ public final class TempSpatialRelsUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
                 int srid = tripSrid(tptr);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return tempHexOut(functions.tintersects_tgeo_geo(tptr, gptr));
+                    return tempHexOut(GeneratedFunctions.tintersects_tgeo_geo(tptr, gptr));
                 } finally { MeosMemory.free(gptr); }
             } finally { MeosMemory.free(tptr); }
         };
@@ -140,14 +140,14 @@ public final class TempSpatialRelsUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
                 int srid = tripSrid(tptr);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return tempHexOut(functions.ttouches_tgeo_geo(tptr, gptr));
+                    return tempHexOut(GeneratedFunctions.ttouches_tgeo_geo(tptr, gptr));
                 } finally { MeosMemory.free(gptr); }
             } finally { MeosMemory.free(tptr); }
         };
@@ -165,13 +165,13 @@ public final class TempSpatialRelsUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
                 if (p2 == null) return null;
                 try {
-                    return tempHexOut(functions.tdisjoint_tgeo_tgeo(p1, p2));
+                    return tempHexOut(GeneratedFunctions.tdisjoint_tgeo_tgeo(p1, p2));
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -180,13 +180,13 @@ public final class TempSpatialRelsUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
                 if (p2 == null) return null;
                 try {
-                    return tempHexOut(functions.tintersects_tgeo_tgeo(p1, p2));
+                    return tempHexOut(GeneratedFunctions.tintersects_tgeo_tgeo(p1, p2));
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -195,13 +195,13 @@ public final class TempSpatialRelsUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
                 if (p2 == null) return null;
                 try {
-                    return tempHexOut(functions.ttouches_tgeo_tgeo(p1, p2));
+                    return tempHexOut(GeneratedFunctions.ttouches_tgeo_tgeo(p1, p2));
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -220,14 +220,14 @@ public final class TempSpatialRelsUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
                 int srid = tripSrid(tptr);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return tempHexOut(functions.tcontains_tgeo_geo(tptr, gptr));
+                    return tempHexOut(GeneratedFunctions.tcontains_tgeo_geo(tptr, gptr));
                 } finally { MeosMemory.free(gptr); }
             } finally { MeosMemory.free(tptr); }
         };
@@ -236,13 +236,13 @@ public final class TempSpatialRelsUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
             try {
-                Pointer p2 = functions.temporal_from_hexwkb(trip2);
+                Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
                 if (p2 == null) return null;
                 try {
-                    return tempHexOut(functions.tcontains_tgeo_tgeo(p1, p2));
+                    return tempHexOut(GeneratedFunctions.tcontains_tgeo_tgeo(p1, p2));
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -256,14 +256,14 @@ public final class TempSpatialRelsUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
                 int srid = tripSrid(tptr);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return tempHexOut(functions.tcovers_tgeo_geo(tptr, gptr));
+                    return tempHexOut(GeneratedFunctions.tcovers_tgeo_geo(tptr, gptr));
                 } finally { MeosMemory.free(gptr); }
             } finally { MeosMemory.free(tptr); }
         };
@@ -277,14 +277,14 @@ public final class TempSpatialRelsUDFs {
         (trip, geomWkt, dist) -> {
             if (trip == null || geomWkt == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
                 int srid = tripSrid(tptr);
-                Pointer gptr = functions.geo_from_text(geomWkt, srid);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, srid);
                 if (gptr == null) return null;
                 try {
-                    return tempHexOut(functions.tdwithin_tgeo_geo(tptr, gptr, dist.doubleValue()));
+                    return tempHexOut(GeneratedFunctions.tdwithin_tgeo_geo(tptr, gptr, dist.doubleValue()));
                 } finally { MeosMemory.free(gptr); }
             } finally { MeosMemory.free(tptr); }
         };

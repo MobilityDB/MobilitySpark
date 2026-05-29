@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import org.apache.spark.sql.api.java.*;
 
 /**
@@ -50,9 +50,9 @@ public final class MeosThread {
     private MeosThread() {}
 
     private static final ThreadLocal<Boolean> MEOS_READY = ThreadLocal.withInitial(() -> {
-        functions.meos_initialize();
-        functions.meos_initialize_timezone("UTC");
-        functions.meos_initialize_noexit_error_handler();
+        GeneratedFunctions.meos_initialize();
+        GeneratedFunctions.meos_initialize_timezone("UTC");
+        GeneratedFunctions.meos_initialize_noexit_error_handler();
         return Boolean.TRUE;
     });
 

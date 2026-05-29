@@ -28,7 +28,7 @@ package org.mobilitydb.spark.examples;
 import org.apache.spark.sql.SparkSession;
 import org.mobilitydb.spark.MobilitySparkSession;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 
 /**
  * N01 Hello World — the minimal MobilitySpark program.

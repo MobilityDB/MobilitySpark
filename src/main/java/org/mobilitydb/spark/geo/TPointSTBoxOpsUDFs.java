@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.geo;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosNative;
@@ -52,11 +52,11 @@ public final class TPointSTBoxOpsUDFs {
     // ------------------------------------------------------------------
 
     private static Pointer stboxPtr(String hex) {
-        return hex == null ? null : functions.stbox_from_hexwkb(hex);
+        return hex == null ? null : GeneratedFunctions.stbox_from_hexwkb(hex);
     }
 
     private static Pointer tpointPtr(String hex) {
-        return hex == null ? null : functions.temporal_from_hexwkb(hex);
+        return hex == null ? null : GeneratedFunctions.temporal_from_hexwkb(hex);
     }
 
     // ------------------------------------------------------------------

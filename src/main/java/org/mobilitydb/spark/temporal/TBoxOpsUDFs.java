@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -58,8 +58,8 @@ public final class TBoxOpsUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.tbox_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.tbox_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.tbox_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.tbox_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return fn.apply(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
@@ -70,8 +70,8 @@ public final class TBoxOpsUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.tbox_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.tbox_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return fn.apply(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
@@ -82,8 +82,8 @@ public final class TBoxOpsUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.tbox_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.tbox_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return fn.apply(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
@@ -94,55 +94,55 @@ public final class TBoxOpsUDFs {
     // tbox × tbox
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> tboxLeftTbox       = tboxTbox(functions::left_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxOverleftTbox   = tboxTbox(functions::overleft_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxRightTbox      = tboxTbox(functions::right_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxOverrightTbox  = tboxTbox(functions::overright_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxBeforeTbox     = tboxTbox(functions::before_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxOverbeforeTbox = tboxTbox(functions::overbefore_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxAfterTbox      = tboxTbox(functions::after_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxOverafterTbox  = tboxTbox(functions::overafter_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxAdjacentTbox   = tboxTbox(functions::adjacent_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxContainsTbox   = tboxTbox(functions::contains_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxContainedTbox  = tboxTbox(functions::contained_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxOverlapsTbox   = tboxTbox(functions::overlaps_tbox_tbox);
-    public static final UDF2<String, String, Boolean> tboxSameTbox       = tboxTbox(functions::same_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxLeftTbox       = tboxTbox(GeneratedFunctions::left_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxOverleftTbox   = tboxTbox(GeneratedFunctions::overleft_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxRightTbox      = tboxTbox(GeneratedFunctions::right_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxOverrightTbox  = tboxTbox(GeneratedFunctions::overright_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxBeforeTbox     = tboxTbox(GeneratedFunctions::before_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxOverbeforeTbox = tboxTbox(GeneratedFunctions::overbefore_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxAfterTbox      = tboxTbox(GeneratedFunctions::after_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxOverafterTbox  = tboxTbox(GeneratedFunctions::overafter_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxAdjacentTbox   = tboxTbox(GeneratedFunctions::adjacent_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxContainsTbox   = tboxTbox(GeneratedFunctions::contains_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxContainedTbox  = tboxTbox(GeneratedFunctions::contained_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxOverlapsTbox   = tboxTbox(GeneratedFunctions::overlaps_tbox_tbox);
+    public static final UDF2<String, String, Boolean> tboxSameTbox       = tboxTbox(GeneratedFunctions::same_tbox_tbox);
 
     // ------------------------------------------------------------------
     // tbox × tnumber
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> tboxLeftTnumber       = tboxTnumber(functions::left_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxOverleftTnumber   = tboxTnumber(functions::overleft_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxRightTnumber      = tboxTnumber(functions::right_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxOverrightTnumber  = tboxTnumber(functions::overright_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxBeforeTnumber     = tboxTnumber(functions::before_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxOverbeforeTnumber = tboxTnumber(functions::overbefore_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxAfterTnumber      = tboxTnumber(functions::after_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxOverafterTnumber  = tboxTnumber(functions::overafter_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxAdjacentTnumber   = tboxTnumber(functions::adjacent_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxContainsTnumber   = tboxTnumber(functions::contains_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxContainedTnumber  = tboxTnumber(functions::contained_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxOverlapsTnumber   = tboxTnumber(functions::overlaps_tbox_tnumber);
-    public static final UDF2<String, String, Boolean> tboxSameTnumber       = tboxTnumber(functions::same_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxLeftTnumber       = tboxTnumber(GeneratedFunctions::left_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxOverleftTnumber   = tboxTnumber(GeneratedFunctions::overleft_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxRightTnumber      = tboxTnumber(GeneratedFunctions::right_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxOverrightTnumber  = tboxTnumber(GeneratedFunctions::overright_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxBeforeTnumber     = tboxTnumber(GeneratedFunctions::before_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxOverbeforeTnumber = tboxTnumber(GeneratedFunctions::overbefore_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxAfterTnumber      = tboxTnumber(GeneratedFunctions::after_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxOverafterTnumber  = tboxTnumber(GeneratedFunctions::overafter_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxAdjacentTnumber   = tboxTnumber(GeneratedFunctions::adjacent_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxContainsTnumber   = tboxTnumber(GeneratedFunctions::contains_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxContainedTnumber  = tboxTnumber(GeneratedFunctions::contained_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxOverlapsTnumber   = tboxTnumber(GeneratedFunctions::overlaps_tbox_tnumber);
+    public static final UDF2<String, String, Boolean> tboxSameTnumber       = tboxTnumber(GeneratedFunctions::same_tbox_tnumber);
 
     // ------------------------------------------------------------------
     // tnumber × tbox
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> tnumberLeftTbox       = tnumberTbox(functions::left_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberOverleftTbox   = tnumberTbox(functions::overleft_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberRightTbox      = tnumberTbox(functions::right_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberOverrightTbox  = tnumberTbox(functions::overright_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberBeforeTbox     = tnumberTbox(functions::before_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberOverbeforeTbox = tnumberTbox(functions::overbefore_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberAfterTbox      = tnumberTbox(functions::after_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberOverafterTbox  = tnumberTbox(functions::overafter_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberAdjacentTbox   = tnumberTbox(functions::adjacent_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberContainsTbox   = tnumberTbox(functions::contains_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberContainedTbox  = tnumberTbox(functions::contained_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberOverlapsTbox   = tnumberTbox(functions::overlaps_tnumber_tbox);
-    public static final UDF2<String, String, Boolean> tnumberSameTbox       = tnumberTbox(functions::same_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberLeftTbox       = tnumberTbox(GeneratedFunctions::left_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberOverleftTbox   = tnumberTbox(GeneratedFunctions::overleft_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberRightTbox      = tnumberTbox(GeneratedFunctions::right_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberOverrightTbox  = tnumberTbox(GeneratedFunctions::overright_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberBeforeTbox     = tnumberTbox(GeneratedFunctions::before_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberOverbeforeTbox = tnumberTbox(GeneratedFunctions::overbefore_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberAfterTbox      = tnumberTbox(GeneratedFunctions::after_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberOverafterTbox  = tnumberTbox(GeneratedFunctions::overafter_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberAdjacentTbox   = tnumberTbox(GeneratedFunctions::adjacent_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberContainsTbox   = tnumberTbox(GeneratedFunctions::contains_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberContainedTbox  = tnumberTbox(GeneratedFunctions::contained_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberOverlapsTbox   = tnumberTbox(GeneratedFunctions::overlaps_tnumber_tbox);
+    public static final UDF2<String, String, Boolean> tnumberSameTbox       = tnumberTbox(GeneratedFunctions::same_tnumber_tbox);
 
     public static void registerAll(SparkSession spark) {
         // tbox × tbox

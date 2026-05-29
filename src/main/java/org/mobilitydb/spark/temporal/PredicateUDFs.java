@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -52,7 +52,7 @@ public final class PredicateUDFs {
     private PredicateUDFs() {}
 
     private static Pointer tempPtr(String hex) {
-        return hex == null ? null : functions.temporal_from_hexwkb(hex);
+        return hex == null ? null : GeneratedFunctions.temporal_from_hexwkb(hex);
     }
 
     /** Convert MEOS ever/always int result to Boolean; null on error (-1). */
@@ -77,7 +77,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.temporal_eq(p1, p2);
+            return GeneratedFunctions.temporal_eq(p1, p2);
         };
 
     // temporalNe(t1, t2) → true if t1 and t2 differ
@@ -86,7 +86,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.temporal_ne(p1, p2);
+            return GeneratedFunctions.temporal_ne(p1, p2);
         };
 
     // temporalLt(t1, t2) → true if t1 < t2 (lexicographic)
@@ -95,7 +95,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.temporal_lt(p1, p2);
+            return GeneratedFunctions.temporal_lt(p1, p2);
         };
 
     // temporalLe(t1, t2) → true if t1 ≤ t2
@@ -104,7 +104,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.temporal_le(p1, p2);
+            return GeneratedFunctions.temporal_le(p1, p2);
         };
 
     // temporalGt(t1, t2) → true if t1 > t2
@@ -113,7 +113,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.temporal_gt(p1, p2);
+            return GeneratedFunctions.temporal_gt(p1, p2);
         };
 
     // temporalGe(t1, t2) → true if t1 ≥ t2
@@ -122,7 +122,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.temporal_ge(p1, p2);
+            return GeneratedFunctions.temporal_ge(p1, p2);
         };
 
     // ------------------------------------------------------------------
@@ -139,7 +139,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_eq_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.ever_eq_tint_int(ptr, v));
         };
 
     // everEqTfloatFloat(tfloat_hex, 1.5) → true if tfloat ever equals 1.5
@@ -149,7 +149,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_eq_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.ever_eq_tfloat_float(ptr, v));
         };
 
     // everEqTemporal(t1, t2) → true if t1 and t2 ever have the same value
@@ -159,7 +159,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.ever_eq_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.ever_eq_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -173,7 +173,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_ne_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.ever_ne_tint_int(ptr, v));
         };
 
     public static final UDF2<String, Double, Boolean> everNeTfloatFloat =
@@ -181,7 +181,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_ne_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.ever_ne_tfloat_float(ptr, v));
         };
 
     public static final UDF2<String, String, Boolean> everNeTemporal =
@@ -189,7 +189,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.ever_ne_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.ever_ne_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -204,7 +204,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_lt_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.ever_lt_tint_int(ptr, v));
         };
 
     // everLtTfloatFloat(tfloat_hex, 2.0) → true if tfloat ever < 2.0
@@ -213,7 +213,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_lt_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.ever_lt_tfloat_float(ptr, v));
         };
 
     // everLtTemporal(t1, t2) → true if t1 ever < t2 at any shared instant
@@ -222,7 +222,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.ever_lt_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.ever_lt_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -234,7 +234,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_le_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.ever_le_tint_int(ptr, v));
         };
 
     public static final UDF2<String, Double, Boolean> everLeTfloatFloat =
@@ -242,7 +242,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_le_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.ever_le_tfloat_float(ptr, v));
         };
 
     public static final UDF2<String, String, Boolean> everLeTemporal =
@@ -250,7 +250,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.ever_le_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.ever_le_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -262,7 +262,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_gt_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.ever_gt_tint_int(ptr, v));
         };
 
     public static final UDF2<String, Double, Boolean> everGtTfloatFloat =
@@ -270,7 +270,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_gt_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.ever_gt_tfloat_float(ptr, v));
         };
 
     public static final UDF2<String, String, Boolean> everGtTemporal =
@@ -278,7 +278,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.ever_gt_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.ever_gt_temporal_temporal(p1, p2));
         };
 
     public static final UDF2<String, Integer, Boolean> everGeTintInt =
@@ -286,7 +286,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_ge_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.ever_ge_tint_int(ptr, v));
         };
 
     public static final UDF2<String, Double, Boolean> everGeTfloatFloat =
@@ -294,7 +294,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.ever_ge_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.ever_ge_tfloat_float(ptr, v));
         };
 
     public static final UDF2<String, String, Boolean> everGeTemporal =
@@ -302,7 +302,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.ever_ge_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.ever_ge_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -317,7 +317,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_eq_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.always_eq_tint_int(ptr, v));
         };
 
     public static final UDF2<String, Double, Boolean> alwaysEqTfloatFloat =
@@ -325,7 +325,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_eq_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.always_eq_tfloat_float(ptr, v));
         };
 
     public static final UDF2<String, String, Boolean> alwaysEqTemporal =
@@ -333,7 +333,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.always_eq_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.always_eq_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -347,7 +347,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_ne_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.always_ne_tint_int(ptr, v));
         };
 
     public static final UDF2<String, Double, Boolean> alwaysNeTfloatFloat =
@@ -355,7 +355,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_ne_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.always_ne_tfloat_float(ptr, v));
         };
 
     public static final UDF2<String, String, Boolean> alwaysNeTemporal =
@@ -363,7 +363,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.always_ne_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.always_ne_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -375,7 +375,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_lt_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.always_lt_tint_int(ptr, v));
         };
 
     public static final UDF2<String, Double, Boolean> alwaysLtTfloatFloat =
@@ -383,7 +383,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_lt_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.always_lt_tfloat_float(ptr, v));
         };
 
     public static final UDF2<String, String, Boolean> alwaysLtTemporal =
@@ -391,7 +391,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.always_lt_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.always_lt_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -403,7 +403,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_le_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.always_le_tint_int(ptr, v));
         };
 
     public static final UDF2<String, Double, Boolean> alwaysLeTfloatFloat =
@@ -411,7 +411,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_le_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.always_le_tfloat_float(ptr, v));
         };
 
     public static final UDF2<String, String, Boolean> alwaysLeTemporal =
@@ -419,7 +419,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.always_le_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.always_le_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -431,7 +431,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_gt_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.always_gt_tint_int(ptr, v));
         };
 
     public static final UDF2<String, Double, Boolean> alwaysGtTfloatFloat =
@@ -439,7 +439,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_gt_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.always_gt_tfloat_float(ptr, v));
         };
 
     public static final UDF2<String, String, Boolean> alwaysGtTemporal =
@@ -447,7 +447,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.always_gt_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.always_gt_temporal_temporal(p1, p2));
         };
 
     public static final UDF2<String, Integer, Boolean> alwaysGeTintInt =
@@ -455,7 +455,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_ge_tint_int(ptr, v));
+            return intToBool(GeneratedFunctions.always_ge_tint_int(ptr, v));
         };
 
     public static final UDF2<String, Double, Boolean> alwaysGeTfloatFloat =
@@ -463,7 +463,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer ptr = tempPtr(s);
             if (ptr == null || v == null) return null;
-            return intToBool(functions.always_ge_tfloat_float(ptr, v));
+            return intToBool(GeneratedFunctions.always_ge_tfloat_float(ptr, v));
         };
 
     public static final UDF2<String, String, Boolean> alwaysGeTemporal =
@@ -471,7 +471,7 @@ public final class PredicateUDFs {
             MeosThread.ensureReady();
             Pointer p1 = tempPtr(s1), p2 = tempPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return intToBool(functions.always_ge_temporal_temporal(p1, p2));
+            return intToBool(GeneratedFunctions.always_ge_temporal_temporal(p1, p2));
         };
 
     // ------------------------------------------------------------------
@@ -480,56 +480,56 @@ public final class PredicateUDFs {
     // ------------------------------------------------------------------
 
     public static final UDF2<Integer, String, Boolean> alwaysEqIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_eq_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_eq_int_tint(v, p)); };
     public static final UDF2<Integer, String, Boolean> alwaysNeIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ne_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_ne_int_tint(v, p)); };
     public static final UDF2<Integer, String, Boolean> alwaysLtIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_lt_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_lt_int_tint(v, p)); };
     public static final UDF2<Integer, String, Boolean> alwaysLeIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_le_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_le_int_tint(v, p)); };
     public static final UDF2<Integer, String, Boolean> alwaysGtIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_gt_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_gt_int_tint(v, p)); };
     public static final UDF2<Integer, String, Boolean> alwaysGeIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ge_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_ge_int_tint(v, p)); };
 
     public static final UDF2<Double, String, Boolean> alwaysEqFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_eq_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_eq_float_tfloat(v, p)); };
     public static final UDF2<Double, String, Boolean> alwaysNeFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ne_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_ne_float_tfloat(v, p)); };
     public static final UDF2<Double, String, Boolean> alwaysLtFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_lt_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_lt_float_tfloat(v, p)); };
     public static final UDF2<Double, String, Boolean> alwaysLeFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_le_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_le_float_tfloat(v, p)); };
     public static final UDF2<Double, String, Boolean> alwaysGtFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_gt_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_gt_float_tfloat(v, p)); };
     public static final UDF2<Double, String, Boolean> alwaysGeFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ge_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_ge_float_tfloat(v, p)); };
 
     public static final UDF2<Integer, String, Boolean> everEqIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_eq_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_eq_int_tint(v, p)); };
     public static final UDF2<Integer, String, Boolean> everNeIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ne_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_ne_int_tint(v, p)); };
     public static final UDF2<Integer, String, Boolean> everLtIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_lt_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_lt_int_tint(v, p)); };
     public static final UDF2<Integer, String, Boolean> everLeIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_le_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_le_int_tint(v, p)); };
     public static final UDF2<Integer, String, Boolean> everGtIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_gt_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_gt_int_tint(v, p)); };
     public static final UDF2<Integer, String, Boolean> everGeIntTint =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ge_int_tint(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_ge_int_tint(v, p)); };
 
     public static final UDF2<Double, String, Boolean> everEqFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_eq_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_eq_float_tfloat(v, p)); };
     public static final UDF2<Double, String, Boolean> everNeFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ne_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_ne_float_tfloat(v, p)); };
     public static final UDF2<Double, String, Boolean> everLtFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_lt_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_lt_float_tfloat(v, p)); };
     public static final UDF2<Double, String, Boolean> everLeFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_le_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_le_float_tfloat(v, p)); };
     public static final UDF2<Double, String, Boolean> everGtFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_gt_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_gt_float_tfloat(v, p)); };
     public static final UDF2<Double, String, Boolean> everGeFloatTfloat =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ge_float_tfloat(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_ge_float_tfloat(v, p)); };
 
     // ------------------------------------------------------------------
     // tbool × bool predicates (only eq and ne meaningful for booleans)
@@ -537,22 +537,22 @@ public final class PredicateUDFs {
     // ------------------------------------------------------------------
 
     public static final UDF2<String, Boolean, Boolean> alwaysEqTboolBool =
-        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_eq_tbool_bool(p, v)); };
+        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_eq_tbool_bool(p, v)); };
     public static final UDF2<String, Boolean, Boolean> alwaysNeTboolBool =
-        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ne_tbool_bool(p, v)); };
+        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_ne_tbool_bool(p, v)); };
     public static final UDF2<Boolean, String, Boolean> alwaysEqBoolTbool =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_eq_bool_tbool(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_eq_bool_tbool(v, p)); };
     public static final UDF2<Boolean, String, Boolean> alwaysNeBoolTbool =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.always_ne_bool_tbool(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.always_ne_bool_tbool(v, p)); };
 
     public static final UDF2<String, Boolean, Boolean> everEqTboolBool =
-        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_eq_tbool_bool(p, v)); };
+        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_eq_tbool_bool(p, v)); };
     public static final UDF2<String, Boolean, Boolean> everNeTboolBool =
-        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ne_tbool_bool(p, v)); };
+        (s, v) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_ne_tbool_bool(p, v)); };
     public static final UDF2<Boolean, String, Boolean> everEqBoolTbool =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_eq_bool_tbool(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_eq_bool_tbool(v, p)); };
     public static final UDF2<Boolean, String, Boolean> everNeBoolTbool =
-        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(functions.ever_ne_bool_tbool(v, p)); };
+        (v, s) -> { MeosThread.ensureReady(); Pointer p = tempPtr(s); if (p == null || v == null) return null; return intToBool(GeneratedFunctions.ever_ne_bool_tbool(v, p)); };
 
     // ------------------------------------------------------------------
     // ttext × text predicates
@@ -561,9 +561,9 @@ public final class PredicateUDFs {
     // ------------------------------------------------------------------
 
     private static Pointer[] makeTextPtr(String val) {
-        Pointer dummy = functions.ttext_in(val + "@2000-01-01 00:00:00+00");
+        Pointer dummy = GeneratedFunctions.ttext_in(val + "@2000-01-01 00:00:00+00");
         if (dummy == null) return null;
-        Pointer textPtr = functions.ttext_value_n(dummy, 1);
+        Pointer textPtr = GeneratedFunctions.ttext_value_n(dummy, 1);
         if (textPtr == null) { MeosMemory.free(dummy); return null; }
         return new Pointer[]{textPtr, dummy};
     }
@@ -574,7 +574,7 @@ public final class PredicateUDFs {
         MeosThread.ensureReady();
         Pointer[] tp = makeTextPtr(textVal);
         if (tp == null) return null;
-        Pointer tptr = functions.temporal_from_hexwkb(ttextHex);
+        Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(ttextHex);
         if (tptr == null) { MeosMemory.free(tp[0]); MeosMemory.free(tp[1]); return null; }
         try {
             return intToBool(fn.apply(tp[0], tptr));
@@ -589,7 +589,7 @@ public final class PredicateUDFs {
             BiFunction<Pointer, Pointer, Integer> fn) {
         if (ttextHex == null || textVal == null) return null;
         MeosThread.ensureReady();
-        Pointer tptr = functions.temporal_from_hexwkb(ttextHex);
+        Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(ttextHex);
         if (tptr == null) return null;
         Pointer[] tp = makeTextPtr(textVal);
         if (tp == null) { MeosMemory.free(tptr); return null; }
@@ -604,59 +604,59 @@ public final class PredicateUDFs {
 
     // always: text OP ttext
     public static final UDF2<String, String, Boolean> alwaysEqTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::always_eq_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::always_eq_text_ttext);
     public static final UDF2<String, String, Boolean> alwaysNeTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::always_ne_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::always_ne_text_ttext);
     public static final UDF2<String, String, Boolean> alwaysLtTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::always_lt_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::always_lt_text_ttext);
     public static final UDF2<String, String, Boolean> alwaysLeTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::always_le_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::always_le_text_ttext);
     public static final UDF2<String, String, Boolean> alwaysGtTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::always_gt_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::always_gt_text_ttext);
     public static final UDF2<String, String, Boolean> alwaysGeTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::always_ge_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::always_ge_text_ttext);
 
     // always: ttext OP text
     public static final UDF2<String, String, Boolean> alwaysEqTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::always_eq_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::always_eq_ttext_text);
     public static final UDF2<String, String, Boolean> alwaysNeTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::always_ne_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::always_ne_ttext_text);
     public static final UDF2<String, String, Boolean> alwaysLtTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::always_lt_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::always_lt_ttext_text);
     public static final UDF2<String, String, Boolean> alwaysLeTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::always_le_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::always_le_ttext_text);
     public static final UDF2<String, String, Boolean> alwaysGtTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::always_gt_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::always_gt_ttext_text);
     public static final UDF2<String, String, Boolean> alwaysGeTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::always_ge_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::always_ge_ttext_text);
 
     // ever: text OP ttext
     public static final UDF2<String, String, Boolean> everEqTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::ever_eq_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::ever_eq_text_ttext);
     public static final UDF2<String, String, Boolean> everNeTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::ever_ne_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::ever_ne_text_ttext);
     public static final UDF2<String, String, Boolean> everLtTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::ever_lt_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::ever_lt_text_ttext);
     public static final UDF2<String, String, Boolean> everLeTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::ever_le_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::ever_le_text_ttext);
     public static final UDF2<String, String, Boolean> everGtTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::ever_gt_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::ever_gt_text_ttext);
     public static final UDF2<String, String, Boolean> everGeTextTtext =
-        (t, s) -> textTtextPred(t, s, functions::ever_ge_text_ttext);
+        (t, s) -> textTtextPred(t, s, GeneratedFunctions::ever_ge_text_ttext);
 
     // ever: ttext OP text
     public static final UDF2<String, String, Boolean> everEqTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::ever_eq_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::ever_eq_ttext_text);
     public static final UDF2<String, String, Boolean> everNeTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::ever_ne_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::ever_ne_ttext_text);
     public static final UDF2<String, String, Boolean> everLtTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::ever_lt_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::ever_lt_ttext_text);
     public static final UDF2<String, String, Boolean> everLeTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::ever_le_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::ever_le_ttext_text);
     public static final UDF2<String, String, Boolean> everGtTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::ever_gt_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::ever_gt_ttext_text);
     public static final UDF2<String, String, Boolean> everGeTtextText =
-        (s, t) -> ttextTextPred(s, t, functions::ever_ge_ttext_text);
+        (s, t) -> ttextTextPred(s, t, GeneratedFunctions::ever_ge_ttext_text);
 
     // tpointIsSimple(tpoint_hex) → Boolean
     // Returns true if the trajectory has no self-intersections.
@@ -665,10 +665,10 @@ public final class PredicateUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                return functions.tpoint_is_simple(ptr);
+                return GeneratedFunctions.tpoint_is_simple(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }
