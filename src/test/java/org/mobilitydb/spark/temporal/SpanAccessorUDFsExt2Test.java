@@ -31,7 +31,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import org.mobilitydb.spark.MeosTestBase;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

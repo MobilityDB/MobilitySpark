@@ -31,7 +31,7 @@ import org.mobilitydb.spark.geo.STBoxUDFs;
 import org.mobilitydb.spark.temporal.ConstructorUDFs;
 import org.mobilitydb.spark.MeosTestBase;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

@@ -30,7 +30,7 @@ import org.junit.jupiter.api.*;
 import java.sql.Timestamp;
 import org.mobilitydb.spark.MeosTestBase;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

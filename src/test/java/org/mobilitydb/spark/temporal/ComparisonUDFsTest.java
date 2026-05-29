@@ -31,7 +31,7 @@ import org.apache.spark.sql.api.java.UDF2;
 import org.mobilitydb.spark.cbuffer.CbufferUDFs;
 import org.mobilitydb.spark.pose.PoseUDFs;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

@@ -27,7 +27,7 @@ package org.mobilitydb.spark;
 
 import org.junit.jupiter.api.BeforeAll;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 
 /**
  * Shared base for all JUnit5 test classes that exercise MEOS.
