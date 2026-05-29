@@ -327,7 +327,7 @@ public final class PoseUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequence(p, "linear");
+                Pointer r = functions.temporal_to_tsequence(p, 3 /* LINEAR interpType (meos.h) */);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
@@ -341,7 +341,7 @@ public final class PoseUDFs {
             Pointer p = functions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequenceset(p, "linear");
+                Pointer r = functions.temporal_to_tsequenceset(p, 3 /* LINEAR interpType (meos.h) */);
                 if (r == null) return null;
                 try { return functions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
