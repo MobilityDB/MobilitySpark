@@ -828,7 +828,7 @@ public final class Th3IndexUDFs {
      * Returns TRUE iff the trip's th3index sequence ever lies in any cell
      * of the candidate set.  Pair with geoToH3IndexSet to prefilter
      * polygon-side cross-join queries.  Wraps
-     * ever_eq_anyof_h3indexset_th3index (MobilityDB PR #938).
+     * ever_eq_h3indexset_th3index (MobilityDB PR #938).
      */
     public static final UDF2<String, String, Boolean> everIntersectsH3IndexSetTh3Index =
         (cellSetHex, th3idx) -> {
@@ -840,7 +840,7 @@ public final class Th3IndexUDFs {
                 Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
                 if (t == null) return null;
                 try {
-                    int r = GeneratedFunctions.ever_eq_anyof_h3indexset_th3index(cells, t);
+                    int r = GeneratedFunctions.ever_eq_h3indexset_th3index(cells, t);
                     return r < 0 ? null : r == 1;
                 } finally {
                     MeosMemory.free(t);
