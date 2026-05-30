@@ -737,7 +737,12 @@ public final class AggregateUDAFs {
         spark.udf().register("tExtent",   org.apache.spark.sql.functions.udaf(new TExtentFn(),   Encoders.STRING()));
         spark.udf().register("setUnion",  org.apache.spark.sql.functions.udaf(new SetUnionFn(),  Encoders.STRING()));
         spark.udf().register("spanUnion", org.apache.spark.sql.functions.udaf(new SpanUnionFn(), Encoders.STRING()));
-        spark.udf().register("merge",     org.apache.spark.sql.functions.udaf(new MergeFn(),     Encoders.STRING()));
+        // The aggregate form carries the canonical `Agg` suffix (MobilityDB
+        // #828): Spark registers a name as exclusively scalar or aggregate, so
+        // the bare `merge` stays the scalar (AccessorUDFs) and the column
+        // aggregate is `mergeAgg`. Same split for appendInstantAgg /
+        // appendSequenceAgg / minDistanceAgg when those aggregates are added.
+        spark.udf().register("mergeAgg",  org.apache.spark.sql.functions.udaf(new MergeFn(),     Encoders.STRING()));
         spark.udf().register("wIntMax",   org.apache.spark.sql.functions.udaf(new WIntMaxFn(),   Encoders.STRING()));
         spark.udf().register("wFloatMax", org.apache.spark.sql.functions.udaf(new WFloatMaxFn(), Encoders.STRING()));
         spark.udf().register("wIntMin",   org.apache.spark.sql.functions.udaf(new WIntMinFn(),   Encoders.STRING()));
