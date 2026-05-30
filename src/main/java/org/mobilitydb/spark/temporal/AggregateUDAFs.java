@@ -49,9 +49,9 @@ import java.io.Serializable;
  * MEOS function authority: meos/include/meos.h (temporal aggregate transfns)
  *
  * Registration: call registerAll(spark).  In SQL, use tCount(col),
- * tAnd(col), tOr(col), tIntMin(col), tIntMax(col), tIntSum(col),
- * tFloatMin(col), tFloatMax(col), tFloatSum(col), tTextMin(col),
- * tTextMax(col), tCentroid(col), tExtent(col).
+ * tAnd(col), tOr(col), tminAgg(col), tmaxAgg(col), tsum(col), tAvg(col),
+ * tCentroid(col), tExtent(col).  tminAgg/tmaxAgg accept tint, tfloat or
+ * ttext and dispatch on the base type; tsum accepts tint or tfloat.
  */
 public final class AggregateUDAFs {
 
@@ -223,172 +223,6 @@ public final class AggregateUDAFs {
     }
 
     // ------------------------------------------------------------------
-    // tIntMin / tIntMax / tIntSum — temporal aggregates on tint
-    // Returns: tint hex-WKB
-    // ------------------------------------------------------------------
-
-    public static final class TIntMinFn extends Aggregator<String, String, String>
-            implements Serializable {
-        @Override public String zero() { return ""; }
-        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
-        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
-
-        @Override public String finish(String buf) {
-            MeosThread.ensureReady();
-            String[] hexes = entries(buf);
-            if (hexes.length == 0) return null;
-            Pointer state = null;
-            for (String hex : hexes) {
-                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
-                if (inp == null) continue;
-                Pointer next = GeneratedFunctions.tint_tmin_transfn(state, inp);
-                MeosMemory.free(inp);
-                state = next;
-            }
-            if (state == null) return null;
-            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
-        }
-
-        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
-        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
-    }
-
-    public static final class TIntMaxFn extends Aggregator<String, String, String>
-            implements Serializable {
-        @Override public String zero() { return ""; }
-        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
-        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
-
-        @Override public String finish(String buf) {
-            MeosThread.ensureReady();
-            String[] hexes = entries(buf);
-            if (hexes.length == 0) return null;
-            Pointer state = null;
-            for (String hex : hexes) {
-                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
-                if (inp == null) continue;
-                Pointer next = GeneratedFunctions.tint_tmax_transfn(state, inp);
-                MeosMemory.free(inp);
-                state = next;
-            }
-            if (state == null) return null;
-            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
-        }
-
-        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
-        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
-    }
-
-    public static final class TIntSumFn extends Aggregator<String, String, String>
-            implements Serializable {
-        @Override public String zero() { return ""; }
-        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
-        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
-
-        @Override public String finish(String buf) {
-            MeosThread.ensureReady();
-            String[] hexes = entries(buf);
-            if (hexes.length == 0) return null;
-            Pointer state = null;
-            for (String hex : hexes) {
-                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
-                if (inp == null) continue;
-                Pointer next = GeneratedFunctions.tint_tsum_transfn(state, inp);
-                MeosMemory.free(inp);
-                state = next;
-            }
-            if (state == null) return null;
-            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
-        }
-
-        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
-        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
-    }
-
-    // ------------------------------------------------------------------
-    // tFloatMin / tFloatMax / tFloatSum — temporal aggregates on tfloat
-    // Returns: tfloat hex-WKB
-    // ------------------------------------------------------------------
-
-    public static final class TFloatMinFn extends Aggregator<String, String, String>
-            implements Serializable {
-        @Override public String zero() { return ""; }
-        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
-        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
-
-        @Override public String finish(String buf) {
-            MeosThread.ensureReady();
-            String[] hexes = entries(buf);
-            if (hexes.length == 0) return null;
-            Pointer state = null;
-            for (String hex : hexes) {
-                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
-                if (inp == null) continue;
-                Pointer next = GeneratedFunctions.tfloat_tmin_transfn(state, inp);
-                MeosMemory.free(inp);
-                state = next;
-            }
-            if (state == null) return null;
-            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
-        }
-
-        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
-        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
-    }
-
-    public static final class TFloatMaxFn extends Aggregator<String, String, String>
-            implements Serializable {
-        @Override public String zero() { return ""; }
-        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
-        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
-
-        @Override public String finish(String buf) {
-            MeosThread.ensureReady();
-            String[] hexes = entries(buf);
-            if (hexes.length == 0) return null;
-            Pointer state = null;
-            for (String hex : hexes) {
-                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
-                if (inp == null) continue;
-                Pointer next = GeneratedFunctions.tfloat_tmax_transfn(state, inp);
-                MeosMemory.free(inp);
-                state = next;
-            }
-            if (state == null) return null;
-            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
-        }
-
-        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
-        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
-    }
-
-    public static final class TFloatSumFn extends Aggregator<String, String, String>
-            implements Serializable {
-        @Override public String zero() { return ""; }
-        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
-        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
-
-        @Override public String finish(String buf) {
-            MeosThread.ensureReady();
-            String[] hexes = entries(buf);
-            if (hexes.length == 0) return null;
-            Pointer state = null;
-            for (String hex : hexes) {
-                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
-                if (inp == null) continue;
-                Pointer next = GeneratedFunctions.tfloat_tsum_transfn(state, inp);
-                MeosMemory.free(inp);
-                state = next;
-            }
-            if (state == null) return null;
-            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
-        }
-
-        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
-        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
-    }
-
-    // ------------------------------------------------------------------
     // tAvg — temporal average of a tnumber (tint or tfloat)
     // MEOS: tnumber_tavg_transfn + tnumber_tavg_finalfn
     // Returns: tfloat hex-WKB
@@ -413,63 +247,6 @@ public final class AggregateUDAFs {
             }
             if (state == null) return null;
             return hexOut(GeneratedFunctions.tnumber_tavg_finalfn(state));
-        }
-
-        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
-        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
-    }
-
-    // ------------------------------------------------------------------
-    // tTextMin / tTextMax — temporal aggregates on ttext
-    // Returns: ttext hex-WKB
-    // ------------------------------------------------------------------
-
-    public static final class TTextMinFn extends Aggregator<String, String, String>
-            implements Serializable {
-        @Override public String zero() { return ""; }
-        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
-        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
-
-        @Override public String finish(String buf) {
-            MeosThread.ensureReady();
-            String[] hexes = entries(buf);
-            if (hexes.length == 0) return null;
-            Pointer state = null;
-            for (String hex : hexes) {
-                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
-                if (inp == null) continue;
-                Pointer next = GeneratedFunctions.ttext_tmin_transfn(state, inp);
-                MeosMemory.free(inp);
-                state = next;
-            }
-            if (state == null) return null;
-            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
-        }
-
-        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
-        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
-    }
-
-    public static final class TTextMaxFn extends Aggregator<String, String, String>
-            implements Serializable {
-        @Override public String zero() { return ""; }
-        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
-        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
-
-        @Override public String finish(String buf) {
-            MeosThread.ensureReady();
-            String[] hexes = entries(buf);
-            if (hexes.length == 0) return null;
-            Pointer state = null;
-            for (String hex : hexes) {
-                Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
-                if (inp == null) continue;
-                Pointer next = GeneratedFunctions.ttext_tmax_transfn(state, inp);
-                MeosMemory.free(inp);
-                state = next;
-            }
-            if (state == null) return null;
-            return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
         }
 
         @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
@@ -720,19 +497,86 @@ public final class AggregateUDAFs {
     // REGISTRATION
     // ------------------------------------------------------------------
 
+    @FunctionalInterface
+    private interface Transfn { Pointer apply(Pointer state, Pointer inp); }
+
+    /** One temporal min/max/sum aggregate pass that dispatches the per-base-type
+     *  transfn off temporal_basetype_name (#1139): "int4"/"float8"/"text". A null
+     *  forText means the op is undefined for ttext (e.g. sum) and text inputs are
+     *  skipped. Mirrors the canonical overloaded tminAgg/tmaxAgg/tsum. */
+    private static String tnumberAgg(String buf, Transfn forInt, Transfn forFloat, Transfn forText) {
+        MeosThread.ensureReady();
+        String[] hexes = entries(buf);
+        if (hexes.length == 0) return null;
+        Pointer state = null;
+        for (String hex : hexes) {
+            Pointer inp = GeneratedFunctions.temporal_from_hexwkb(hex);
+            if (inp == null) continue;
+            String bt = GeneratedFunctions.temporal_basetype_name(inp);
+            Transfn fn = "int4".equals(bt) ? forInt
+                       : "float8".equals(bt) ? forFloat
+                       : "text".equals(bt) ? forText : null;
+            if (fn == null) { MeosMemory.free(inp); continue; }
+            Pointer next = fn.apply(state, inp);
+            MeosMemory.free(inp);
+            state = next;
+        }
+        if (state == null) return null;
+        return hexOut(GeneratedFunctions.temporal_tagg_finalfn(state));
+    }
+
+    public static final class TMinAggFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+        @Override public String finish(String buf) {
+            return tnumberAgg(buf, GeneratedFunctions::tint_tmin_transfn,
+                GeneratedFunctions::tfloat_tmin_transfn, GeneratedFunctions::ttext_tmin_transfn);
+        }
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    public static final class TMaxAggFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+        @Override public String finish(String buf) {
+            return tnumberAgg(buf, GeneratedFunctions::tint_tmax_transfn,
+                GeneratedFunctions::tfloat_tmax_transfn, GeneratedFunctions::ttext_tmax_transfn);
+        }
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
+    public static final class TSumAggFn extends Aggregator<String, String, String>
+            implements Serializable {
+        @Override public String zero() { return ""; }
+        @Override public String reduce(String buf, String hex) { return append(buf, hex); }
+        @Override public String merge(String b1, String b2) { return AggregateUDAFs.merge(b1, b2); }
+        @Override public String finish(String buf) {   // sum undefined for ttext ⇒ forText=null
+            return tnumberAgg(buf, GeneratedFunctions::tint_tsum_transfn,
+                GeneratedFunctions::tfloat_tsum_transfn, null);
+        }
+        @Override public Encoder<String> bufferEncoder() { return Encoders.STRING(); }
+        @Override public Encoder<String> outputEncoder() { return Encoders.STRING(); }
+    }
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("tCount",    org.apache.spark.sql.functions.udaf(new TCountFn(),    Encoders.STRING()));
         spark.udf().register("tAnd",      org.apache.spark.sql.functions.udaf(new TAndFn(),      Encoders.STRING()));
         spark.udf().register("tOr",       org.apache.spark.sql.functions.udaf(new TOrFn(),       Encoders.STRING()));
-        spark.udf().register("tIntMin",   org.apache.spark.sql.functions.udaf(new TIntMinFn(),   Encoders.STRING()));
-        spark.udf().register("tIntMax",   org.apache.spark.sql.functions.udaf(new TIntMaxFn(),   Encoders.STRING()));
-        spark.udf().register("tIntSum",   org.apache.spark.sql.functions.udaf(new TIntSumFn(),   Encoders.STRING()));
-        spark.udf().register("tFloatMin", org.apache.spark.sql.functions.udaf(new TFloatMinFn(), Encoders.STRING()));
-        spark.udf().register("tFloatMax", org.apache.spark.sql.functions.udaf(new TFloatMaxFn(), Encoders.STRING()));
-        spark.udf().register("tFloatSum", org.apache.spark.sql.functions.udaf(new TFloatSumFn(), Encoders.STRING()));
+        // Canonical overloaded aggregates (MobilityDB #828 names): one
+        // subtype-dispatching UDAF each, mirroring tminAgg(tint|tfloat|ttext)
+        // etc. Spark cannot register a UDAF per signature, so the single UDAF
+        // dispatches on temporal_basetype_name (#1139). tsum keeps the bare
+        // name (no Tsum box accessor → no collision).
+        spark.udf().register("tminAgg",   org.apache.spark.sql.functions.udaf(new TMinAggFn(),   Encoders.STRING()));
+        spark.udf().register("tmaxAgg",   org.apache.spark.sql.functions.udaf(new TMaxAggFn(),   Encoders.STRING()));
+        spark.udf().register("tsum",      org.apache.spark.sql.functions.udaf(new TSumAggFn(),   Encoders.STRING()));
         spark.udf().register("tAvg",      org.apache.spark.sql.functions.udaf(new TAvgFn(),      Encoders.STRING()));
-        spark.udf().register("tTextMin",  org.apache.spark.sql.functions.udaf(new TTextMinFn(),  Encoders.STRING()));
-        spark.udf().register("tTextMax",  org.apache.spark.sql.functions.udaf(new TTextMaxFn(),  Encoders.STRING()));
         spark.udf().register("tCentroid", org.apache.spark.sql.functions.udaf(new TCentroidFn(), Encoders.STRING()));
         spark.udf().register("tExtent",   org.apache.spark.sql.functions.udaf(new TExtentFn(),   Encoders.STRING()));
         spark.udf().register("setUnion",  org.apache.spark.sql.functions.udaf(new SetUnionFn(),  Encoders.STRING()));

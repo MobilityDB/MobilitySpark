@@ -133,7 +133,7 @@ class AggregateUDAFsTest extends MeosTestBase {
 
     @Test @Order(6)
     void tIntMin_returns_nonnull_tint() {
-        AggregateUDAFs.TIntMinFn agg = new AggregateUDAFs.TIntMinFn();
+        AggregateUDAFs.TMinAggFn agg = new AggregateUDAFs.TMinAggFn();
         String buf = agg.zero();
         buf = agg.reduce(buf, TINT1);
         buf = agg.reduce(buf, TINT2);
@@ -144,7 +144,7 @@ class AggregateUDAFsTest extends MeosTestBase {
 
     @Test @Order(7)
     void tIntMax_returns_nonnull_tint() {
-        AggregateUDAFs.TIntMaxFn agg = new AggregateUDAFs.TIntMaxFn();
+        AggregateUDAFs.TMaxAggFn agg = new AggregateUDAFs.TMaxAggFn();
         String buf = agg.zero();
         buf = agg.reduce(buf, TINT1);
         buf = agg.reduce(buf, TINT2);
@@ -155,7 +155,7 @@ class AggregateUDAFsTest extends MeosTestBase {
 
     @Test @Order(8)
     void tIntSum_returns_nonnull_tint() {
-        AggregateUDAFs.TIntSumFn agg = new AggregateUDAFs.TIntSumFn();
+        AggregateUDAFs.TSumAggFn agg = new AggregateUDAFs.TSumAggFn();
         String buf = agg.zero();
         buf = agg.reduce(buf, TINT1);
         buf = agg.reduce(buf, TINT2);
@@ -170,7 +170,7 @@ class AggregateUDAFsTest extends MeosTestBase {
 
     @Test @Order(9)
     void tFloatMin_returns_nonnull_tfloat() {
-        AggregateUDAFs.TFloatMinFn agg = new AggregateUDAFs.TFloatMinFn();
+        AggregateUDAFs.TMinAggFn agg = new AggregateUDAFs.TMinAggFn();
         String buf = agg.zero();
         buf = agg.reduce(buf, TFLOAT1);
         buf = agg.reduce(buf, TFLOAT2);
@@ -181,7 +181,7 @@ class AggregateUDAFsTest extends MeosTestBase {
 
     @Test @Order(10)
     void tFloatMax_returns_nonnull_tfloat() {
-        AggregateUDAFs.TFloatMaxFn agg = new AggregateUDAFs.TFloatMaxFn();
+        AggregateUDAFs.TMaxAggFn agg = new AggregateUDAFs.TMaxAggFn();
         String buf = agg.zero();
         buf = agg.reduce(buf, TFLOAT1);
         buf = agg.reduce(buf, TFLOAT2);
@@ -192,7 +192,7 @@ class AggregateUDAFsTest extends MeosTestBase {
 
     @Test @Order(11)
     void tFloatSum_returns_nonnull_tfloat() {
-        AggregateUDAFs.TFloatSumFn agg = new AggregateUDAFs.TFloatSumFn();
+        AggregateUDAFs.TSumAggFn agg = new AggregateUDAFs.TSumAggFn();
         String buf = agg.zero();
         buf = agg.reduce(buf, TFLOAT1);
         buf = agg.reduce(buf, TFLOAT2);
@@ -207,7 +207,7 @@ class AggregateUDAFsTest extends MeosTestBase {
 
     @Test @Order(12)
     void tTextMin_returns_nonnull_ttext() {
-        AggregateUDAFs.TTextMinFn agg = new AggregateUDAFs.TTextMinFn();
+        AggregateUDAFs.TMinAggFn agg = new AggregateUDAFs.TMinAggFn();
         String buf = agg.zero();
         buf = agg.reduce(buf, TTEXT1);
         buf = agg.reduce(buf, TTEXT2);
@@ -218,7 +218,7 @@ class AggregateUDAFsTest extends MeosTestBase {
 
     @Test @Order(13)
     void tTextMax_returns_nonnull_ttext() {
-        AggregateUDAFs.TTextMaxFn agg = new AggregateUDAFs.TTextMaxFn();
+        AggregateUDAFs.TMaxAggFn agg = new AggregateUDAFs.TMaxAggFn();
         String buf = agg.zero();
         buf = agg.reduce(buf, TTEXT1);
         buf = agg.reduce(buf, TTEXT2);
