@@ -65,11 +65,14 @@ class NativeMemoryLeakTest extends MeosTestBase {
 
     private static final int  WARMUP_ITERS  = 200;
     private static final int  TEST_ITERS    = 5_000;
-    // 10 MB tolerates glibc fragmentation + JNR-FFI char* micro-leaks
+    // 50 MB tolerates glibc arena retention + JNR-FFI char* micro-leaks
     // (~0.4 KB/call for hex strings that JMEOS returns as Java String without
-    // freeing the underlying C char*).  Real Temporal* leaks grow at ≥100 KB/call
-    // (900 KB/call for full BerlinMOD trips) and would far exceed this limit.
-    private static final long MAX_GROWTH_KB = 10_240;
+    // freeing the underlying C char*).  Even after malloc_trim(0) the
+    // ubuntu-noble glibc 2.39 runner retains ~15-21 MB of freed arena across
+    // the 5 000 calls, so a tighter bound flakes on a freed-but-unreturned
+    // heap.  Real Temporal* leaks grow at ≥100 KB/call (900 KB/call for full
+    // BerlinMOD trips) → ≥500 MB, still caught here with a 10x margin.
+    private static final long MAX_GROWTH_KB = 51_200;
 
     private static String TRIP_HEX;
     private static final String GEOM_WKT = "POINT(0.05 0.0)";
