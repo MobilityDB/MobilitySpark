@@ -112,4 +112,33 @@ class DistanceUDFsTest extends MeosTestBase {
         assertNull(DistanceUDFs.tdistanceTgeoTgeo.call(null, TRIP2));
         assertNull(DistanceUDFs.tdistanceTfloatFloat.call(null, 1.0));
     }
+
+    // ------------------------------------------------------------------
+    // Set-set minDistance (the BerlinMOD Q5 spatial-min over two trip sets)
+    // ------------------------------------------------------------------
+
+    @Test @Order(7)
+    void minDistance_setSet_equalsPairwiseMin() throws Exception {
+        String a = temporal_as_hexwkb(tgeompoint_in(
+            "[POINT(0 0)@2020-01-01 00:00:00+00, POINT(1 0)@2020-01-01 01:00:00+00]"), (byte) 0);
+        String b = temporal_as_hexwkb(tgeompoint_in(
+            "[POINT(0 5)@2020-01-01 00:00:00+00, POINT(1 5)@2020-01-01 01:00:00+00]"), (byte) 0);
+        String c = temporal_as_hexwkb(tgeompoint_in(
+            "[POINT(0 2)@2020-01-01 00:00:00+00, POINT(1 2)@2020-01-01 01:00:00+00]"), (byte) 0);
+        double setSet = DistanceUDFs.minDistanceTgeoarrTgeoarr.call(
+            java.util.List.of(a, b), java.util.List.of(c));
+        double pairwiseMin = Math.min(
+            DistanceUDFs.minDistanceTgeoTgeo.call(a, c),
+            DistanceUDFs.minDistanceTgeoTgeo.call(b, c));
+        assertEquals(pairwiseMin, setSet, 1e-9,
+            "minDistance(array, array) equals the minimum over all trip cross-pairs");
+    }
+
+    @Test @Order(8)
+    void minDistance_setSet_nullAndEmpty() throws Exception {
+        String a = temporal_as_hexwkb(tgeompoint_in(
+            "[POINT(0 0)@2020-01-01 00:00:00+00, POINT(1 0)@2020-01-01 01:00:00+00]"), (byte) 0);
+        assertNull(DistanceUDFs.minDistanceTgeoarrTgeoarr.call(null, java.util.List.of(a)));
+        assertNull(DistanceUDFs.minDistanceTgeoarrTgeoarr.call(java.util.List.of(a), java.util.List.of()));
+    }
 }

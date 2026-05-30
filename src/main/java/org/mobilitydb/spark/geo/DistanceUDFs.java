@@ -26,13 +26,18 @@
 package org.mobilitydb.spark.geo;
 
 import functions.GeneratedFunctions;
+import jnr.ffi.Memory;
 import jnr.ffi.Pointer;
+import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosNative;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Spark SQL UDFs for temporal distance operations between tgeo/tnumber types.
@@ -398,6 +403,75 @@ public final class DistanceUDFs {
             }
         };
 
+    // minDistance(trips1 ARRAY<STRING>, trips2 ARRAY<STRING>) → DOUBLE
+    // The set-set spatial minimum distance: the minimum distance ever reached
+    // between any trip in the first set and any trip in the second.  Backed by
+    // the MEOS Tgeoarr_tgeoarr_mindist kernel, which prunes far trip pairs by
+    // their STBox lower bound, so the N×N is handled inside one call rather than
+    // a SQL Cartesian join.  Mirrors MobilityDB's minDistance(tgeompoint[],
+    // tgeompoint[]) so the BerlinMOD Q5 SQL is identical across the platforms:
+    //   minDistance(array_agg(t1.trip), array_agg(t2.trip)) GROUP BY licence pair
+    public static final UDF2<Object, Object, Double> minDistanceTgeoarrTgeoarr =
+        (o1, o2) -> {
+            if (o1 == null || o2 == null) return null;
+            List<String> hex1 = toStringList(o1);
+            List<String> hex2 = toStringList(o2);
+            if (hex1.isEmpty() || hex2.isEmpty()) return null;
+            MeosThread.ensureReady();
+            Runtime rt = Runtime.getSystemRuntime();
+            List<Pointer> p1 = new ArrayList<>(hex1.size());
+            List<Pointer> p2 = new ArrayList<>(hex2.size());
+            try {
+                for (String h : hex1) {
+                    if (h == null) continue;
+                    Pointer p = GeneratedFunctions.temporal_from_hexwkb(h);
+                    if (p != null) p1.add(p);
+                }
+                for (String h : hex2) {
+                    if (h == null) continue;
+                    Pointer p = GeneratedFunctions.temporal_from_hexwkb(h);
+                    if (p != null) p2.add(p);
+                }
+                if (p1.isEmpty() || p2.isEmpty()) return null;
+                Pointer arr1 = Memory.allocateDirect(rt, (long) p1.size() * Long.BYTES);
+                Pointer arr2 = Memory.allocateDirect(rt, (long) p2.size() * Long.BYTES);
+                for (int i = 0; i < p1.size(); i++) arr1.putPointer((long) i * Long.BYTES, p1.get(i));
+                for (int i = 0; i < p2.size(); i++) arr2.putPointer((long) i * Long.BYTES, p2.get(i));
+                double d = GeneratedFunctions.mindistance_tgeoarr_tgeoarr(
+                    arr1, p1.size(), arr2, p2.size());
+                // arr1/arr2 are GC-managed Memory.allocateDirect buffers; keep them
+                // strongly reachable until the native call returns, or under GC
+                // pressure the JIT can reclaim the backing memory mid-call and the
+                // kernel reads a freed Temporal*[] (SIGSEGV).
+                java.lang.ref.Reference.reachabilityFence(arr1);
+                java.lang.ref.Reference.reachabilityFence(arr2);
+                return d == Double.MAX_VALUE ? null : d;
+            } finally {
+                for (Pointer p : p1) MeosMemory.free(p);
+                for (Pointer p : p2) MeosMemory.free(p);
+            }
+        };
+
+    /** Convert a Spark array column argument (Scala Seq / Java List / array) to a List<String>. */
+    @SuppressWarnings("unchecked")
+    private static List<String> toStringList(Object o) {
+        if (o instanceof List) return (List<String>) o;
+        if (o instanceof scala.collection.Seq) {
+            // Iterate the Scala Seq directly — works on Scala 2.12 and 2.13 alike,
+            // unlike the version-specific CollectionConverters classes.
+            scala.collection.Iterator<String> it = ((scala.collection.Seq<String>) o).iterator();
+            List<String> l = new ArrayList<>();
+            while (it.hasNext()) l.add(it.next());
+            return l;
+        }
+        if (o instanceof Object[]) {
+            List<String> l = new ArrayList<>();
+            for (Object x : (Object[]) o) l.add((String) x);
+            return l;
+        }
+        throw new IllegalArgumentException("minDistance: unexpected array arg type " + o.getClass());
+    }
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("tdistanceTgeoGeo",       tdistanceTgeoGeo,       DataTypes.StringType);
         spark.udf().register("tdistanceTgeoTgeo",      tdistanceTgeoTgeo,      DataTypes.StringType);
@@ -415,6 +489,7 @@ public final class DistanceUDFs {
 
         spark.udf().register("minDistanceTgeoGeo",    minDistanceTgeoGeo,    DataTypes.DoubleType);
         spark.udf().register("minDistanceTgeoTgeo",   minDistanceTgeoTgeo,   DataTypes.DoubleType);
+        spark.udf().register("minDistanceTgeoarrTgeoarr", minDistanceTgeoarrTgeoarr, DataTypes.DoubleType);
 
         // MobilityDB SQL bare-name aliases.
         // The portable operator alias `nearestApproachDistance` (|=|) is
@@ -422,6 +497,9 @@ public final class DistanceUDFs {
         // reusing this same nadTgeoGeo backing field.
         spark.udf().register("nearestApproachInstant",  naiTgeoGeo,  DataTypes.StringType);
         spark.udf().register("shortestLine",            shortestLineTgeoGeo, DataTypes.StringType);
-        spark.udf().register("minDistance",             minDistanceTgeoTgeo, DataTypes.DoubleType);
+        // Bare `minDistance` resolves to the set-set array form (the BerlinMOD Q5
+        // spatial-min over two trip sets); Spark cannot overload by signature, and
+        // the scalar forms stay reachable as minDistanceTgeoTgeo / minDistanceTgeoGeo.
+        spark.udf().register("minDistance",             minDistanceTgeoarrTgeoarr, DataTypes.DoubleType);
     }
 }
