@@ -58,6 +58,15 @@ public final class BerlinMODUDFs {
 
     private BerlinMODUDFs() {}
 
+    /**
+     * SRID applied when parsing the query-table WKT geometries (QueryPoints,
+     * QueryRegions). Must match the SRID the trips carry, otherwise spatial
+     * operators such as {@code trip && stbox(geom, t)} raise "Operation on
+     * mixed SRID". Default 0 matches the small synthetic dataset; set
+     * {@code -Dberlinmod.srid=3812} for the Brussels (Lambert 2008) export.
+     */
+    public static final int GEOM_SRID = Integer.getInteger("berlinmod.srid", 0);
+
     private static final DateTimeFormatter PG_FMT =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -161,7 +170,7 @@ public final class BerlinMODUDFs {
     public static final UDF2<String, Object, String> geoTimeStbox = (geomWkt, tsArg) -> {
         if (geomWkt == null || tsArg == null) return null;
         MeosThread.ensureReady();
-        Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
+        Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, GEOM_SRID);
         if (gptr == null) return null;
         try {
             Pointer result;
@@ -310,11 +319,11 @@ public final class BerlinMODUDFs {
     public static final UDF2<String, String, Boolean> geomContains = (outer, inner) -> {
         if (outer == null || inner == null) return null;
         MeosThread.ensureReady();
-        Pointer g1 = GeneratedFunctions.geo_from_text(outer, 0);
+        Pointer g1 = GeneratedFunctions.geo_from_text(outer, GEOM_SRID);
         if (g1 == null) return null;
         try {
             OffsetDateTime epoch = GeneratedFunctions.pg_timestamptz_in("2000-01-01", -1);
-            Pointer innerGeo = GeneratedFunctions.geo_from_text(inner, 0);
+            Pointer innerGeo = GeneratedFunctions.geo_from_text(inner, GEOM_SRID);
             if (innerGeo == null) return null;
             try {
                 Pointer tptr = GeneratedFunctions.tpointinst_make(innerGeo, epoch);

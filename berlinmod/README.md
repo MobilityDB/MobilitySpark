@@ -86,28 +86,27 @@ turn the row-by-row O(N²) prefilter into a tractable equi-join.
 ### NxN mitigations on Spark (Q5, Q6, Q10, Q16)
 
 The four Trips × Trips queries don't fit Spark's no-spatial-index model
-naturally. Two complementary mitigations are wired in this benchmark:
+naturally. Every platform runs the same portable SQL from
+`queries.sql`; the speedups come from constructs that are part of the
+fixed query intent, not engine-specific rewrites:
 
-1. **Broadcast hints in the portable SQL** (`/*+ BROADCAST(...) */`).
-   Spark recognises the hint and pins the listed small/filtered tables to
-   every executor; PostgreSQL and DuckDB treat the `/*+ ... */` block as
-   an ordinary comment, so the SQL stays byte-identical and portable.
-   Lands ~10-100× speedup when one side of a Trips × Trips join is
-   licence-filtered (Q10/Q16).
-2. **Spark-optimised query variants** (`q05_spark.sql`, `q06_spark.sql`,
-   `q10_spark.sql`, `q16_spark.sql`). These explode each trip's
-   `th3index` into one row per H3 cell via `explode(th3IndexValues(...))`
-   and then run the spatial prefilter as an **equi-join on the cell
-   column** — which Spark accelerates natively (sort-merge / shuffle
-   hash). The expensive `tDwithin` / `minDistance` / `eDwithin` then
-   runs on the much smaller deduplicated candidate set. Lands
-   ~100-1000× speedup vs. the portable form on Spark.
+- **Set-set `minDistance(tgeompoint[], tgeompoint[])`** expresses the Q5
+  spatial-min over two trip sets directly as a MEOS aggregate, which
+  carries an internal STBox-pair prune. Q5 is the natural array form on
+  all three platforms.
+- **`th3index` cell-membership prefilter** on the point-relation queries
+  (Q4 / Q6 / Q10). The `trip_h3` column is materialised at load time on
+  every platform; the prefilter is a cheap cell test that runs before
+  the expensive `eIntersects` / `eDwithin` / `tDwithin`. On Spark the
+  prefilter is injected by `preprocessForSpark`; on PostgreSQL the load
+  script adds a GiST index so it becomes an index seek.
 
-The MobilitySpark bench runner (`bench/bench_mspark.sh` →
-`BerlinMODBench`) auto-prefers `<query>_spark.sql` over `<query>.sql` when
-present; PG and DuckDB runners always use the portable file. Variants
-are semantically equivalent: same input, same output, same scientific
-question — just expressed in the form Spark's engine can accelerate.
+Queries that remain a full Trips × Trips Cartesian on Spark (no spatial
+index) run to their true cost — that is a faithful benchmark result, not
+something to hide behind a rewrite. The MobilitySpark bench runner
+(`bench/bench_mspark.sh` → `BerlinMODBench`) splits `queries.sql` on the
+`-- @query <id>` markers, the same single file the PG and DuckDB runners
+consume.
 
 ### Tier applicability per query
 

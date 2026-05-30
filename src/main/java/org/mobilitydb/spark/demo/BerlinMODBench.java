@@ -137,14 +137,12 @@ public final class BerlinMODBench {
             // it first so we can rematerialise at our chosen resolution — this
             // guarantees a consistent resolution across all three platforms
             // regardless of how the CSV was produced.
-            // th3index materialisation is gated on MobilityDB PR #944 +
-            // a JMEOS regen exposing the h3 public surface — see the
-            // companion comment in MobilitySparkSession.java.  Default
-            // resolution 7 (~1.2 km cells) mirrors the value previously
-            // held in Th3IndexUDFs.DEFAULT_RESOLUTION.  This block is a
-            // no-op unless berlinmod.bench.th3index.enable=true is set
-            // AND the tgeompointToTh3Index UDF is registered (currently
-            // unavailable post-regen).
+            // The tgeompointToTh3Index UDF (registered by Th3IndexUDFs via
+            // MobilitySparkSession) materialises the column from each trip's
+            // tgeompoint over the H3 public surface.  Default resolution 7
+            // (~1.2 km cells).  This block is a no-op unless
+            // berlinmod.bench.th3index.enable=true is set, so the before-vs-
+            // after prefilter measurement is reproducible without a rebuild.
             if ("true".equals(System.getProperty("berlinmod.bench.th3index.enable"))) {
                 int res = Integer.getInteger("berlinmod.bench.th3index.resolution", 7);
                 System.out.println("=== Materialising trip_h3 column (resolution " + res + ") ===");
@@ -189,37 +187,30 @@ public final class BerlinMODBench {
             // Time each query — flush results after every query so a crash
             // still leaves a valid JSON file with the timings collected so far.
             //
-            // Spark-optimised variants: when a `<query>_spark.sql` file exists
-            // next to `<query>.sql`, prefer it.  These variants use UNNEST +
-            // equi-join on H3 cells (via `th3IndexValues(trip_h3)`) to convert
-            // the portable-SQL row-by-row Cartesian prefilter into an
-            // equi-join — which Spark accelerates natively.  This mitigates
-            // the O(N²) cost of the Trips × Trips queries (Q5/Q6/Q10/Q16) on
-            // Spark, which has no spatial index.  PG / DuckDB are not
-            // affected — they keep running the portable `<query>.sql`.  See
-            // berlinmod/README.md "NxN mitigations on Spark" for details.
+            // Single canonical source: berlinmod/queries.sql holds every query,
+            // each delimited by a `-- @query <id>` marker. All three runners
+            // (PostgreSQL, DuckDB, Spark) split the same file, so the SQL cannot
+            // drift between platforms. Spark applies preprocessForSpark as a
+            // dialect transform; the query intent is identical across engines.
+            Map<String, String> queries = splitQueries(
+                    Files.readString(Paths.get(sqlDir, "queries.sql")));
             for (String q : queryList) {
-                Path sparkVariant = Paths.get(sqlDir, q + "_spark.sql");
-                Path portable     = Paths.get(sqlDir, q + ".sql");
-                Path sqlFile;
-                String variantTag = "";
-                if (Files.exists(sparkVariant)) {
-                    sqlFile = sparkVariant;
-                    variantTag = " [spark]";
-                } else if (Files.exists(portable)) {
-                    sqlFile = portable;
-                } else {
-                    System.out.printf("  [skip] %s — SQL file not found%n", q);
+                String raw = queries.get(q);
+                if (raw == null) {
+                    System.out.printf("  [skip] %s — not in queries.sql%n", q);
                     continue;
                 }
-                String sql = preprocessForSpark(stripComments(Files.readString(sqlFile)));
+                String sql = preprocessForSpark(stripComments(raw));
                 List<Long> qTimes = new ArrayList<>(runs);
 
-                System.out.printf("  timing %-6s%s: ", q, variantTag);
+                System.out.printf("  timing %-6s: ", q);
                 for (int run = 0; run < runs; run++) {
                     try {
                         long t0 = System.currentTimeMillis();
-                        spark.sql(sql).count();          // forces full evaluation
+                        // Force full materialisation of every output column via the noop
+                        // sink. count() alone lets Spark prune projection-only expressions
+                        // (e.g. minDistance(arr, arr) in Q5), which would mistime the query.
+                        spark.sql(sql).write().format("noop").mode("overwrite").save();
                         long elapsed = System.currentTimeMillis() - t0;
                         qTimes.add(elapsed);
                         System.out.printf("%d ", elapsed);
@@ -240,6 +231,29 @@ public final class BerlinMODBench {
         }
 
         System.out.println("=== Results written to " + outputPath + " ===");
+    }
+
+    /**
+     * Split the canonical queries.sql into id → SQL, keyed by the
+     * {@code -- @query <id>} markers. The text before the first marker (the
+     * file header) is discarded. Insertion order is preserved.
+     */
+    private static Map<String, String> splitQueries(String text) {
+        Map<String, String> out = new LinkedHashMap<>();
+        String id = null;
+        StringBuilder body = new StringBuilder();
+        for (String line : text.split("\n")) {
+            String t = line.stripLeading();
+            if (t.startsWith("-- @query")) {
+                if (id != null) out.put(id, body.toString());
+                id = t.substring("-- @query".length()).trim();
+                body.setLength(0);
+            } else if (id != null) {
+                body.append(line).append('\n');
+            }
+        }
+        if (id != null) out.put(id, body.toString());
+        return out;
     }
 
     /** Strip leading-comment lines so Spark SQL doesn't choke on them. */
