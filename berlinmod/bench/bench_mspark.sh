@@ -88,7 +88,13 @@ if [[ -z "$JAR" ]]; then
 fi
 echo "=== Using JAR: $JAR ==="
 
-LIBMEOS_DIR="${LIBMEOS_DIR:-/usr/local/lib}"
+# Resolve libmeos from the repo's vendored lib/ by default, not the system
+# /usr/local/lib (which may hold a stale libmeos from another build that lacks
+# the pinned surface → UnsatisfiedLinkError on meos_initialize_noexit_error_handler).
+# The JMEOS JNR loader resolves the shared object through LD_LIBRARY_PATH, so it
+# must be exported; -Djava.library.path additionally serves the MeosNative loader.
+LIBMEOS_DIR="${LIBMEOS_DIR:-${REPO_ROOT}/lib}"
+export LD_LIBRARY_PATH="${LIBMEOS_DIR}:${LD_LIBRARY_PATH:-}"
 
 mkdir -p "$(dirname "$OUTPUT")"
 
