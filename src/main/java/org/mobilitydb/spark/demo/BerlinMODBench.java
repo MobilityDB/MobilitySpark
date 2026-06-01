@@ -316,12 +316,30 @@ public final class BerlinMODBench {
         //    registered camelCase UDF name.
         sql = sql.replace("everIntersectsH3IndexSet_Th3Index", "everIntersectsH3IndexSetTh3Index");
 
-        // The th3index spatial prefilter for cross-join queries (Q4 / Q5 /
-        // Q6 / Q10) lives directly in the portable BerlinMOD SQL files (see
-        // the th3index unification work — every backend executes the same
-        // prefilter expressions, MobilitySpark via the Th3IndexUDFs class
-        // and the precomputed trip_h3 column on Trips).  No Spark-specific
-        // injection rule is needed here.
+        // 6. Resolve the cross-join spatial prefilter through the materialised
+        //    trip_bbox (STBox) column.  The th3index cell prefilter is a true
+        //    index seek on PostgreSQL / DuckDB, but in Spark's string-storage
+        //    model the trip_h3 sequence is re-parsed per candidate pair; the
+        //    STBox bounding-box overlap is the cheap, coordinate-system-agnostic
+        //    equivalent that the same dialect already uses via the `&&` operator
+        //    (Q9 / Q11 / Q16).  Each rewrite is a sound spatial superset filter:
+        //    the exact eIntersects / nearestApproachDistance still runs on the
+        //    surviving pairs, so results are unchanged.
+        //    everIntersectsH3IndexSetTh3Index(geoToH3IndexSet(g, r), t.trip_h3)
+        //      → stboxOverlaps(t.trip_bbox, geoToStbox(g))
+        sql = sql.replaceAll(
+            "everIntersectsH3IndexSetTh3Index\\(geoToH3IndexSet\\(([^,]+),\\s*\\d+\\),\\s*(\\w+)\\.trip_h3\\)",
+            "stboxOverlaps($2.trip_bbox, geoToStbox($1))");
+        //    COALESCE(everEqH3IndexTh3Index(geomToH3Cell(g, r), t.trip_h3), TRUE)
+        //      → stboxOverlaps(t.trip_bbox, geoToStbox(g))
+        sql = sql.replaceAll(
+            "COALESCE\\(everEqH3IndexTh3Index\\(geomToH3Cell\\(([^,]+),\\s*\\d+\\),\\s*(\\w+)\\.trip_h3\\),\\s*TRUE\\)",
+            "stboxOverlaps($2.trip_bbox, geoToStbox($1))");
+        //    everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)
+        //      → stboxOverlaps(t1.trip_bbox, t2.trip_bbox)
+        sql = sql.replaceAll(
+            "everEqTh3IndexTh3Index\\((\\w+)\\.trip_h3,\\s*(\\w+)\\.trip_h3\\)",
+            "stboxOverlaps($1.trip_bbox, $2.trip_bbox)");
 
         return sql;
     }
