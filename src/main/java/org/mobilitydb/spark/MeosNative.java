@@ -426,8 +426,8 @@ public final class MeosNative {
         // stubbed.
         // ================================================================
 
-        Pointer geo_tpose_to_trgeo(Pointer gs, Pointer temp);       // Temporal*
-        Pointer trgeo_to_tpose(Pointer temp);                       // Temporal*
+        Pointer geo_tpose_to_trgeometry(Pointer gs, Pointer temp);  // Temporal*
+        Pointer trgeometry_to_tpose(Pointer temp);                  // Temporal*
     }
 
     public static final Lib INSTANCE;

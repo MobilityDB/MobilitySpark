@@ -166,6 +166,10 @@ public final class MobilitySparkSession implements AutoCloseable {
         for (String family : EXTENDED_FAMILY_REGISTRARS) {
             registerFamily(spark, family);
         }
+        // SQL-surface parity gap UDFs (math, accessors, set/span/box algebra).
+        org.mobilitydb.spark.temporal.MathGapUDFs.registerAll(spark);
+        org.mobilitydb.spark.temporal.AccessorGapUDFs.registerAll(spark);
+        org.mobilitydb.spark.temporal.SetSpanGapUDFs.registerAll(spark);
         // Portable bare-name operator dialect (RFC #920) — registered last
         // so the 29 canonical bare names are the authoritative spelling.
         org.mobilitydb.spark.portable.PortableOperatorAliasUDFs.registerAll(spark);

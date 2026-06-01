@@ -570,9 +570,8 @@ public final class MoreAccessorUDFs {
                 long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
-                Pointer outVal = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(1);
-                boolean found = GeneratedFunctions.tbool_value_at_timestamptz(ptr, odt, false, outVal);
-                if (!found) return null;
+                Pointer outVal = GeneratedFunctions.tbool_value_at_timestamptz(ptr, odt, false);
+                if (outVal == null) return null;
                 return outVal.getByte(0) != 0;
             } finally {
                 MeosMemory.free(ptr);
@@ -590,9 +589,8 @@ public final class MoreAccessorUDFs {
                 long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
-                Pointer outVal = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
-                boolean found = GeneratedFunctions.tint_value_at_timestamptz(ptr, odt, false, outVal);
-                if (!found) return null;
+                Pointer outVal = GeneratedFunctions.tint_value_at_timestamptz(ptr, odt, false);
+                if (outVal == null) return null;
                 return outVal.getInt(0);
             } finally {
                 MeosMemory.free(ptr);
@@ -610,9 +608,8 @@ public final class MoreAccessorUDFs {
                 long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
-                Pointer outVal = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                boolean found = GeneratedFunctions.tfloat_value_at_timestamptz(ptr, odt, false, outVal);
-                if (!found) return null;
+                Pointer outVal = GeneratedFunctions.tfloat_value_at_timestamptz(ptr, odt, false);
+                if (outVal == null) return null;
                 return outVal.getDouble(0);
             } finally {
                 MeosMemory.free(ptr);
@@ -632,10 +629,7 @@ public final class MoreAccessorUDFs {
                 long pgEpochMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
                 OffsetDateTime odt = OffsetDateTime.ofInstant(
                     Instant.ofEpochSecond(pgEpochMicros, 0), ZoneOffset.UTC);
-                Pointer outBuf = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                boolean found = GeneratedFunctions.ttext_value_at_timestamptz(ptr, odt, false, outBuf);
-                if (!found) return null;
-                Pointer textPtr = outBuf.getPointer(0);
+                Pointer textPtr = GeneratedFunctions.ttext_value_at_timestamptz(ptr, odt, false);
                 if (textPtr == null) return null;
                 try {
                     return GeneratedFunctions.text_out(textPtr);

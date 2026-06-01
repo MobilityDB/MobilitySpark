@@ -1,0 +1,4 @@
+# Declared in a public header but not exported by libmeos at this tip.
+# geo_get_srid = PostGIS-provided; meos_initialize_pointcloud = POINTCLOUD build-flag-gated.
+geo_get_srid
+meos_initialize_pointcloud

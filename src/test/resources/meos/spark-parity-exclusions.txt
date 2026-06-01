@@ -1,0 +1,335 @@
+# Spark UDF parity exclusions — mirrors MobilityDuck docs/DuckDB-Parity-Gaps.md model.
+# Format: <sqlName>\t<category>\t<reason>. Categories:
+#   RESHAPED   — covered by a Spark UDF under a reshaped/bare name (operator→named form).
+#   FAMILY_OOS — whole family not built into this Spark surface.
+#   GAP        — tracked open gap (real missing UDF); fill then move to covered.
+# SparkUdfParityTest fails if an addressable SQL function is NOT covered AND NOT listed here.
+
+cbuffer_contains	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+cbuffer_same	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+pose_same	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+set_contained	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+set_contains	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+set_left	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+set_overlaps	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+set_overleft	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+set_overright	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+set_right	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+span_adjacent	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+span_contained	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+span_contains	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+span_left	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+span_overlaps	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+span_overleft	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+span_overright	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+span_right	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_above	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_adjacent	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_after	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_back	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_before	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_below	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_contained	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_contains	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_front	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_left	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_overabove	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_overafter	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_overback	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_overbefore	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_overbelow	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_overfront	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_overlaps	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_overleft	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_overright	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_right	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+stbox_same	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_adjacent	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_after	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_before	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_contained	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_contains	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_left	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_overafter	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_overbefore	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_overlaps	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_overleft	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_overright	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_right	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tbox_same	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_above	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_adjacent	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_after	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_back	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_before	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_below	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_contained	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_contains	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_front	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_left	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_overabove	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_overafter	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_overback	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_overbefore	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_overbelow	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_overfront	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_overlaps	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_overleft	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_overright	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_right	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_same	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_teq	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_tge	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_tgt	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_tle	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_tlt	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+temporal_tne	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tgeo_teq	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+tgeo_tne	RESHAPED	position/topology/comparison operator exposed as the type-agnostic bare-name UDF
+attpcbox	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+attpcboxfine	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+endnumpoints	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+getdim	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+hast	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+hasx	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+hasz	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+minustpcbox	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+minustpcboxfine	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+numpoints	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+pcid	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+pcpatch	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+pcpatchsetfrombinary	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+pcpatchsetfromhexwkb	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+pcpoint	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+pcpointsetfrombinary	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+pcpointsetfromhexwkb	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+startnumpoints	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tmax	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tmin	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_above	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_adjacent	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_after	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_back	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_before	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_below	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_contained	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_contains	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_front	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_gist_distance	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_intersection	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_left	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_overabove	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_overafter	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_overback	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_overbefore	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_overbelow	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_overfront	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_overlaps	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_overleft	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_overright	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_right	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_same	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_t	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_union	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_xt	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_z	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcbox_zt	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcpatch	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcpatchfrombinary	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcpatchfromhexwkb	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcpatchseq	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcpatchseqset	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcpoint	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcpointfrombinary	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcpointfromhexwkb	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcpointseq	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+tpcpointseqset	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+xmax	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+xmin	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+ymax	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+ymin	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+zmax	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+zmin	FAMILY_OOS	pointcloud family not built into the Spark UDF surface
+_edisjoint	FAMILY_OOS	internal helper (underscore-prefixed), not user-facing
+_trgeometry_geom_clip_polygon	FAMILY_OOS	internal helper, not user-facing
+_trgeometry_geom_clip_polygon_posed	FAMILY_OOS	internal helper, not user-facing
+abs	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+acontains	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+acovers	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+angulardifference	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+angularspeed	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+applypose	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+area	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+arrowroundtrip	FAMILY_OOS	Arrow binary interchange, not a SQL query UDF
+asgeopose	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+asmfjson	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+atouches	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+attbox	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+atvalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+azimuth	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+bigintspan	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+bodypointtrajectory	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+cbuffer_covers	FAMILY_OOS	no MEOS scalar cbuffer-cbuffer predicate symbol
+cbuffer_disjoint	FAMILY_OOS	no MEOS scalar cbuffer-cbuffer predicate symbol
+cbuffer_dwithin	FAMILY_OOS	no MEOS scalar cbuffer-cbuffer predicate symbol
+cbuffer_intersects	FAMILY_OOS	no MEOS scalar cbuffer-cbuffer predicate symbol
+cbuffer_touches	FAMILY_OOS	no MEOS scalar cbuffer-cbuffer predicate symbol
+ceil	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+centroid	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+contained_rid	FAMILY_OOS	npoint route-id position op, no MEOS backing (PG-only)
+contains_rid	FAMILY_OOS	npoint route-id position op, no MEOS backing (PG-only)
+convexhull	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+create_trip	FAMILY_OOS	BerlinMOD datagen helper, not a query UDF
+degrees	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+deltavalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+derivative	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+direction	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+distance	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+endspan	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+endvalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+exp	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+expandtime	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+floor	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+geopose_frame_is_geographic	FAMILY_OOS	geopose frame internal, no MEOS backing
+geopose_frame_name	FAMILY_OOS	geopose frame internal, no MEOS backing
+geopose_frame_srid	FAMILY_OOS	geopose frame internal, no MEOS backing
+geotoh3cell	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+getspace	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+h3_are_neighbor_cells	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_area	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_to_boundary	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_to_center_child	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_to_child_pos	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_to_children	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_to_latlng	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_to_latlng_tgeompoint	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_to_local_ij	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_to_parent	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_to_vertex	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cell_to_vertexes	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_cells_to_directed_edge	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_child_pos_to_cell	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_compact_cells	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_directed_edge_to_boundary	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_edge_length	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_get_base_cell_number	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_get_directed_edge_destination	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_get_directed_edge_origin	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_get_icosahedron_faces	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_get_resolution	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_great_circle_distance	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_grid_disk	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_grid_distance	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_grid_path_cells	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_grid_ring	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_is_pentagon	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_is_res_class_iii	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_is_valid_cell	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_is_valid_directed_edge	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_is_valid_vertex	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_latlng_to_cell	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_local_ij_to_cell	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_origin_to_directed_edges	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_uncompact_cells	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3_vertex_to_latlng	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3indexsetfrombinary	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+h3indexsetfromhexwkb	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+initcap	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+instants	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+integral	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+isgeodetic	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+ln	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+log10	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+lower	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+maxvalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+minuselevation	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+minustbox	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+minusvalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+minusvalues	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+minvalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+mobilitydb_full_version	FAMILY_OOS	library/metadata function, not a data UDF
+mobilitydb_version	FAMILY_OOS	library/metadata function, not a data UDF
+multirange	FAMILY_OOS	PG multirange conversion, no Spark type
+normalise	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+numspans	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+numvalues	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+overlaps_rid	FAMILY_OOS	npoint route-id position op, no MEOS backing (PG-only)
+perimeter	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+pitch	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+posefromgeopose	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+radians	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+range	FAMILY_OOS	PG range-type conversion, no Spark type
+roll	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+round	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+same_rid	FAMILY_OOS	npoint route-id position op, no MEOS backing (PG-only)
+scaletime	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+scalevalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+segments	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+sequences	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+set	FAMILY_OOS	polymorphic value->set constructor, covered by per-type set builders
+set_distance	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+set_intersection	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+set_minus	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+set_union	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+setinterp	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+shiftscaletime	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+shiftscalevalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+shifttime	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+shiftvalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+span_distance	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+span_intersection	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+span_minus	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+span_union	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+spann	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+srid	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+startspan	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+startvalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+stbox_intersection	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+stbox_union	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tbigint	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+tbigintfrombinary	FAMILY_OOS	tbigint type not yet implemented in the Spark surface
+tbigintfromhexwkb	FAMILY_OOS	tbigint type not yet implemented in the Spark surface
+tbigintfrommfjson	FAMILY_OOS	tbigint type not yet implemented in the Spark surface
+tbigintinst	FAMILY_OOS	tbigint type not yet implemented in the Spark surface
+tbigintseq	FAMILY_OOS	tbigint type not yet implemented in the Spark surface
+tbigintseqset	FAMILY_OOS	tbigint type not yet implemented in the Spark surface
+tbigintseqsetgaps	FAMILY_OOS	tbigint type not yet implemented in the Spark surface
+tbool_and	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tbool_not	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tbool_or	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tbox_intersection	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tbox_union	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tcbufferfrommfjson	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tempbasetype	FAMILY_OOS	library/metadata function, not a data UDF
+textset_cat	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+th3index	FAMILY_OOS	raw h3-pg / th3index-cell API not exposed (Spark uses th3index ops)
+time_distance	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+timestamps	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tmaxinc	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tmininc	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tnpointfrommfjson	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tnumber_add	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tnumber_div	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tnumber_mul	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tnumber_sub	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tposefromgeopose	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tprecision	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+transform_gk	FAMILY_OOS	Gauss-Krueger transform, no MEOS backing
+traversedarea	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+trend	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+tsample	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+ttext_cat	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+twavg	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+upper	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+v_clip_poly_point	FAMILY_OOS	blocked on MEOS #963 (trgeo_geom_clip not in the exported surface)
+v_clip_poly_poly	FAMILY_OOS	blocked on MEOS #963 (trgeo_geom_clip not in the exported surface)
+v_clip_tpoly_point	FAMILY_OOS	blocked on MEOS #963 (trgeo_geom_clip not in the exported surface)
+v_clip_tpoly_poly	FAMILY_OOS	blocked on MEOS #963 (trgeo_geom_clip not in the exported surface)
+v_clip_tpoly_tpoint	FAMILY_OOS	blocked on MEOS #963 (trgeo_geom_clip not in the exported surface)
+v_clip_tpoly_tpoly	FAMILY_OOS	blocked on MEOS #963 (trgeo_geom_clip not in the exported surface)
+valuen	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+volume	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+xmaxinc	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+xmininc	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+yaw	GAP	open gap: no Spark UDF invokes the backing MEOS symbol

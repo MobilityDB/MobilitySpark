@@ -91,7 +91,7 @@ public final class RgeoUDFs {
                 Pointer tp = GeneratedFunctions.temporal_from_hexwkb(tposeHex);
                 if (tp == null) return null;
                 try {
-                    Pointer r = MeosNative.INSTANCE.geo_tpose_to_trgeo(g, tp);
+                    Pointer r = MeosNative.INSTANCE.geo_tpose_to_trgeometry(g, tp);
                     if (r == null) return null;
                     try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                     finally { MeosMemory.free(r); }
@@ -104,7 +104,7 @@ public final class RgeoUDFs {
     public static final UDF2<String, String, String> trgeometryInst = trgeometry;
 
     // tpose(trgeometry STRING) → STRING (tpose hex-WKB)
-    // MEOS: trgeo_to_tpose(const Temporal *temp) → Temporal *
+    // MEOS: trgeometry_to_tpose(const Temporal *temp) → Temporal *
     public static final UDF1<String, String> tpose =
         (hex) -> {
             if (hex == null) return null;
@@ -112,7 +112,7 @@ public final class RgeoUDFs {
             Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = MeosNative.INSTANCE.trgeo_to_tpose(p);
+                Pointer r = MeosNative.INSTANCE.trgeometry_to_tpose(p);
                 if (r == null) return null;
                 try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
