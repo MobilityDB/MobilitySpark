@@ -143,23 +143,29 @@ public final class BerlinMODBench {
             // (~1.2 km cells).  This block is a no-op unless
             // berlinmod.bench.th3index.enable=true is set, so the before-vs-
             // after prefilter measurement is reproducible without a rebuild.
-            if ("true".equals(System.getProperty("berlinmod.bench.th3index.enable"))) {
+            {
                 int res = Integer.getInteger("berlinmod.bench.th3index.resolution", 7);
-                System.out.println("=== Materialising trip_h3 column (resolution " + res + ") ===");
+                System.out.println("=== Materialising trip_h3 (res " + res + ") + trip_bbox prefilter columns ===");
                 String[] cols = spark.table("Trips").schema().fieldNames();
                 String selectCols = java.util.Arrays.stream(cols)
-                    .filter(c -> !"trip_h3".equalsIgnoreCase(c))
+                    .filter(c -> !"trip_h3".equalsIgnoreCase(c) && !"trip_bbox".equalsIgnoreCase(c))
                     .collect(Collectors.joining(", "));
+                // The trip_h3 (temporal H3 cell index) and trip_bbox (STBox of
+                // the whole trip) columns are the cross-join spatial prefilter
+                // mechanism: a cheap cell / bounding-box test that runs before
+                // the expensive eIntersects / nearestApproachDistance / tDwithin
+                // calls.  Materialising them once per trip means the prefilter
+                // never re-parses the full multi-thousand-instant trip per pair.
                 // Materialise via a Dataset rather than CREATE OR REPLACE
                 // TEMPORARY VIEW Trips AS SELECT ... FROM Trips: the latter
                 // trips Spark's checkCyclicViewReference (the new view names
-                // itself in its own definition) and aborts with
-                // RECURSIVE_VIEW. Reading the current Trips into a Dataset
-                // first resolves the source plan, then the registration
-                // replaces the view atomically with the materialised result.
+                // itself in its own definition) and aborts with RECURSIVE_VIEW.
+                // Reading the current Trips into a Dataset first resolves the
+                // source plan, then the registration replaces the view atomically.
                 spark.sql(
                     "SELECT " + selectCols + ", " +
-                    "       tgeompointToTh3Index(trip, " + res + ") AS trip_h3 " +
+                    "       tgeompointToTh3Index(trip, " + res + ") AS trip_h3, " +
+                    "       expandSpace(trip, 0.0)             AS trip_bbox " +
                     "FROM Trips"
                 ).createOrReplaceTempView("Trips");
             }
@@ -286,8 +292,18 @@ public final class BerlinMODBench {
         //    The [^,)]+ / [^)]+ pattern matches exactly 2 args (comma present).
         sql = sql.replaceAll("\\bstbox\\(([^,)]+),\\s*([^)]+)\\)", "geoTimeStbox($1, $2)");
 
-        // 2. Replace bounding-box overlap operator && with the bboxOverlaps UDF.
-        //    Pattern: table.column && right_hand_expr (rest of line).
+        // 2a. Route the spatial bounding-box prefilter to the materialised
+        //     trip_bbox (STBox) column so the cross-join never re-parses the
+        //     full trip.  expandSpace accepts an STBox hex directly, so feed it
+        //     the precomputed trip_bbox (strictly inside expandSpace(...)).
+        sql = sql.replaceAll("expandSpace\\(\\s*(\\w+)\\.trip\\s*,", "expandSpace($1.trip_bbox,");
+        //     Spatial `trip && <stbox>` (geoTimeStbox / expandSpace RHS) →
+        //     stboxOverlaps over the precomputed trip_bbox column.
+        sql = sql.replaceAll("(\\w+)\\.trip\\s+&&\\s+((?:geoTimeStbox|expandSpace)\\(.+)",
+                             "stboxOverlaps($1.trip_bbox, $2)");
+
+        // 2b. Any remaining bounding-box overlap operator && (temporal-span
+        //     RHS, e.g. trip && period) → the bboxOverlaps UDF on the trip.
         sql = sql.replaceAll("([\\w]+\\.[\\w]+)\\s+&&\\s+(.+)", "bboxOverlaps($1, $2)");
 
         // 3. Remove PostgreSQL :: cast to numeric (Spark ROUND handles DOUBLE natively).
@@ -295,6 +311,10 @@ public final class BerlinMODBench {
 
         // 4. Replace PostGIS ST_Contains with the registered geomContains UDF.
         sql = sql.replace("ST_Contains(", "geomContains(");
+
+        // 5. Normalise the th3index set-membership prefilter spelling to the
+        //    registered camelCase UDF name.
+        sql = sql.replace("everIntersectsH3IndexSet_Th3Index", "everIntersectsH3IndexSetTh3Index");
 
         // The th3index spatial prefilter for cross-join queries (Q4 / Q5 /
         // Q6 / Q10) lives directly in the portable BerlinMOD SQL files (see

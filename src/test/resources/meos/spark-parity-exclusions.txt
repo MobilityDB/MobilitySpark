@@ -261,7 +261,7 @@ posefromgeopose	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
 radians	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
 range	FAMILY_OOS	PG range-type conversion, no Spark type
 roll	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
-round	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
+round	RESHAPED	numeric ROUND(value, scale) is the Spark SQL built-in; temporal-float value rounding is exposed as tfloatRound
 same_rid	FAMILY_OOS	npoint route-id position op, no MEOS backing (PG-only)
 scaletime	GAP	open gap: no Spark UDF invokes the backing MEOS symbol
 scalevalue	GAP	open gap: no Spark UDF invokes the backing MEOS symbol

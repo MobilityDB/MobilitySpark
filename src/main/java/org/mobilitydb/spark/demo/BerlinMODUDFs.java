@@ -209,28 +209,62 @@ public final class BerlinMODUDFs {
     // Used in Q10 as a bounding-box pre-filter: bboxOverlaps(trip, expandSpace(...)).
     // MEOS: tspatial_to_stbox + stbox_expand_space meos_geo.h:548
     // ------------------------------------------------------------------
-    public static final UDF2<String, Number, String> expandSpace = (trip, dist) -> {
-        if (trip == null || dist == null) return null;
+    public static final UDF2<String, Number, String> expandSpace = (in, dist) -> {
+        if (in == null || dist == null) return null;
         MeosThread.ensureReady();
-        Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
-        if (tptr == null) return null;
+        // Accept either a tgeompoint hex (full trip) or a precomputed STBox hex
+        // (the materialised trip_bbox column) so a cross-join prefilter never
+        // re-parses the full multi-thousand-instant trip.
+        Pointer bbox = GeneratedFunctions.stbox_from_hexwkb(in);
+        Pointer tptr = null;
+        if (bbox == null) {
+            tptr = GeneratedFunctions.temporal_from_hexwkb(in);
+            if (tptr == null) return null;
+            bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
+        }
+        if (bbox == null) {
+            if (tptr != null) MeosMemory.free(tptr);
+            return null;
+        }
         try {
-            Pointer bbox = GeneratedFunctions.tspatial_to_stbox(tptr);
-            if (bbox == null) return null;
+            Pointer expanded = GeneratedFunctions.stbox_expand_space(bbox, dist.doubleValue());
+            if (expanded == null) return null;
             try {
-                Pointer expanded = GeneratedFunctions.stbox_expand_space(bbox, dist.doubleValue());
-                if (expanded == null) return null;
-                try {
-                    Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                    return GeneratedFunctions.stbox_as_hexwkb(expanded, (byte) 0, sizeOut);
-                } finally {
-                    MeosMemory.free(expanded);
-                }
+                Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+                return GeneratedFunctions.stbox_as_hexwkb(expanded, (byte) 0, sizeOut);
             } finally {
-                MeosMemory.free(bbox);
+                MeosMemory.free(expanded);
             }
         } finally {
-            MeosMemory.free(tptr);
+            MeosMemory.free(bbox);
+            if (tptr != null) MeosMemory.free(tptr);
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // stboxOverlaps(aHex STRING, bHex STRING) → BOOLEAN
+    // STBox-vs-STBox bounding-box overlap.  Both arguments are small STBox
+    // hex-WKB strings (e.g. the materialised trip_bbox column and a
+    // geoTimeStbox / expandSpace result), so the cross-join spatial prefilter
+    // never parses a full trip.  preprocessForSpark rewrites the spatial
+    // `trip && <stbox>` operator to this UDF on trip_bbox.
+    // MEOS: overlaps_stbox_stbox
+    // ------------------------------------------------------------------
+    public static final UDF2<String, String, Boolean> stboxOverlaps = (a, b) -> {
+        if (a == null || b == null) return null;
+        MeosThread.ensureReady();
+        Pointer pa = GeneratedFunctions.stbox_from_hexwkb(a);
+        if (pa == null) return null;
+        try {
+            Pointer pb = GeneratedFunctions.stbox_from_hexwkb(b);
+            if (pb == null) return null;
+            try {
+                return GeneratedFunctions.overlaps_stbox_stbox(pa, pb);
+            } finally {
+                MeosMemory.free(pb);
+            }
+        } finally {
+            MeosMemory.free(pa);
         }
     };
 
@@ -340,6 +374,7 @@ public final class BerlinMODUDFs {
     public static void registerAll(SparkSession spark) {
         spark.udf().register("length",           length,           DataTypes.DoubleType);
         spark.udf().register("bboxOverlaps",     bboxOverlaps,     DataTypes.BooleanType);
+        spark.udf().register("stboxOverlaps",    stboxOverlaps,    DataTypes.BooleanType);
         spark.udf().register("valueAtTimestamp", valueAtTimestamp, DataTypes.StringType);
         spark.udf().register("geoTimeStbox",     geoTimeStbox,     DataTypes.StringType);
         spark.udf().register("expandSpace",      expandSpace,      DataTypes.StringType);

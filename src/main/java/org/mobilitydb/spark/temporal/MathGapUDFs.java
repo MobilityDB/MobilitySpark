@@ -324,7 +324,9 @@ public final class MathGapUDFs {
         spark.udf().register("trend",      trend,      DataTypes.StringType);
         // unary temporal + param -> temporal
         spark.udf().register("degrees",    degrees,    DataTypes.StringType);
-        spark.udf().register("round",      round,      DataTypes.StringType);
+        // `round` is intentionally NOT registered: it would shadow Spark's
+        // built-in numeric ROUND(value, scale).  Temporal-float value rounding
+        // is exposed as tfloatRound; numeric rounding uses the SQL built-in.
         // unary temporal -> double
         spark.udf().register("integral",   integral,   DataTypes.DoubleType);
         spark.udf().register("twavg",      twavg,      DataTypes.DoubleType);
