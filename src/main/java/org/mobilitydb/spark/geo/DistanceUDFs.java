@@ -32,11 +32,17 @@ import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosNative;
 import org.mobilitydb.spark.MeosThread;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF2;
+import org.apache.spark.sql.api.java.UDF3;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -472,6 +478,136 @@ public final class DistanceUDFs {
         throw new IllegalArgumentException("minDistance: unexpected array arg type " + o.getClass());
     }
 
+    // ------------------------------------------------------------------
+    // Set-set spatial joins (#1148) — array<struct> of qualifying pairs.
+    // Both sides are array<string> of hex-WKB temporals.  The kernel resolves
+    // the N×M inside one native call (STBox prune before the exact predicate),
+    // returning 0-based (i,j) indexes into the input arrays; the SQL maps them
+    // back to identities via a parallel array_agg(identity).  This removes the
+    // SQL Cartesian + the bbox / th3index / broadcast prefilter tricks.
+    // ------------------------------------------------------------------
+
+    /** Marshal a Spark array<string> of hex-WKB temporals into a native Temporal*[]
+     *  direct buffer; parsed pointers are added to {@code ptrs} for the caller to free.
+     *  Returns the direct buffer, or null when the array is empty. */
+    private static Pointer marshalTrips(Object o, List<Pointer> ptrs, Runtime rt) {
+        if (o == null) return null;
+        for (String h : toStringList(o)) {
+            if (h == null) continue;
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(h);
+            if (p != null) ptrs.add(p);
+        }
+        if (ptrs.isEmpty()) return null;
+        Pointer buf = Memory.allocateDirect(rt, (long) ptrs.size() * Long.BYTES);
+        for (int i = 0; i < ptrs.size(); i++) buf.putPointer((long) i * Long.BYTES, ptrs.get(i));
+        return buf;
+    }
+
+    // eDwithinPairs(trips1 ARRAY<STRING>, trips2 ARRAY<STRING>, dist DOUBLE)
+    //   → ARRAY<STRUCT<i:INT, j:INT>>  (pairs ever within dist)
+    public static final UDF3<Object, Object, Object, List<Row>> eDwithinPairs =
+        (o1, o2, dist) -> {
+            if (o1 == null || o2 == null || dist == null) return Collections.emptyList();
+            double d = ((Number) dist).doubleValue();
+            MeosThread.ensureReady();
+            Runtime rt = Runtime.getSystemRuntime();
+            List<Pointer> p1 = new ArrayList<>(), p2 = new ArrayList<>();
+            try {
+                Pointer arr1 = marshalTrips(o1, p1, rt);
+                Pointer arr2 = marshalTrips(o2, p2, rt);
+                if (arr1 == null || arr2 == null) return Collections.emptyList();
+                Pointer countPtr = Memory.allocateDirect(rt, Integer.BYTES);
+                Pointer res = MeosNative.INSTANCE.edwithin_tgeoarr_tgeoarr(
+                    arr1, p1.size(), arr2, p2.size(), d, countPtr);
+                java.lang.ref.Reference.reachabilityFence(arr1);
+                java.lang.ref.Reference.reachabilityFence(arr2);
+                int cnt = countPtr.getInt(0);
+                if (res == null || cnt == 0) return Collections.emptyList();
+                List<Row> out = new ArrayList<>(cnt);
+                for (int k = 0; k < cnt; k++)
+                    out.add(RowFactory.create(
+                        res.getInt((long) (2 * k) * Integer.BYTES),
+                        res.getInt((long) (2 * k + 1) * Integer.BYTES)));
+                MeosMemory.free(res);
+                return out;
+            } finally {
+                for (Pointer p : p1) MeosMemory.free(p);
+                for (Pointer p : p2) MeosMemory.free(p);
+            }
+        };
+
+    // aDisjointPairs(trips1 ARRAY<STRING>, trips2 ARRAY<STRING>)
+    //   → ARRAY<STRUCT<i:INT, j:INT>>  (pairs always spatially disjoint = ¬eIntersects)
+    public static final UDF2<Object, Object, List<Row>> aDisjointPairs =
+        (o1, o2) -> {
+            if (o1 == null || o2 == null) return Collections.emptyList();
+            MeosThread.ensureReady();
+            Runtime rt = Runtime.getSystemRuntime();
+            List<Pointer> p1 = new ArrayList<>(), p2 = new ArrayList<>();
+            try {
+                Pointer arr1 = marshalTrips(o1, p1, rt);
+                Pointer arr2 = marshalTrips(o2, p2, rt);
+                if (arr1 == null || arr2 == null) return Collections.emptyList();
+                Pointer countPtr = Memory.allocateDirect(rt, Integer.BYTES);
+                Pointer res = MeosNative.INSTANCE.adisjoint_tgeoarr_tgeoarr(
+                    arr1, p1.size(), arr2, p2.size(), countPtr);
+                java.lang.ref.Reference.reachabilityFence(arr1);
+                java.lang.ref.Reference.reachabilityFence(arr2);
+                int cnt = countPtr.getInt(0);
+                if (res == null || cnt == 0) return Collections.emptyList();
+                List<Row> out = new ArrayList<>(cnt);
+                for (int k = 0; k < cnt; k++)
+                    out.add(RowFactory.create(
+                        res.getInt((long) (2 * k) * Integer.BYTES),
+                        res.getInt((long) (2 * k + 1) * Integer.BYTES)));
+                MeosMemory.free(res);
+                return out;
+            } finally {
+                for (Pointer p : p1) MeosMemory.free(p);
+                for (Pointer p : p2) MeosMemory.free(p);
+            }
+        };
+
+    // tDwithinPairs(trips1 ARRAY<STRING>, trips2 ARRAY<STRING>, dist DOUBLE)
+    //   → ARRAY<STRUCT<i:INT, j:INT, periods:STRING>>  (whenTrue spanset hex-WKB per pair)
+    public static final UDF3<Object, Object, Object, List<Row>> tDwithinPairs =
+        (o1, o2, dist) -> {
+            if (o1 == null || o2 == null || dist == null) return Collections.emptyList();
+            double d = ((Number) dist).doubleValue();
+            MeosThread.ensureReady();
+            Runtime rt = Runtime.getSystemRuntime();
+            List<Pointer> p1 = new ArrayList<>(), p2 = new ArrayList<>();
+            try {
+                Pointer arr1 = marshalTrips(o1, p1, rt);
+                Pointer arr2 = marshalTrips(o2, p2, rt);
+                if (arr1 == null || arr2 == null) return Collections.emptyList();
+                Pointer countPtr = Memory.allocateDirect(rt, Integer.BYTES);
+                Pointer periodsPtr = Memory.allocateDirect(rt, Long.BYTES);
+                Pointer res = MeosNative.INSTANCE.tdwithin_tgeoarr_tgeoarr(
+                    arr1, p1.size(), arr2, p2.size(), d, countPtr, periodsPtr);
+                java.lang.ref.Reference.reachabilityFence(arr1);
+                java.lang.ref.Reference.reachabilityFence(arr2);
+                int cnt = countPtr.getInt(0);
+                if (res == null || cnt == 0) return Collections.emptyList();
+                Pointer ssArr = periodsPtr.getPointer(0);
+                List<Row> out = new ArrayList<>(cnt);
+                for (int k = 0; k < cnt; k++) {
+                    int i = res.getInt((long) (2 * k) * Integer.BYTES);
+                    int j = res.getInt((long) (2 * k + 1) * Integer.BYTES);
+                    Pointer ss = ssArr.getPointer((long) k * Long.BYTES);
+                    String periods = ss == null ? null : GeneratedFunctions.spanset_as_hexwkb(ss, (byte) 0);
+                    MeosMemory.free(ss);
+                    out.add(RowFactory.create(i, j, periods));
+                }
+                MeosMemory.free(ssArr);
+                MeosMemory.free(res);
+                return out;
+            } finally {
+                for (Pointer p : p1) MeosMemory.free(p);
+                for (Pointer p : p2) MeosMemory.free(p);
+            }
+        };
+
     public static void registerAll(SparkSession spark) {
         spark.udf().register("tdistanceTgeoGeo",       tdistanceTgeoGeo,       DataTypes.StringType);
         spark.udf().register("tdistanceTgeoTgeo",      tdistanceTgeoTgeo,      DataTypes.StringType);
@@ -501,5 +637,17 @@ public final class DistanceUDFs {
         // spatial-min over two trip sets); Spark cannot overload by signature, and
         // the scalar forms stay reachable as minDistanceTgeoTgeo / minDistanceTgeoGeo.
         spark.udf().register("minDistance",             minDistanceTgeoarrTgeoarr, DataTypes.DoubleType);
+
+        // Set-set spatial joins (#1148) — array<struct> of qualifying (i,j) pairs.
+        StructType pairType = DataTypes.createStructType(new StructField[] {
+            DataTypes.createStructField("i", DataTypes.IntegerType, false),
+            DataTypes.createStructField("j", DataTypes.IntegerType, false) });
+        StructType pairPeriodsType = DataTypes.createStructType(new StructField[] {
+            DataTypes.createStructField("i", DataTypes.IntegerType, false),
+            DataTypes.createStructField("j", DataTypes.IntegerType, false),
+            DataTypes.createStructField("periods", DataTypes.StringType, true) });
+        spark.udf().register("eDwithinPairs",  eDwithinPairs,  DataTypes.createArrayType(pairType));
+        spark.udf().register("aDisjointPairs", aDisjointPairs, DataTypes.createArrayType(pairType));
+        spark.udf().register("tDwithinPairs",  tDwithinPairs,  DataTypes.createArrayType(pairPeriodsType));
     }
 }

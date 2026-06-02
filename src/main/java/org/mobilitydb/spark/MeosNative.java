@@ -65,6 +65,21 @@ public final class MeosNative {
         Pointer shortestline_tgeo_geo(Pointer temporal, Pointer geo);
 
         // ----------------------------------------------------------------
+        // Set-set spatial joins (#1148): both sides are Temporal*[] direct
+        // buffers (arr1/arr2) of length count1/count2.  Each returns a
+        // malloc'd int[] of length 2*(*count) holding the qualifying pairs
+        // [i0,j0,i1,j1,…] (0-based indexes into the input arrays); *count is
+        // the out-param.  NULL + *count=0 when no pair qualifies.  The kernel
+        // prunes far / temporally-disjoint pairs by STBox before the exact
+        // predicate, so the N×M runs in one native call.  tdwithin also fills
+        // *periods = SpanSet*[*count] (the whenTrue spanset per pair).
+        // ----------------------------------------------------------------
+
+        Pointer edwithin_tgeoarr_tgeoarr(Pointer arr1, int count1, Pointer arr2, int count2, double dist, Pointer count);
+        Pointer tdwithin_tgeoarr_tgeoarr(Pointer arr1, int count1, Pointer arr2, int count2, double dist, Pointer count, Pointer periods);
+        Pointer adisjoint_tgeoarr_tgeoarr(Pointer arr1, int count1, Pointer arr2, int count2, Pointer count);
+
+        // ----------------------------------------------------------------
         // Scalar value-to-bin (renamed from float_bucket / int_bucket)
         // ----------------------------------------------------------------
 

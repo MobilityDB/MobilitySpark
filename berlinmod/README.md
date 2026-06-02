@@ -46,17 +46,17 @@ encoding.
 | `q03.sql` | Position of query-licence vehicles at each query instant | `atTime(tgeompoint, timestamptz)` |
 | `q04.sql` | Vehicles that ever passed a query point | `eIntersects(tgeompoint, geometry)` |
 | `q05.sql` | Min nearest-approach distance between query-licence pairs | `nearestApproachDistance(tgeompoint, tgeompoint)` |
-| `q06.sql` | Truck pairs within 10 m | `eDwithin(tgeompoint, tgeompoint, float)` |
+| `q06.sql` | Truck pairs within 10 m | `eDwithinPairs(tgeompoint[], tgeompoint[], float)` |
 | `q07.sql` | Trip portions of query-licence vehicles during each query period | `atTime(tgeompoint, tstzspan)` |
 | `q08.sql` | Trajectory geometry of each trip | `trajectory(tgeompoint)` |
 | `q09.sql` | Longest distance driven by any vehicle in each query period | `atTime`, `length` |
-| `q10.sql` | When did query-licence vehicles meet others (within 3 m)? | `expandSpace`, `tDwithin`, `whenTrue` |
+| `q10.sql` | When did query-licence vehicles meet others (within 3 m)? | `tDwithinPairs(tgeompoint[], tgeompoint[], float)` |
 | `q11.sql` | Vehicles passing a query point at a query instant | `valueAtTimestamp`, `stbox` |
 | `q12.sql` | Vehicle pairs at the same query point at the same query instant | `valueAtTimestamp`, `stbox` |
 | `q13.sql` | Vehicles that travelled within a query region during a query period | `atTime`, `eIntersects`, `stbox` |
 | `q14.sql` | Vehicles inside a query region at a query instant | `valueAtTimestamp`, `ST_Contains`, `stbox` |
 | `q15.sql` | Vehicles that passed a query point during a query period | `atTime`, `eIntersects`, `stbox` |
-| `q16.sql` | Query-licence vehicle pairs in same region+period but always disjoint | `atTime`, `eIntersects`, `aDisjoint` |
+| `q16.sql` | Query-licence vehicle pairs in same region+period but always disjoint | `atTime`, `eIntersects`, `aDisjointPairs(tgeompoint[], tgeompoint[])` |
 | `q17.sql` | Query points visited by the most distinct vehicles | `eIntersects` |
 | `qrt.sql` | Binary roundtrip — all trips serialised as hex-WKB | `asHexWKB(tgeompoint)` |
 
@@ -79,34 +79,33 @@ contribution of different acceleration mechanisms:
 **Why Spark is excluded from Tiers 2 / 3:** Spark SQL has no native spatial
 index of its own; forcing it to "compete" without `th3index` would measure
 lack-of-feature, not engine performance. Tier 1 is the only honest
-measurement on Spark — with the caveat that Trips × Trips queries
-(Q5/Q6/Q10/Q16) need explicit Spark-side mitigations (next section) to
-turn the row-by-row O(N²) prefilter into a tractable equi-join.
+measurement on Spark — with the caveat that the Trips × Trips queries
+(Q5/Q6/Q10/Q16) resolve their N×M trip pairing inside the MEOS set-set
+spatial-join family (next section) rather than a Spark Cartesian.
 
-### NxN mitigations on Spark (Q5, Q6, Q10, Q16)
+### Trips × Trips queries on Spark (Q5, Q6, Q10, Q16)
 
-The four Trips × Trips queries don't fit Spark's no-spatial-index model
-naturally. Every platform runs the same portable SQL from
-`queries.sql`; the speedups come from constructs that are part of the
-fixed query intent, not engine-specific rewrites:
+The four Trips × Trips queries resolve their whole N×M trip pairing inside one
+MEOS set-set spatial-join call with an internal STBox prune, so the SQL is the
+natural one-call form on every platform rather than an engine-specific rewrite.
+Each query arrays both sides with `array_agg` and joins only on the small
+grouping keys; `preprocessForSpark` maps the portable
+`LATERAL <fn>(...) AS p(cols)` set-returning-function form onto Spark's
+`LATERAL VIEW inline(<fn>(...))`.
 
-- **Set-set `minDistance(tgeompoint[], tgeompoint[])`** expresses the Q5
-  spatial-min over two trip sets directly as a MEOS aggregate, which
-  carries an internal STBox-pair prune. Q5 is the natural array form on
-  all three platforms.
-- **`th3index` cell-membership prefilter** on the point-relation queries
-  (Q4 / Q6 / Q10). The `trip_h3` column is materialised at load time on
-  every platform; the prefilter is a cheap cell test that runs before
-  the expensive `eIntersects` / `eDwithin` / `tDwithin`. On Spark the
-  prefilter is injected by `preprocessForSpark`; on PostgreSQL the load
-  script adds a GiST index so it becomes an index seek.
+- **`minDistance(tgeompoint[], tgeompoint[])`** — Q5, the reduction member: the
+  spatial-min over the two trip sets.
+- **`eDwithinPairs` / `tDwithinPairs` / `aDisjointPairs(tgeompoint[], tgeompoint[])`**
+  — Q6 / Q10 / Q16, the relation members: the qualifying 0-based `(i, j)`
+  trip-index pairs, with `tDwithinPairs` also returning the `whenTrue` spanset per
+  pair. The caller maps each `(i, j)` back to its identity through a parallel
+  `array_agg(identity)`.
 
-Queries that remain a full Trips × Trips Cartesian on Spark (no spatial
-index) run to their true cost — that is a faithful benchmark result, not
-something to hide behind a rewrite. The MobilitySpark bench runner
-(`bench/bench_mspark.sh` → `BerlinMODBench`) splits `queries.sql` on the
-`-- @query <id>` markers, the same single file the PG and DuckDB runners
-consume.
+The set-set call is an O(N×M) STBox-pruned scan, not a spatial index, so on
+dense-overlap inputs it runs to its true cost — a faithful benchmark result. The
+MobilitySpark bench runner (`bench/bench_mspark.sh` → `BerlinMODBench`) splits
+`queries.sql` on the `-- @query <id>` markers, the same single file the PG and
+DuckDB runners consume.
 
 ### Tier applicability per query
 

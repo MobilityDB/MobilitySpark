@@ -341,6 +341,17 @@ public final class BerlinMODBench {
             "everEqTh3IndexTh3Index\\((\\w+)\\.trip_h3,\\s*(\\w+)\\.trip_h3\\)",
             "stboxOverlaps($1.trip_bbox, $2.trip_bbox)");
 
+        // 7. Set-set spatial-join SRF (#1148): the portable
+        //    `, LATERAL <fn>(<args>) AS <alias>(<cols>)` table function (the
+        //    PostgreSQL/DuckDB SRF form) becomes Spark's table generator
+        //    `LATERAL VIEW inline(<fn>(<args>)) <alias> AS <cols>`.  The UDF
+        //    returns array<struct<...>>; inline() expands each struct to a row.
+        //    Consumes the preceding comma so the FROM-list item turns into a
+        //    Spark lateral view.  Arg lists carry no nested parentheses.
+        sql = sql.replaceAll(
+            ",\\s*LATERAL\\s+(\\w+\\([^)]*\\))\\s+AS\\s+(\\w+)\\s*\\(([^)]*)\\)",
+            " LATERAL VIEW inline($1) $2 AS $3");
+
         return sql;
     }
 

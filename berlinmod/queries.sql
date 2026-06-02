@@ -142,32 +142,27 @@ ORDER  BY a.licence, b.licence;
 -- Portable: works unchanged on MobilityDB/PostgreSQL, MobilityDuck/DuckDB,
 -- and MobilitySpark/Spark SQL.
 --
--- Temporal operations used:
---   eDwithin(tgeompoint, tgeompoint, float8) → boolean
---     True if the two trips ever came within the given distance of each other.
+-- Temporal operation used:
+--   eDwithinPairs(tgeompoint[], tgeompoint[], float8) → setof(i, j)
+--     The set-set ever-within join: the qualifying (i, j) index pairs whose
+--     trips ever came within the distance.  The kernel prunes far and
+--     temporally-disjoint trip pairs by their STBox before the exact eDwithin,
+--     so the N×N is resolved inside one call rather than a SQL Cartesian join.
 --
--- Spatial prefilter (th3index): trips whose paths never share a cell at any
--- common instant cannot be within 10 m of each other (cell edge at resolution
--- 7 is ≈ 1.2 km, well above the 10 m threshold).
---
--- MobilityDB operator equivalent: t1.trip |=| t2.trip <= 10.0
+-- Index base: the kernel returns 0-based indexes; Spark array access is 0-based
+-- (g.lic[p.i]).  PostgreSQL/DuckDB array access is 1-based (g.lic[p.i + 1]).
 
-SELECT /*+ BROADCAST(v1, v2) */
-       v1.licence AS licence1,
-       v2.licence AS licence2
-FROM   Vehicles v1
-JOIN   Trips t1 ON t1.vehId = v1.vehId
-JOIN   Vehicles v2 ON v1.vehId < v2.vehId
-JOIN   Trips t2 ON t2.vehId = v2.vehId
-WHERE  v1.type  = 'truck'
-  AND  v2.type  = 'truck'
-  AND  everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)
-  AND  eDwithin(t1.trip, t2.trip, 10.0)
-ORDER  BY v1.licence, v2.licence;
--- The `/*+ BROADCAST(v1, v2) */` block is a Spark SQL hint pinning the
--- small Vehicles tables to every executor.  PostgreSQL and DuckDB treat
--- it as an ordinary block comment.  See berlinmod/README.md "NxN
--- mitigations on Spark".
+WITH TruckTrips AS (
+  SELECT array_agg(t.trip)    AS trips,
+         array_agg(v.licence) AS lic
+  FROM   Vehicles v
+  JOIN   Trips    t ON t.vehId = v.vehId
+  WHERE  v.type = 'truck' )
+SELECT DISTINCT g.lic[p.i] AS licence1, g.lic[p.j] AS licence2
+FROM   TruckTrips g,
+       LATERAL eDwithinPairs(g.trips, g.trips, 10.0) AS p(i, j)
+WHERE  p.i < p.j
+ORDER  BY licence1, licence2;
 
 
 -- @query q07
@@ -260,38 +255,33 @@ ORDER  BY periodId;
 -- Portable: works unchanged on MobilityDB/PostgreSQL, MobilityDuck/DuckDB,
 -- and MobilitySpark/Spark SQL.
 --
--- Temporal operations used:
---   expandSpace(tgeompoint, float) → stbox      (expand bounding box spatially)
---   tDwithin(tgeompoint, tgeompoint, float) → tbool
---   whenTrue(tbool) → tstzspanset               (intervals when predicate holds)
+-- Temporal operation used:
+--   tDwithinPairs(tgeompoint[], tgeompoint[], float) → setof(i, j, periods)
+--     The set-set when-within join: per qualifying (i, j) trip pair, the
+--     whenTrue(tDwithin) spanset of the intervals the two trips were within the
+--     distance.  The kernel prunes far and temporally-disjoint pairs by their
+--     STBox before the exact tDwithin, so the N×M is resolved inside one call
+--     rather than a SQL Cartesian join.  Only qualifying pairs are returned, so
+--     periods is never NULL.
 --
--- Spatial prefilter (th3index): in addition to the existing bbox prefilter
--- t2.trip && expandSpace(t1.trip, 3), we also require the th3index sequences
--- to ever-equal at a common instant.  Both prefilters are sound for a 3 m
--- distance threshold (cell edge ≈ 1.2 km, well above 3 m).
+-- Index base: the kernel returns 0-based indexes (Spark array access is 0-based).
 
-WITH Temp AS (
-  SELECT /*+ BROADCAST(l, v1, t1) */
-         l.licence AS licence1, t2.vehId AS car2Id,
-         whenTrue(tDwithin(t1.trip, t2.trip, 3.0)) AS periods,
-         t1.tripId AS tripId1, t2.tripId AS tripId2
+WITH LicTrips AS (
+  SELECT array_agg(t1.trip)   AS trips,
+         array_agg(l.licence) AS lic,
+         array_agg(t1.vehId)  AS veh
   FROM   QueryLicences l
   JOIN   Vehicles v1 ON v1.licence = l.licence
-  JOIN   Trips    t1 ON t1.vehId   = v1.vehId
-  JOIN   Trips    t2 ON t1.vehId  <> t2.vehId
-  WHERE  everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)
-    AND  t2.trip && expandSpace(t1.trip, 3)
-)
-SELECT licence1, car2Id, periods
-FROM   Temp
-WHERE  periods IS NOT NULL
-ORDER  BY licence1, car2Id, tripId1, tripId2;
--- The `/*+ BROADCAST(l, v1, t1) */` block is a Spark SQL hint forcing the
--- QueryLicences-filtered t1 side (~10 vehicles' trips) to be broadcast to
--- every executor, so the t1 × t2 join becomes a broadcast-hash join over
--- the much larger t2.  Without this hint Spark would shuffle 10K × 10K
--- candidate pairs on a non-equi join.  PostgreSQL and DuckDB treat the
--- hint as an ordinary block comment.
+  JOIN   Trips    t1 ON t1.vehId   = v1.vehId ),
+AllTrips AS (
+  SELECT array_agg(t2.trip)  AS trips,
+         array_agg(t2.vehId) AS veh
+  FROM   Trips t2 )
+SELECT a.lic[p.i] AS licence1, b.veh[p.j] AS car2Id, p.periods AS periods
+FROM   LicTrips a, AllTrips b,
+       LATERAL tDwithinPairs(a.trips, b.trips, 3.0) AS p(i, j, periods)
+WHERE  a.veh[p.i] <> b.veh[p.j]
+ORDER  BY licence1, car2Id;
 
 
 -- @query q11
@@ -443,29 +433,37 @@ ORDER  BY t.pointId, t.periodId, v.licence;
 -- Temporal operations used:
 --   atTime(tgeompoint, tstzspan) → tgeompoint
 --   eIntersects(tgeompoint, geometry) → bool    (avoids trajectory() override)
---   aDisjoint(tgeompoint, tgeompoint) → bool    (always spatially disjoint)
 --   stbox(geometry, tstzspan) → stbox           (GiST index pre-filter)
+--   aDisjointPairs(tgeompoint[], tgeompoint[]) → setof(i, j)
+--     The set-set always-disjoint join: the qualifying (i, j) index pairs whose
+--     period-restricted trips never share a location (= ¬eIntersects).  Per
+--     (period, region) the trips that intersect the region during the period
+--     are arrayed once; the kernel resolves the pair join inside one call
+--     (non-overlapping STBoxes are trivially disjoint), so there is no SQL
+--     licence × licence Cartesian.
+--
+-- Index base: the kernel returns 0-based indexes (Spark array access is 0-based).
 
-SELECT /*+ BROADCAST(l1, v1, l2, v2, p, r) */
-       p.periodId, p.period, r.regionId,
-       l1.licence AS licence1, l2.licence AS licence2
-FROM   QueryLicences l1
-JOIN   Vehicles      v1 ON v1.licence = l1.licence
-JOIN   Trips         t1 ON t1.vehId   = v1.vehId
-JOIN   QueryLicences l2 ON l1.licenceId < l2.licenceId
-JOIN   Vehicles      v2 ON v2.licence = l2.licence
-JOIN   Trips         t2 ON t2.vehId   = v2.vehId
-JOIN   QueryPeriods  p  ON true
-JOIN   QueryRegions  r  ON true
-WHERE  l1.licenceId <= 10 AND l2.licenceId <= 10
-  AND  p.periodId   <= 10
-  AND  r.regionId   <= 10
-  AND  t1.trip && stbox(r.geom, p.period)
-  AND  t2.trip && stbox(r.geom, p.period)
-  AND  eIntersects(atTime(t1.trip, p.period), r.geom)
-  AND  eIntersects(atTime(t2.trip, p.period), r.geom)
-  AND  aDisjoint(atTime(t1.trip, p.period), atTime(t2.trip, p.period))
-ORDER  BY p.periodId, r.regionId, l1.licence, l2.licence;
+WITH PR AS (
+  SELECT p.periodId, p.period, r.regionId,
+         array_agg(atTime(t.trip, p.period)) AS trips,
+         array_agg(l.licence)                AS lic,
+         array_agg(l.licenceId)              AS lid
+  FROM   QueryLicences l
+  JOIN   Vehicles v ON v.licence = l.licence
+  JOIN   Trips    t ON t.vehId   = v.vehId
+  JOIN   QueryPeriods p ON true
+  JOIN   QueryRegions r ON true
+  WHERE  l.licenceId <= 10 AND p.periodId <= 10 AND r.regionId <= 10
+    AND  t.trip && stbox(r.geom, p.period)
+    AND  eIntersects(atTime(t.trip, p.period), r.geom)
+  GROUP  BY p.periodId, p.period, r.regionId )
+SELECT g.periodId, g.period, g.regionId,
+       g.lic[q.i] AS licence1, g.lic[q.j] AS licence2
+FROM   PR g,
+       LATERAL aDisjointPairs(g.trips, g.trips) AS q(i, j)
+WHERE  g.lid[q.i] < g.lid[q.j]
+ORDER  BY g.periodId, g.regionId, licence1, licence2;
 
 
 -- @query q17
@@ -488,4 +486,3 @@ SELECT pointId, hits
 FROM   PointCount
 WHERE  hits = (SELECT MAX(hits) FROM PointCount)
 ORDER  BY pointId;
-
