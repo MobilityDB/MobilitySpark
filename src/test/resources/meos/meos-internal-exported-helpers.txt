@@ -1,4 +1,17 @@
 # Exported but intentionally undeclared internal helpers; not part of the contract.
+# The PostgreSQL base-type I/O symbols below are exported by libmeos but are not
+# part of the public MEOS surface; the public pg_*_in/out wrappers are bound instead.
+date_in
+date_out
+interval_cmp
+interval_in
+interval_out
+time_in
+time_out
+timestamp_in
+timestamp_out
+timestamptz_in
+timestamptz_out
 cbuffersegm_distance_turnpt
 tcbuffer_cbuffer_distance_turnpt
 tcbuffer_restrict_geom

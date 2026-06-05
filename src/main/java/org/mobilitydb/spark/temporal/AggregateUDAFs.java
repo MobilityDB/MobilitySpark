@@ -440,7 +440,7 @@ public final class AggregateUDAFs {
                 if (bar < 0) continue;
                 Pointer t = GeneratedFunctions.temporal_from_hexwkb(enc.substring(0, bar));
                 if (t == null) continue;
-                Pointer interval = GeneratedFunctions.interval_in(enc.substring(bar + 1), -1);
+                Pointer interval = GeneratedFunctions.pg_interval_in(enc.substring(bar + 1), -1);
                 if (interval == null) { MeosMemory.free(t); continue; }
                 Pointer next = transfn(state, t, interval);
                 MeosMemory.free(t);
