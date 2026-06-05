@@ -145,27 +145,32 @@ public final class BerlinMODBench {
             // after prefilter measurement is reproducible without a rebuild.
             {
                 int res = Integer.getInteger("berlinmod.bench.th3index.resolution", 7);
-                System.out.println("=== Materialising trip_h3 (res " + res + ") + trip_bbox prefilter columns ===");
                 String[] cols = spark.table("Trips").schema().fieldNames();
+                boolean hasTripH3 = java.util.Arrays.stream(cols)
+                    .anyMatch(c -> "trip_h3".equalsIgnoreCase(c));
+                // The trip_h3 (temporal H3 cell index) and trip_bbox (STBox of the
+                // whole trip) columns are the cross-join spatial prefilter mechanism:
+                // a cheap cell / bounding-box test that runs before the expensive
+                // eIntersects / nearestApproachDistance / tDwithin calls.  trip_h3 is
+                // produced point-by-point at trip-assembly time in the source data
+                // (h3_latlng_to_cell), so when the dataset already carries it we REUSE
+                // it rather than re-deriving it from the assembled trajectory (which
+                // re-parses the multi-thousand-instant trip).  trip_bbox is always
+                // materialised here (a cheap STBox of the whole trip).
+                System.out.println(hasTripH3
+                    ? "=== Reusing precomputed trip_h3 from the dataset + materialising trip_bbox ==="
+                    : "=== Materialising trip_h3 (res " + res + ") + trip_bbox prefilter columns ===");
                 String selectCols = java.util.Arrays.stream(cols)
-                    .filter(c -> !"trip_h3".equalsIgnoreCase(c) && !"trip_bbox".equalsIgnoreCase(c))
+                    .filter(c -> !"trip_bbox".equalsIgnoreCase(c))
                     .collect(Collectors.joining(", "));
-                // The trip_h3 (temporal H3 cell index) and trip_bbox (STBox of
-                // the whole trip) columns are the cross-join spatial prefilter
-                // mechanism: a cheap cell / bounding-box test that runs before
-                // the expensive eIntersects / nearestApproachDistance / tDwithin
-                // calls.  Materialising them once per trip means the prefilter
-                // never re-parses the full multi-thousand-instant trip per pair.
-                // Materialise via a Dataset rather than CREATE OR REPLACE
-                // TEMPORARY VIEW Trips AS SELECT ... FROM Trips: the latter
-                // trips Spark's checkCyclicViewReference (the new view names
-                // itself in its own definition) and aborts with RECURSIVE_VIEW.
-                // Reading the current Trips into a Dataset first resolves the
-                // source plan, then the registration replaces the view atomically.
+                String tripH3Expr = hasTripH3 ? ""
+                    : "tgeompointToTh3Index(trip, " + res + ") AS trip_h3, ";
+                // Materialise via a Dataset rather than CREATE OR REPLACE TEMPORARY
+                // VIEW Trips AS SELECT ... FROM Trips: the latter trips Spark's
+                // checkCyclicViewReference and aborts with RECURSIVE_VIEW.
                 spark.sql(
-                    "SELECT " + selectCols + ", " +
-                    "       tgeompointToTh3Index(trip, " + res + ") AS trip_h3, " +
-                    "       expandSpace(trip, 0.0)             AS trip_bbox " +
+                    "SELECT " + selectCols + ", " + tripH3Expr +
+                    "       expandSpace(trip, 0.0) AS trip_bbox " +
                     "FROM Trips"
                 ).createOrReplaceTempView("Trips");
             }
