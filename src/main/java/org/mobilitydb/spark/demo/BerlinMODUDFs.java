@@ -150,12 +150,8 @@ public final class BerlinMODUDFs {
         if (tptr == null) return null;
         OffsetDateTime odt = parseTs(tsArg);
         if (odt == null) return null;
-        Pointer valueOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-        boolean found = GeneratedFunctions.tgeo_value_at_timestamptz(tptr, odt, true, valueOut);
-        if (!found) return null;
-        long addr = valueOut.getLong(0);
-        if (addr == 0L) return null;
-        Pointer geomPtr = Runtime.getSystemRuntime().getMemoryManager().newPointer(addr);
+        Pointer geomPtr = GeneratedFunctions.tgeo_value_at_timestamptz(tptr, odt, true);
+        if (geomPtr == null) return null;
         return GeneratedFunctions.geo_as_text(geomPtr, 15);
     };
 

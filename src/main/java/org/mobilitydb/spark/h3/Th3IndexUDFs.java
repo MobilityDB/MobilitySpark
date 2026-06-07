@@ -114,13 +114,13 @@ public final class Th3IndexUDFs {
     public static final UDF1<String, Long> h3IndexFromText = (s) -> {
         if (s == null) return null;
         MeosThread.ensureReady();
-        return GeneratedFunctions.h3index_in(s);
+        return GeneratedFunctions.h3index_parse(s);
     };
 
     public static final UDF1<Long, String> h3IndexAsText = (cell) -> {
         if (cell == null) return null;
         MeosThread.ensureReady();
-        return GeneratedFunctions.h3index_out(cell);
+        return GeneratedFunctions.h3index_to_string(cell);
     };
 
     public static final UDF1<String, Long> h3IndexParse = (s) -> {
