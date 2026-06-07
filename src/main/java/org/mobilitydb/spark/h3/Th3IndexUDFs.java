@@ -823,14 +823,14 @@ public final class Th3IndexUDFs {
         };
 
     /**
-     * everIntersectsH3IndexSetTh3Index(cellSetHex, th3idx) → BOOLEAN.
+     * everEqH3IndexSetTh3Index(cellSetHex, th3idx) → BOOLEAN.
      *
      * Returns TRUE iff the trip's th3index sequence ever lies in any cell
      * of the candidate set.  Pair with geoToH3IndexSet to prefilter
      * polygon-side cross-join queries.  Wraps
-     * ever_eq_h3indexset_th3index (MobilityDB PR #938).
+     * ever_eq_h3indexset_th3index.
      */
-    public static final UDF2<String, String, Boolean> everIntersectsH3IndexSetTh3Index =
+    public static final UDF2<String, String, Boolean> everEqH3IndexSetTh3Index =
         (cellSetHex, th3idx) -> {
             if (cellSetHex == null || th3idx == null) return null;
             MeosThread.ensureReady();
@@ -1114,8 +1114,8 @@ public final class Th3IndexUDFs {
         spark.udf().register("th3IndexCellToBoundary", th3IndexCellToBoundary, DataTypes.StringType);
         spark.udf().register("geomToH3Cell",          geomToH3Cell,          DataTypes.LongType);
         spark.udf().register("geoToH3IndexSet",       geoToH3IndexSet,       DataTypes.StringType);
-        spark.udf().register("everIntersectsH3IndexSetTh3Index",
-                             everIntersectsH3IndexSetTh3Index,                DataTypes.BooleanType);
+        spark.udf().register("everEqH3IndexSetTh3Index",
+                             everEqH3IndexSetTh3Index,                        DataTypes.BooleanType);
 
         // Directed edges
         spark.udf().register("th3IndexAreNeighborCells",        th3IndexAreNeighborCells,

@@ -30,7 +30,7 @@ ORDER  BY l.licence;
 -- or on the boundary of the polygon at any instant.
 --
 -- Spatial prefilter (th3index, polygon-side): geoToH3IndexSet covers the
--- query region with H3 cells at resolution 7; everIntersectsH3IndexSet_Th3Index
+-- query region with H3 cells at resolution 7; everEqH3IndexSetTh3Index
 -- tests whether the trip's th3index path ever lies in any of those cells.
 -- Sound for the eIntersects predicate at any resolution — a trip can only
 -- intersect the region if it ever passes through a cell that covers part
@@ -41,7 +41,7 @@ SELECT DISTINCT v.licence
 FROM   Vehicles v
 JOIN   Trips t    ON  t.vehId = v.vehId
 JOIN   QueryRegions r ON
-   everIntersectsH3IndexSet_Th3Index(geoToH3IndexSet(r.geom, 7), t.trip_h3)
+   everEqH3IndexSetTh3Index(geoToH3IndexSet(r.geom, 7), t.trip_h3)
    AND eIntersects(t.trip, r.geom)
 ORDER  BY v.licence;
 
