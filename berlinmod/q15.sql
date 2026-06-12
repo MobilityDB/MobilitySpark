@@ -1,3 +1,7 @@
+-- Copyright(c) MobilityDB Contributors
+-- This file is part of MobilityDB documentation.
+-- Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+--
 -- BerlinMOD Q15: Which vehicles passed a point from QueryPoints during a
 -- period from QueryPeriods?
 --
@@ -17,7 +21,7 @@ WITH Temp AS (
   SELECT DISTINCT pt.pointId, pt.geom, pt.geomWKT, pr.periodId, pr.period, t.vehId
   FROM   Trips t, QueryPoints pt, QueryPeriods pr
   WHERE  pt.pointId  <= 10 AND pr.periodId <= 10
-    AND  t.trip && stbox(pt.geom, pr.period)
+    AND  overlaps(t.trip, stbox(pt.geom, pr.period))
     AND  eIntersects(atTime(t.trip, pr.period), pt.geom)
 )
 SELECT DISTINCT t.pointId, t.geomWKT AS geom, t.periodId, t.period, v.licence

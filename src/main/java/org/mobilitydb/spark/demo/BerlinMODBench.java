@@ -115,43 +115,11 @@ public final class BerlinMODBench {
             System.out.println("=== Loading data from: " + dataDir + " ===");
             BerlinMODDemo.loadFromCsvPublic(spark, dataDir);
 
-            // Materialise the th3index column on Trips at load time.  Each trip's
-            // tgeompoint is converted to a temporal H3 cell sequence at the
-            // chosen resolution (default 7 ≈ 1.2 km cells).  The trip_h3 column
-            // is used by the portable BerlinMOD SQL (Q4 / Q5 / Q6 / Q10) as a
-            // spatial prefilter — a cheap cell-membership test that runs before
-            // the expensive eIntersects / nearestApproachDistance / eDwithin /
-            // tDwithin calls.  All three benchmarked platforms compute the
-            // column at load time so the comparison is apples-to-apples; on
-            // PostgreSQL the load script also adds a GiST index on the column
-            // so the prefilter becomes a true index seek.
-            //
-            // Disabled when berlinmod.bench.th3index.disable=true so before-vs-
-            // after measurement is reproducible without a rebuild — note that
-            // disabling it makes the prefilter expressions in the portable SQL
-            // reference a non-existent column, so use this only with a custom
-            // SQL set that omits the prefilter.
-            //
-            // If the source CSV already carries a trip_h3 column (as produced
-            // by berlinmod_portability_export() in MobilityDB-BerlinMOD), drop
-            // it first so we can rematerialise at our chosen resolution — this
-            // guarantees a consistent resolution across all three platforms
-            // regardless of how the CSV was produced.
-            if (!"true".equals(System.getProperty("berlinmod.bench.th3index.disable"))) {
-                int res = Integer.getInteger("berlinmod.bench.th3index.resolution",
-                                             org.mobilitydb.spark.h3.Th3IndexUDFs.DEFAULT_RESOLUTION);
-                System.out.println("=== Materialising trip_h3 column (resolution " + res + ") ===");
-                String[] cols = spark.table("Trips").schema().fieldNames();
-                String selectCols = java.util.Arrays.stream(cols)
-                    .filter(c -> !"trip_h3".equalsIgnoreCase(c))
-                    .collect(Collectors.joining(", "));
-                spark.sql(
-                    "CREATE OR REPLACE TEMPORARY VIEW Trips AS " +
-                    "SELECT " + selectCols + ", " +
-                    "       tgeompointToTh3Index(trip, " + res + ") AS trip_h3 " +
-                    "FROM Trips"
-                );
-            }
+            // The trip_h3 column (temporal H3 cell sequence used by the portable
+            // BerlinMOD SQL as a spatial prefilter for the Trips×Trips queries) is
+            // part of the canonical data produced once by
+            // berlinmod_portability_export(); it is loaded from the CSV, not
+            // recomputed here, so every engine consumes the identical column.
 
             spark.catalog().cacheTable("Vehicles");
             spark.catalog().cacheTable("Trips");
@@ -175,34 +143,18 @@ public final class BerlinMODBench {
 
             // Time each query — flush results after every query so a crash
             // still leaves a valid JSON file with the timings collected so far.
-            //
-            // Spark-optimised variants: when a `<query>_spark.sql` file exists
-            // next to `<query>.sql`, prefer it.  These variants use UNNEST +
-            // equi-join on H3 cells (via `th3IndexValues(trip_h3)`) to convert
-            // the portable-SQL row-by-row Cartesian prefilter into an
-            // equi-join — which Spark accelerates natively.  This mitigates
-            // the O(N²) cost of the Trips × Trips queries (Q5/Q6/Q10/Q16) on
-            // Spark, which has no spatial index.  PG / DuckDB are not
-            // affected — they keep running the portable `<query>.sql`.  See
-            // berlinmod/README.md "NxN mitigations on Spark" for details.
+            // Every engine runs the identical canonical <query>.sql with bare
+            // portable names (no Spark-specific variant, no SQL rewriting).
             for (String q : queryList) {
-                Path sparkVariant = Paths.get(sqlDir, q + "_spark.sql");
-                Path portable     = Paths.get(sqlDir, q + ".sql");
-                Path sqlFile;
-                String variantTag = "";
-                if (Files.exists(sparkVariant)) {
-                    sqlFile = sparkVariant;
-                    variantTag = " [spark]";
-                } else if (Files.exists(portable)) {
-                    sqlFile = portable;
-                } else {
+                Path sqlFile = Paths.get(sqlDir, q + ".sql");
+                if (!Files.exists(sqlFile)) {
                     System.out.printf("  [skip] %s — SQL file not found%n", q);
                     continue;
                 }
-                String sql = preprocessForSpark(stripComments(Files.readString(sqlFile)));
+                String sql = stripComments(Files.readString(sqlFile));
                 List<Long> qTimes = new ArrayList<>(runs);
 
-                System.out.printf("  timing %-6s%s: ", q, variantTag);
+                System.out.printf("  timing %-6s: ", q);
                 for (int run = 0; run < runs; run++) {
                     try {
                         long t0 = System.currentTimeMillis();
@@ -235,48 +187,6 @@ public final class BerlinMODBench {
                 .filter(line -> !line.stripLeading().startsWith("--"))
                 .collect(Collectors.joining("\n"))
                 .replaceAll(";\\s*$", "");
-    }
-
-    /**
-     * Rewrite portable BerlinMOD SQL to Spark-compatible SQL.
-     *
-     * Spark SQL cannot define custom infix operators, so the portable SQL's
-     * {@code &&} bounding-box overlap operator and PostgreSQL-specific cast
-     * syntax ({@code ::numeric}) must be rewritten before passing to
-     * {@link SparkSession#sql}.  Transformations applied in order:
-     * <ol>
-     *   <li>{@code stbox(geom, t)} → {@code geoTimeStbox(geom, t)} (2-arg form only)</li>
-     *   <li>{@code expr && expr2} → {@code bboxOverlaps(expr, expr2)} (per line)</li>
-     *   <li>{@code ::numeric} → removed (Spark ROUND accepts DOUBLE directly)</li>
-     *   <li>{@code ST_Contains(} → {@code geomContains(}</li>
-     *   <li>th3index prefilter injection for {@code eIntersects(t.<col>, p.<col>)}
-     *       on point geometries — see {@link #injectTh3IndexPrefilter}.</li>
-     * </ol>
-     */
-    private static String preprocessForSpark(String sql) {
-        // 1. Replace 2-arg stbox(geom, time_or_period) with geoTimeStbox(geom, time_or_period).
-        //    The \b word boundary ensures stboxHasx etc. are not affected.
-        //    The [^,)]+ / [^)]+ pattern matches exactly 2 args (comma present).
-        sql = sql.replaceAll("\\bstbox\\(([^,)]+),\\s*([^)]+)\\)", "geoTimeStbox($1, $2)");
-
-        // 2. Replace bounding-box overlap operator && with the bboxOverlaps UDF.
-        //    Pattern: table.column && right_hand_expr (rest of line).
-        sql = sql.replaceAll("([\\w]+\\.[\\w]+)\\s+&&\\s+(.+)", "bboxOverlaps($1, $2)");
-
-        // 3. Remove PostgreSQL :: cast to numeric (Spark ROUND handles DOUBLE natively).
-        sql = sql.replace("::numeric", "");
-
-        // 4. Replace PostGIS ST_Contains with the registered geomContains UDF.
-        sql = sql.replace("ST_Contains(", "geomContains(");
-
-        // The th3index spatial prefilter for cross-join queries (Q4 / Q5 /
-        // Q6 / Q10) lives directly in the portable BerlinMOD SQL files (see
-        // the th3index unification work — every backend executes the same
-        // prefilter expressions, MobilitySpark via the Th3IndexUDFs class
-        // and the precomputed trip_h3 column on Trips).  No Spark-specific
-        // injection rule is needed here.
-
-        return sql;
     }
 
     /** Write a JSON result file compatible with report.py. */

@@ -1,3 +1,7 @@
+-- Copyright(c) MobilityDB Contributors
+-- This file is part of MobilityDB documentation.
+-- Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+--
 -- BerlinMOD Q17: Which point(s) from QueryPoints have been visited by the
 -- maximum number of distinct vehicles?
 --

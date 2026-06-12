@@ -1,42 +1,39 @@
--- BerlinMOD Q5: For each pair of query-licence vehicles, the minimum
--- spatial distance ever reached between their trips, irrespective of
--- time. The BerlinMOD spec asks for the minimum distance between the
--- places each vehicle has been; the answer is the spatial-min over the
--- two trajectories.
+-- Copyright(c) MobilityDB Contributors
+-- This file is part of MobilityDB documentation.
+-- Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+--
+-- BerlinMOD Q5: For each pair of query-licence vehicles, the minimum distance
+-- ever reached between their trips.
 --
 -- Portable: works unchanged on MobilityDB/PostgreSQL, MobilityDuck/DuckDB,
 -- and MobilitySpark/Spark SQL.
 --
--- Temporal operation used:
---   minDistance(tgeompoint, tgeompoint) → float8
---     Returns the minimum spatial distance reached at any pair of
---     points on the two trajectories, ignoring time. Distinct from
---     nearestApproachDistance, which is the time-synchronous variant.
+-- Temporal operations used:
+--   nearestApproachDistance(tgeompoint, tgeompoint) → float8
+--     Returns the minimum Euclidean distance reached at any common instant.
+--     Returns NULL when the trips have no overlapping time extent.
 --
--- Spatial prefilter (th3index): trips whose th3index sequences never
--- agree on a cell at any common instant cannot reach a min distance
--- below the cell edge length at the chosen resolution. At the default
--- resolution 7 (cell edge approximately 1.2 km) the prefilter is sound
--- for distance thresholds well below that edge length; it excludes
--- only pairs whose true min distance is far above the thresholds that
--- BerlinMOD's tDwithin/eDwithin queries care about.
+-- MobilityDB operator equivalent:  t1.trip |=| t2.trip
+-- NOTE: MobilityPySpark called this min_distance() / nearest_approach_distance();
+--       the canonical portable name is nearestApproachDistance() (MEOS convention).
 --
---   everEqTh3IndexTh3Index(t1.trip_h3, t2.trip_h3)
+-- Performance: nearestApproachDistance is non-NULL only when the two trips
+-- share a time extent, so overlaps(timeSpan(t1.trip), timeSpan(t2.trip)) is a
+-- necessary condition for any result row and cannot drop a true row.  Placing
+-- it first lets every engine prune the pair space (PostgreSQL/DuckDB via a
+-- span index, Spark via a broadcast join) instead of evaluating the expensive
+-- NAD over the full O(n^2) cross product.
 
-SELECT /*+ BROADCAST(l1, v1, l2, v2) */
-       l1.licence AS licence1,
+SELECT l1.licence AS licence1,
        l2.licence AS licence2,
-       MIN(ST_Distance(trajectory(t1.trip), trajectory(t2.trip))) AS min_dist
+       MIN(nearestApproachDistance(t1.trip, t2.trip)) AS min_dist
 FROM   QueryLicences l1
 JOIN   Vehicles v1  ON  v1.licence = l1.licence
 JOIN   Trips    t1  ON  t1.vehId   = v1.vehId
 JOIN   QueryLicences l2 ON l1.licenceId < l2.licenceId
 JOIN   Vehicles v2  ON  v2.licence = l2.licence
 JOIN   Trips    t2  ON  t2.vehId   = v2.vehId
-WHERE  ever_eq(t1.trip_h3, t2.trip_h3)
+WHERE  overlaps(timeSpan(t1.trip), timeSpan(t2.trip))
+  AND  nearestApproachDistance(t1.trip, t2.trip) IS NOT NULL
 GROUP  BY l1.licence, l2.licence
 ORDER  BY l1.licence, l2.licence;
--- The `/*+ BROADCAST(...) */` block is a Spark SQL hint forcing the four
--- small dimension tables onto every executor.  PostgreSQL and DuckDB treat
--- it as an ordinary block comment, so the SQL stays byte-identical and
--- portable across the three platforms.

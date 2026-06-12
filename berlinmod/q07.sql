@@ -1,3 +1,7 @@
+-- Copyright(c) MobilityDB Contributors
+-- This file is part of MobilityDB documentation.
+-- Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+--
 -- BerlinMOD Q7: Trip portions of query-licence vehicles during each query period.
 --
 -- Portable: works unchanged on MobilityDB/PostgreSQL, MobilityDuck/DuckDB,
@@ -11,7 +15,7 @@
 SELECT v.vehId     AS vehid,
        v.licence,
        p.periodId  AS periodid,
-       asHexEWKB(atTime(t.trip, p.period)) AS pos
+       asHexWKB(atTime(t.trip, p.period)) AS pos
 FROM   QueryLicences l
 JOIN   Vehicles v  ON  v.licence = l.licence
 JOIN   Trips    t  ON  t.vehId   = v.vehId

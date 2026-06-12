@@ -1,3 +1,7 @@
+-- Copyright(c) MobilityDB Contributors
+-- This file is part of MobilityDB documentation.
+-- Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+--
 -- BerlinMOD Q13: Which vehicles travelled within a region from QueryRegions
 -- during a period from QueryPeriods?
 --
@@ -17,7 +21,7 @@ WITH Temp AS (
   SELECT DISTINCT r.regionId, p.periodId, p.period, t.vehId
   FROM   Trips t, QueryRegions r, QueryPeriods p
   WHERE  r.regionId <= 10 AND p.periodId <= 10
-    AND  t.trip && stbox(r.geom, p.period)
+    AND  overlaps(t.trip, stbox(r.geom, p.period))
     AND  eIntersects(atTime(t.trip, p.period), r.geom)
 )
 SELECT DISTINCT t.regionId, t.periodId, t.period, v.licence

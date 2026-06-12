@@ -1,3 +1,7 @@
+-- Copyright(c) MobilityDB Contributors
+-- This file is part of MobilityDB documentation.
+-- Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+--
 -- BerlinMOD Q11: Which vehicles passed a point from QueryPoints at one of
 -- the instants from QueryInstants?
 --
@@ -11,7 +15,7 @@
 WITH Temp AS (
   SELECT p.pointId, p.geom, p.geomWKT, i.instantId, i.instant, t.vehId
   FROM   Trips t, QueryPoints p, QueryInstants i
-  WHERE  t.trip && stbox(p.geom, i.instant)
+  WHERE  overlaps(t.trip, stbox(p.geom, i.instant))
     AND  valueAtTimestamp(t.trip, i.instant) = p.geom
 )
 SELECT t.pointId, t.geomWKT AS geom, t.instantId, t.instant, v.licence

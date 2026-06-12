@@ -1,3 +1,7 @@
+-- Copyright(c) MobilityDB Contributors
+-- This file is part of MobilityDB documentation.
+-- Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+--
 -- BerlinMOD QRT: Binary roundtrip verification.
 --
 -- Portable: works unchanged on MobilityDB/PostgreSQL, MobilityDuck/DuckDB,
@@ -10,6 +14,6 @@
 --   The hex-WKB strings must be byte-for-byte identical across platforms.
 
 SELECT tripId AS tripid,
-       asHexEWKB(trip) AS trip_hexwkb
+       asHexWKB(trip) AS trip_hexwkb
 FROM   Trips
 ORDER  BY tripId;
