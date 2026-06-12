@@ -142,6 +142,9 @@ public final class MobilitySparkSession implements AutoCloseable {
         org.mobilitydb.spark.npoint.NpointUDFs.registerAll(spark);
         org.mobilitydb.spark.pose.PoseUDFs.registerAll(spark);
         org.mobilitydb.spark.rgeo.RgeoUDFs.registerAll(spark);
+        // Portable bare-name operator dialect (RFC #920) — registered last
+        // so the 29 canonical bare names are the authoritative spelling.
+        org.mobilitydb.spark.portable.PortableOperatorAliasUDFs.registerAll(spark);
         return new MobilitySparkSession();
     }
 
