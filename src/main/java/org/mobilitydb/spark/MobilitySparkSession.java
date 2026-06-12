@@ -137,6 +137,11 @@ public final class MobilitySparkSession implements AutoCloseable {
         TransformUDFs.registerAll(spark);
         AggregateUDAFs.registerAll(spark);
         org.mobilitydb.spark.h3.Th3IndexUDFs.registerAll(spark);
+        // Sibling temporal families (cbuffer / npoint / pose / rgeo)
+        org.mobilitydb.spark.cbuffer.CbufferUDFs.registerAll(spark);
+        org.mobilitydb.spark.npoint.NpointUDFs.registerAll(spark);
+        org.mobilitydb.spark.pose.PoseUDFs.registerAll(spark);
+        org.mobilitydb.spark.rgeo.RgeoUDFs.registerAll(spark);
         return new MobilitySparkSession();
     }
 
