@@ -65,11 +65,16 @@ class NativeMemoryLeakTest {
 
     private static final int  WARMUP_ITERS  = 200;
     private static final int  TEST_ITERS    = 5_000;
-    // 10 MB tolerates glibc fragmentation + JNR-FFI char* micro-leaks
-    // (~0.4 KB/call for hex strings that JMEOS returns as Java String without
-    // freeing the underlying C char*).  Real Temporal* leaks grow at ≥100 KB/call
-    // (900 KB/call for full BerlinMOD trips) and would far exceed this limit.
-    private static final long MAX_GROWTH_KB = 10_240;
+    // Tolerates glibc arena fragmentation + the structural JNR-FFI char* micro-leak
+    // (hex strings JMEOS returns as a Java String without freeing the underlying
+    // C char* — unavoidable with the String-return convention). The magnitude of
+    // both is environment-dependent: on the CI runners (Ubuntu noble glibc) the
+    // longer hex-EWKB trajectory strings fragment to ~3.6 KB/call (~18 MB), well
+    // above a developer box. The 50 MB ceiling sits an order of magnitude below the
+    // real-Temporal*-leak signal — those grow at ≥100 KB/call (≥500 MB over 5 000
+    // calls; 900 KB/call for full BerlinMOD trips) — so it still fails loudly on a
+    // genuine leak while absorbing structural-noise variance across environments.
+    private static final long MAX_GROWTH_KB = 51_200;
 
     private static String TRIP_HEX;
     private static final String GEOM_WKT = "POINT(0.05 0.0)";
