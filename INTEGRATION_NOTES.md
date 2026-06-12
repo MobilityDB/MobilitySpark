@@ -1,20 +1,19 @@
-# INTEGRATION BRANCH NOTE — JMEOS regen needed for Th3IndexUDFs
+# INTEGRATION BRANCH NOTE — MEOS / JMEOS pin
 
-The accumulated integration branch (integration/berlinmod-bench) carries
-PR #11 (Th3IndexUDFs full API, 86 UDFs) which calls JMEOS methods like
-`always_eq_th3index_h3index` / `always_ne_th3index_h3index`.  Neither the
-bundled JMEOS-1.4.jar nor JMEOS-1.5.jar exposes these — they require a
-JMEOS regeneration against MEOS-with-th3index.
+`integration/berlinmod-bench` builds against ecosystem pin
+**`ecosystem-pin-2026-06-11p`**.
 
-For the parallel benchmark task: either
-  (a) replace libs/JMEOS-1.5.jar with a regen built against the MEOS pin
-      that includes the th3index module (estebanzimanyi/MobilityDB:
-      fix/meos-pg-symbol-collision-plus-h3 @ b183b12ee692, OR
-      split/th3index-stacked, OR integration/meos-1.4-bump merged with #1045),
-  (b) comment-out the th3index method call-sites in Th3IndexUDFs.java
-      (lines around 498, 540, 580, etc.) — disables only the h3-cell
-      h3-cell join queries (Tier-1 Spark column-store prefilter), the
-      Trips × Trips queries Q5/Q6/Q10/Q16 still run via portable SQL +
-      BROADCAST hints.
+- **`libs/JMEOS-1.4.jar`** is the canonical JMEOS regen at that pin
+  (JMEOS PR #19): a single generated `functions.GeneratedFunctions`
+  surface. The legacy hand-rolled `functions.functions` facade is retired,
+  and every UDF binds the generated surface directly.
+- **`lib/libmeos.so`** is built from the pin with `-DH3=ON` and the
+  CBUFFER / NPOINT / POSE / RGEO families, so the th3index family is backed
+  with no build-time special-casing.
+- **CI** (`.github/workflows/maven.yml`) builds `libmeos` from the pin on
+  Linux and macOS (with H3). The Windows job is non-blocking until the
+  `MEOS_TZDATA_DIR` cmake option lands in the pin (it currently lives only on
+  the `meos-windows-bootstrap` branch); once folded, Windows repoints to the
+  pin like the other platforms.
 
-Option (a) is the right fix and is the JMEOS-session's standing task.
+The full unit suite is green (907/907).

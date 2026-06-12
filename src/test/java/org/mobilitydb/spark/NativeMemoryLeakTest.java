@@ -34,7 +34,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

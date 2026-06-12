@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.geo;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosNative;
@@ -56,15 +56,15 @@ public final class DistanceUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+            Pointer gsptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (gsptr == null) { MeosMemory.free(tptr); return null; }
             try {
-                Pointer r = functions.tdistance_tgeo_geo(tptr, gsptr);
+                Pointer r = GeneratedFunctions.tdistance_tgeo_geo(tptr, gsptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -84,15 +84,15 @@ public final class DistanceUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
-                Pointer r = functions.tdistance_tgeo_tgeo(p1, p2);
+                Pointer r = GeneratedFunctions.tdistance_tgeo_tgeo(p1, p2);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -112,13 +112,13 @@ public final class DistanceUDFs {
         (hex, d) -> {
             if (hex == null || d == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(hex);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tdistance_tfloat_float(ptr, d);
+                Pointer r = GeneratedFunctions.tdistance_tfloat_float(ptr, d);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -137,13 +137,13 @@ public final class DistanceUDFs {
         (hex, i) -> {
             if (hex == null || i == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(hex);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (ptr == null) return null;
             try {
-                Pointer r = functions.tdistance_tint_int(ptr, i);
+                Pointer r = GeneratedFunctions.tdistance_tint_int(ptr, i);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -162,15 +162,15 @@ public final class DistanceUDFs {
         (hex1, hex2) -> {
             if (hex1 == null || hex2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(hex1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(hex1);
             if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(hex2);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(hex2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
-                Pointer r = functions.tdistance_tnumber_tnumber(p1, p2);
+                Pointer r = GeneratedFunctions.tdistance_tnumber_tnumber(p1, p2);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -191,9 +191,9 @@ public final class DistanceUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+            Pointer gsptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (gsptr == null) { MeosMemory.free(tptr); return null; }
             try {
                 double d = MeosNative.INSTANCE.nad_tgeo_geo(tptr, gsptr);
@@ -210,9 +210,9 @@ public final class DistanceUDFs {
         (trip, stboxHex) -> {
             if (trip == null || stboxHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer sptr = functions.stbox_from_hexwkb(stboxHex);
+            Pointer sptr = GeneratedFunctions.stbox_from_hexwkb(stboxHex);
             if (sptr == null) { MeosMemory.free(tptr); return null; }
             try {
                 double d = MeosNative.INSTANCE.nad_tgeo_stbox(tptr, sptr);
@@ -229,9 +229,9 @@ public final class DistanceUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
                 double d = MeosNative.INSTANCE.nad_tgeo_tgeo(p1, p2);
@@ -252,15 +252,15 @@ public final class DistanceUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+            Pointer gsptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (gsptr == null) { MeosMemory.free(tptr); return null; }
             try {
                 Pointer r = MeosNative.INSTANCE.nai_tgeo_geo(tptr, gsptr);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -280,15 +280,15 @@ public final class DistanceUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+            Pointer gsptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (gsptr == null) { MeosMemory.free(tptr); return null; }
             try {
                 Pointer r = MeosNative.INSTANCE.shortestline_tgeo_geo(tptr, gsptr);
                 if (r == null) return null;
                 try {
-                    return functions.geo_as_text(r, 6);
+                    return GeneratedFunctions.geo_as_text(r, 6);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -304,15 +304,15 @@ public final class DistanceUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
-                Pointer r = functions.shortestline_tgeo_tgeo(p1, p2);
+                Pointer r = GeneratedFunctions.shortestline_tgeo_tgeo(p1, p2);
                 if (r == null) return null;
                 try {
-                    return functions.geo_as_text(r, 6);
+                    return GeneratedFunctions.geo_as_text(r, 6);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -328,15 +328,15 @@ public final class DistanceUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
                 Pointer r = MeosNative.INSTANCE.nai_tgeo_tgeo(p1, p2);
                 if (r == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(r, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -366,9 +366,9 @@ public final class DistanceUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
-            Pointer gsptr = functions.geo_from_text(geomWkt, 0);
+            Pointer gsptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (gsptr == null) { MeosMemory.free(tptr); return null; }
             try {
                 double d = MeosNative.INSTANCE.nad_tgeo_geo(tptr, gsptr);
@@ -384,9 +384,9 @@ public final class DistanceUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
             if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
                 double d = MeosNative.INSTANCE.mindistance_tgeo_tgeo(

@@ -29,7 +29,7 @@ import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.junit.jupiter.api.*;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

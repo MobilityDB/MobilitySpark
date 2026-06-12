@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.h3;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF2;
@@ -59,13 +59,13 @@ public final class Th3IndexPrefilterUDFs {
         (tripHex, resolution) -> {
             if (tripHex == null || resolution == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(tripHex);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(tripHex);
             if (t == null) return null;
             try {
                 Pointer th3 = H3IndexJnrBindings.LIB.tgeompoint_to_th3index(t, resolution);
                 if (th3 == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(th3, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(th3, (byte) 0);
                 } finally {
                     MeosMemory.free(th3);
                 }
@@ -83,13 +83,13 @@ public final class Th3IndexPrefilterUDFs {
         (geoWkt, resolution) -> {
             if (geoWkt == null || resolution == null) return null;
             MeosThread.ensureReady();
-            Pointer gs = functions.geo_from_text(geoWkt, 4326);
+            Pointer gs = GeneratedFunctions.geo_from_text(geoWkt, 4326);
             if (gs == null) return null;
             try {
                 Pointer set = H3IndexJnrBindings.LIB.geo_to_h3index_set(gs, resolution);
                 if (set == null) return null;
                 try {
-                    return functions.set_as_hexwkb(set, (byte) 0);
+                    return GeneratedFunctions.set_as_hexwkb(set, (byte) 0);
                 } finally {
                     MeosMemory.free(set);
                 }
@@ -103,10 +103,10 @@ public final class Th3IndexPrefilterUDFs {
         (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer t1 = functions.temporal_from_hexwkb(h1);
+            Pointer t1 = GeneratedFunctions.temporal_from_hexwkb(h1);
             if (t1 == null) return null;
             try {
-                Pointer t2 = functions.temporal_from_hexwkb(h2);
+                Pointer t2 = GeneratedFunctions.temporal_from_hexwkb(h2);
                 if (t2 == null) return null;
                 try {
                     int r = H3IndexJnrBindings.LIB.ever_eq_th3index_th3index(t1, t2);
@@ -125,10 +125,10 @@ public final class Th3IndexPrefilterUDFs {
         (setHex, tripH3Hex) -> {
             if (setHex == null || tripH3Hex == null) return null;
             MeosThread.ensureReady();
-            Pointer set = functions.set_from_hexwkb(setHex);
+            Pointer set = GeneratedFunctions.set_from_hexwkb(setHex);
             if (set == null) return null;
             try {
-                Pointer t = functions.temporal_from_hexwkb(tripH3Hex);
+                Pointer t = GeneratedFunctions.temporal_from_hexwkb(tripH3Hex);
                 if (t == null) return null;
                 try {
                     int r = H3IndexJnrBindings.LIB.ever_eq_anyof_h3indexset_th3index(set, t);

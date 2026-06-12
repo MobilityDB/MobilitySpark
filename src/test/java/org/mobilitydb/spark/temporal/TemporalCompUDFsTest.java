@@ -27,7 +27,7 @@ package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

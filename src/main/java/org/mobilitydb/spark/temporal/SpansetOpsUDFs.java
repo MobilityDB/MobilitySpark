@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -52,8 +52,8 @@ public final class SpansetOpsUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.span_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.spanset_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.span_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.spanset_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return fn.apply(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
@@ -64,8 +64,8 @@ public final class SpansetOpsUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.spanset_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.span_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.spanset_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.span_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return fn.apply(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
@@ -76,8 +76,8 @@ public final class SpansetOpsUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.spanset_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.spanset_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.spanset_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.spanset_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return fn.apply(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
@@ -88,39 +88,39 @@ public final class SpansetOpsUDFs {
     // span × spanset
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> spanLeftSpanset       = spanSpanset(functions::left_span_spanset);
-    public static final UDF2<String, String, Boolean> spanOverleftSpanset   = spanSpanset(functions::overleft_span_spanset);
-    public static final UDF2<String, String, Boolean> spanRightSpanset      = spanSpanset(functions::right_span_spanset);
-    public static final UDF2<String, String, Boolean> spanOverrightSpanset  = spanSpanset(functions::overright_span_spanset);
-    public static final UDF2<String, String, Boolean> spanAdjacentSpanset   = spanSpanset(functions::adjacent_span_spanset);
-    public static final UDF2<String, String, Boolean> spanContainsSpanset   = spanSpanset(functions::contains_span_spanset);
-    public static final UDF2<String, String, Boolean> spanContainedSpanset  = spanSpanset(functions::contained_span_spanset);
-    public static final UDF2<String, String, Boolean> spanOverlapsSpanset   = spanSpanset(functions::overlaps_span_spanset);
+    public static final UDF2<String, String, Boolean> spanLeftSpanset       = spanSpanset(GeneratedFunctions::left_span_spanset);
+    public static final UDF2<String, String, Boolean> spanOverleftSpanset   = spanSpanset(GeneratedFunctions::overleft_span_spanset);
+    public static final UDF2<String, String, Boolean> spanRightSpanset      = spanSpanset(GeneratedFunctions::right_span_spanset);
+    public static final UDF2<String, String, Boolean> spanOverrightSpanset  = spanSpanset(GeneratedFunctions::overright_span_spanset);
+    public static final UDF2<String, String, Boolean> spanAdjacentSpanset   = spanSpanset(GeneratedFunctions::adjacent_span_spanset);
+    public static final UDF2<String, String, Boolean> spanContainsSpanset   = spanSpanset(GeneratedFunctions::contains_span_spanset);
+    public static final UDF2<String, String, Boolean> spanContainedSpanset  = spanSpanset(GeneratedFunctions::contained_span_spanset);
+    public static final UDF2<String, String, Boolean> spanOverlapsSpanset   = spanSpanset(GeneratedFunctions::overlaps_span_spanset);
 
     // ------------------------------------------------------------------
     // spanset × span
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> spansetLeftSpan       = spansetSpan(functions::left_spanset_span);
-    public static final UDF2<String, String, Boolean> spansetOverleftSpan   = spansetSpan(functions::overleft_spanset_span);
-    public static final UDF2<String, String, Boolean> spansetRightSpan      = spansetSpan(functions::right_spanset_span);
-    public static final UDF2<String, String, Boolean> spansetOverrightSpan  = spansetSpan(functions::overright_spanset_span);
-    public static final UDF2<String, String, Boolean> spansetAdjacentSpan   = spansetSpan(functions::adjacent_spanset_span);
-    public static final UDF2<String, String, Boolean> spansetContainedSpan  = spansetSpan(functions::contained_spanset_span);
-    public static final UDF2<String, String, Boolean> spansetOverlapsSpan   = spansetSpan(functions::overlaps_spanset_span);
+    public static final UDF2<String, String, Boolean> spansetLeftSpan       = spansetSpan(GeneratedFunctions::left_spanset_span);
+    public static final UDF2<String, String, Boolean> spansetOverleftSpan   = spansetSpan(GeneratedFunctions::overleft_spanset_span);
+    public static final UDF2<String, String, Boolean> spansetRightSpan      = spansetSpan(GeneratedFunctions::right_spanset_span);
+    public static final UDF2<String, String, Boolean> spansetOverrightSpan  = spansetSpan(GeneratedFunctions::overright_spanset_span);
+    public static final UDF2<String, String, Boolean> spansetAdjacentSpan   = spansetSpan(GeneratedFunctions::adjacent_spanset_span);
+    public static final UDF2<String, String, Boolean> spansetContainedSpan  = spansetSpan(GeneratedFunctions::contained_spanset_span);
+    public static final UDF2<String, String, Boolean> spansetOverlapsSpan   = spansetSpan(GeneratedFunctions::overlaps_spanset_span);
     // spansetContainsSpan already registered by SpanAlgebraUDFs; omitted here to avoid redundant duplicate.
 
     // ------------------------------------------------------------------
     // spanset × spanset
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, String, Boolean> spansetLeftSpanset       = spansetSpanset(functions::left_spanset_spanset);
-    public static final UDF2<String, String, Boolean> spansetOverleftSpanset   = spansetSpanset(functions::overleft_spanset_spanset);
-    public static final UDF2<String, String, Boolean> spansetRightSpanset      = spansetSpanset(functions::right_spanset_spanset);
-    public static final UDF2<String, String, Boolean> spansetOverrightSpanset  = spansetSpanset(functions::overright_spanset_spanset);
-    public static final UDF2<String, String, Boolean> spansetAdjacentSpanset   = spansetSpanset(functions::adjacent_spanset_spanset);
-    public static final UDF2<String, String, Boolean> spansetContainsSpanset  = spansetSpanset(functions::contains_spanset_spanset);
-    public static final UDF2<String, String, Boolean> spansetContainedSpanset = spansetSpanset(functions::contained_spanset_spanset);
+    public static final UDF2<String, String, Boolean> spansetLeftSpanset       = spansetSpanset(GeneratedFunctions::left_spanset_spanset);
+    public static final UDF2<String, String, Boolean> spansetOverleftSpanset   = spansetSpanset(GeneratedFunctions::overleft_spanset_spanset);
+    public static final UDF2<String, String, Boolean> spansetRightSpanset      = spansetSpanset(GeneratedFunctions::right_spanset_spanset);
+    public static final UDF2<String, String, Boolean> spansetOverrightSpanset  = spansetSpanset(GeneratedFunctions::overright_spanset_spanset);
+    public static final UDF2<String, String, Boolean> spansetAdjacentSpanset   = spansetSpanset(GeneratedFunctions::adjacent_spanset_spanset);
+    public static final UDF2<String, String, Boolean> spansetContainsSpanset  = spansetSpanset(GeneratedFunctions::contains_spanset_spanset);
+    public static final UDF2<String, String, Boolean> spansetContainedSpanset = spansetSpanset(GeneratedFunctions::contained_spanset_spanset);
     // spansetOverlaps(spanset, spanset) already registered by SpanAlgebraUDFs.
 
     public static void registerAll(SparkSession spark) {

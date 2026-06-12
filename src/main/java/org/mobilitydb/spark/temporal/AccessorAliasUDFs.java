@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -61,9 +61,9 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.intspan_width(p); }
+            try { return GeneratedFunctions.intspan_width(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -71,9 +71,9 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.bigintspan_width(p); }
+            try { return GeneratedFunctions.bigintspan_width(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -81,9 +81,9 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.floatspan_width(p); }
+            try { return GeneratedFunctions.floatspan_width(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -93,9 +93,9 @@ public final class AccessorAliasUDFs {
         (hex, boundspan) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.intspanset_width(p, boundspan != null && boundspan); }
+            try { return GeneratedFunctions.intspanset_width(p, boundspan != null && boundspan); }
             finally { MeosMemory.free(p); }
         };
 
@@ -103,9 +103,9 @@ public final class AccessorAliasUDFs {
         (hex, boundspan) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.bigintspanset_width(p, boundspan != null && boundspan); }
+            try { return GeneratedFunctions.bigintspanset_width(p, boundspan != null && boundspan); }
             finally { MeosMemory.free(p); }
         };
 
@@ -113,9 +113,9 @@ public final class AccessorAliasUDFs {
         (hex, boundspan) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.floatspanset_width(p, boundspan != null && boundspan); }
+            try { return GeneratedFunctions.floatspanset_width(p, boundspan != null && boundspan); }
             finally { MeosMemory.free(p); }
         };
 
@@ -127,9 +127,9 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.datespanset_start_date(p); }
+            try { return GeneratedFunctions.datespanset_start_date(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -137,9 +137,9 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.datespanset_end_date(p); }
+            try { return GeneratedFunctions.datespanset_end_date(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -147,9 +147,9 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.datespanset_num_dates(p); }
+            try { return GeneratedFunctions.datespanset_num_dates(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -157,10 +157,10 @@ public final class AccessorAliasUDFs {
         (hex, n) -> {
             if (hex == null || n == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.datespanset_date_n(p, n);
+                Pointer r = GeneratedFunctions.datespanset_date_n(p, n);
                 if (r == null) return null;
                 // Pointer has the date as 4 bytes — read as int
                 int date = r.getInt(0);
@@ -172,12 +172,12 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.datespanset_dates(p);
+                Pointer r = GeneratedFunctions.datespanset_dates(p);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -190,12 +190,12 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.tnumber_to_span(p);
+                Pointer r = GeneratedFunctions.tnumber_to_span(p);
                 if (r == null) return null;
-                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.span_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -208,10 +208,10 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int n = functions.set_num_values(p);
+                int n = GeneratedFunctions.set_num_values(p);
                 Integer[] out = new Integer[n];
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer outBuf = rt.getMemoryManager().allocateDirect(8);
@@ -228,10 +228,10 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int n = functions.set_num_values(p);
+                int n = GeneratedFunctions.set_num_values(p);
                 Long[] out = new Long[n];
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer outBuf = rt.getMemoryManager().allocateDirect(8);
@@ -261,7 +261,7 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -274,7 +274,7 @@ public final class AccessorAliasUDFs {
                     Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++) {
                         Pointer elem = arr.slice(i * TBOX_SIZE);
-                        out[i] = functions.tbox_as_hexwkb(elem, (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.tbox_as_hexwkb(elem, (byte) 0, sizeOut);
                     }
                     return out;
                 } finally { MeosMemory.free(arr); }
@@ -287,7 +287,7 @@ public final class AccessorAliasUDFs {
         (hex, vsize, vorigin) -> {
             if (hex == null || vsize == null || vorigin == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -297,7 +297,7 @@ public final class AccessorAliasUDFs {
                 try {
                     int n = countOut.getInt(0);
                     String[] out = new String[n];
-                    for (int i = 0; i < n; i++) out[i] = functions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
+                    for (int i = 0; i < n; i++) out[i] = GeneratedFunctions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(p); }
@@ -307,7 +307,7 @@ public final class AccessorAliasUDFs {
         (hex, vsize, vorigin) -> {
             if (hex == null || vsize == null || vorigin == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -317,7 +317,7 @@ public final class AccessorAliasUDFs {
                 try {
                     int n = countOut.getInt(0);
                     String[] out = new String[n];
-                    for (int i = 0; i < n; i++) out[i] = functions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
+                    for (int i = 0; i < n; i++) out[i] = GeneratedFunctions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(p); }
@@ -332,7 +332,7 @@ public final class AccessorAliasUDFs {
     private static String[] splitArrSpan(String hex, Integer n, SplitFn fn) {
         if (hex == null || n == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(hex);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
         if (t == null) return null;
         try {
             jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -342,7 +342,7 @@ public final class AccessorAliasUDFs {
             try {
                 int cnt = countOut.getInt(0);
                 String[] out = new String[cnt];
-                for (int i = 0; i < cnt; i++) out[i] = functions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
+                for (int i = 0; i < cnt; i++) out[i] = GeneratedFunctions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
                 return out;
             } finally { MeosMemory.free(arr); }
         } finally { MeosMemory.free(t); }
@@ -351,7 +351,7 @@ public final class AccessorAliasUDFs {
     private static String[] splitArrTbox(String hex, Integer n, SplitFn fn) {
         if (hex == null || n == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(hex);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
         if (t == null) return null;
         try {
             jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -362,7 +362,7 @@ public final class AccessorAliasUDFs {
                 int cnt = countOut.getInt(0);
                 String[] out = new String[cnt];
                 Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
-                for (int i = 0; i < cnt; i++) out[i] = functions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
+                for (int i = 0; i < cnt; i++) out[i] = GeneratedFunctions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
                 return out;
             } finally { MeosMemory.free(arr); }
         } finally { MeosMemory.free(t); }
@@ -371,7 +371,7 @@ public final class AccessorAliasUDFs {
     private static String[] splitArrStbox(String hex, Integer n, SplitFn fn) {
         if (hex == null || n == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(hex);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
         if (t == null) return null;
         try {
             jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -382,7 +382,7 @@ public final class AccessorAliasUDFs {
                 int cnt = countOut.getInt(0);
                 String[] out = new String[cnt];
                 Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
-                for (int i = 0; i < cnt; i++) out[i] = functions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
+                for (int i = 0; i < cnt; i++) out[i] = GeneratedFunctions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
                 return out;
             } finally { MeosMemory.free(arr); }
         } finally { MeosMemory.free(t); }
@@ -418,9 +418,9 @@ public final class AccessorAliasUDFs {
         timeBins = (hex, intervalStr, origin) -> {
             if (hex == null || intervalStr == null || origin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(hex);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (t == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -431,7 +431,7 @@ public final class AccessorAliasUDFs {
                 try {
                     int n = countOut.getInt(0);
                     String[] out = new String[n];
-                    for (int i = 0; i < n; i++) out[i] = functions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
+                    for (int i = 0; i < n; i++) out[i] = GeneratedFunctions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(t, iv); }
@@ -445,7 +445,7 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer s = functions.stbox_from_hexwkb(hex);
+            Pointer s = GeneratedFunctions.stbox_from_hexwkb(hex);
             if (s == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -456,7 +456,7 @@ public final class AccessorAliasUDFs {
                     int n = countOut.getInt(0);
                     String[] out = new String[n];
                     Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
-                    for (int i = 0; i < n; i++) out[i] = functions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
+                    for (int i = 0; i < n; i++) out[i] = GeneratedFunctions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(s); }
@@ -467,7 +467,7 @@ public final class AccessorAliasUDFs {
         timestamptzGetBin = (ts, intervalStr, origin) -> {
             if (ts == null || intervalStr == null || origin == null) return null;
             MeosThread.ensureReady();
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) return null;
             try {
                 long binStart = org.mobilitydb.spark.MeosNative.INSTANCE
@@ -482,7 +482,7 @@ public final class AccessorAliasUDFs {
         (hex, vsize, vorigin) -> {
             if (hex == null || vsize == null || vorigin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(hex);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (t == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -492,7 +492,7 @@ public final class AccessorAliasUDFs {
                 try {
                     int n = countOut.getInt(0);
                     String[] out = new String[n];
-                    for (int i = 0; i < n; i++) out[i] = functions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
+                    for (int i = 0; i < n; i++) out[i] = GeneratedFunctions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(t); }
@@ -502,7 +502,7 @@ public final class AccessorAliasUDFs {
         (hex, vsize, vorigin) -> {
             if (hex == null || vsize == null || vorigin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(hex);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (t == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -512,7 +512,7 @@ public final class AccessorAliasUDFs {
                 try {
                     int n = countOut.getInt(0);
                     String[] out = new String[n];
-                    for (int i = 0; i < n; i++) out[i] = functions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
+                    for (int i = 0; i < n; i++) out[i] = GeneratedFunctions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(t); }
@@ -522,9 +522,9 @@ public final class AccessorAliasUDFs {
         tstzspanBins = (hex, intervalStr, origin) -> {
             if (hex == null || intervalStr == null || origin == null) return null;
             MeosThread.ensureReady();
-            Pointer s = functions.span_from_hexwkb(hex);
+            Pointer s = GeneratedFunctions.span_from_hexwkb(hex);
             if (s == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(s); return null; }
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -535,7 +535,7 @@ public final class AccessorAliasUDFs {
                 try {
                     int n = countOut.getInt(0);
                     String[] out = new String[n];
-                    for (int i = 0; i < n; i++) out[i] = functions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
+                    for (int i = 0; i < n; i++) out[i] = GeneratedFunctions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(s, iv); }
@@ -545,7 +545,7 @@ public final class AccessorAliasUDFs {
         (hex, vsize, vorigin) -> {
             if (hex == null || vsize == null || vorigin == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -555,7 +555,7 @@ public final class AccessorAliasUDFs {
                 try {
                     int n = countOut.getInt(0);
                     String[] out = new String[n];
-                    for (int i = 0; i < n; i++) out[i] = functions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
+                    for (int i = 0; i < n; i++) out[i] = GeneratedFunctions.span_as_hexwkb(arr.slice(i * SPAN_SIZE), (byte) 0);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(p); }
@@ -565,7 +565,7 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
@@ -578,7 +578,7 @@ public final class AccessorAliasUDFs {
                     Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++) {
                         Pointer elem = arr.slice(i * STBOX_SIZE);
-                        out[i] = functions.stbox_as_hexwkb(elem, (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.stbox_as_hexwkb(elem, (byte) 0, sizeOut);
                     }
                     return out;
                 } finally { MeosMemory.free(arr); }
@@ -593,7 +593,7 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try { return org.mobilitydb.spark.MeosNative.INSTANCE.tnumber_avg_value(p); }
             finally { MeosMemory.free(p); }
@@ -603,10 +603,10 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int n = functions.set_num_values(p);
+                int n = GeneratedFunctions.set_num_values(p);
                 Double[] out = new Double[n];
                 jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                 Pointer outBuf = rt.getMemoryManager().allocateDirect(8);
@@ -628,9 +628,9 @@ public final class AccessorAliasUDFs {
             if (bytes == null) return null;
             MeosThread.ensureReady();
             String hex = HexFormat.of().formatHex(bytes).toUpperCase();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.set_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
     }
@@ -644,16 +644,16 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int n = functions.spanset_num_spans(p);
+                int n = GeneratedFunctions.spanset_num_spans(p);
                 String[] out = new String[n];
                 for (int i = 0; i < n; i++) {
                     // 1-based per MEOS convention
-                    Pointer span = functions.spanset_span_n(p, i + 1);
+                    Pointer span = GeneratedFunctions.spanset_span_n(p, i + 1);
                     if (span == null) { out[i] = null; continue; }
-                    out[i] = functions.span_as_hexwkb(span, (byte) 0);
+                    out[i] = GeneratedFunctions.span_as_hexwkb(span, (byte) 0);
                     // span_n returns a fresh copy in newer MEOS; free it
                     MeosMemory.free(span);
                 }
@@ -778,7 +778,7 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(hex);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (t == null) return null;
             try {
                 int temptype = t.getByte(4) & 0xff;
@@ -791,7 +791,7 @@ public final class AccessorAliasUDFs {
                 Pointer s = org.mobilitydb.spark.MeosNative.INSTANCE
                     .set_make_free(values, count, basetype, false);
                 if (s == null) return null;
-                try { return functions.set_as_hexwkb(s, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(s, (byte) 0); }
                 finally { MeosMemory.free(s); }
             } finally { MeosMemory.free(t); }
         };
@@ -806,15 +806,15 @@ public final class AccessorAliasUDFs {
     private static String segmDuration(String hex, String intervalStr, Boolean strict, boolean atleast) {
         if (hex == null || intervalStr == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(hex);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
         if (t == null) return null;
-        Pointer iv = functions.pg_interval_in(intervalStr, -1);
+        Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
         if (iv == null) { MeosMemory.free(t); return null; }
         try {
             Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE
                 .temporal_segm_duration(t, iv, atleast, strict != null && strict);
             if (r == null) return null;
-            try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
             finally { MeosMemory.free(r); }
         } finally { MeosMemory.free(t, iv); }
     }
@@ -825,7 +825,7 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer s = functions.stbox_from_hexwkb(hex);
+            Pointer s = GeneratedFunctions.stbox_from_hexwkb(hex);
             if (s == null) return null;
             try {
                 Pointer b = org.mobilitydb.spark.MeosNative.INSTANCE.stbox_to_gbox(s);
@@ -841,7 +841,7 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer s = functions.stbox_from_hexwkb(hex);
+            Pointer s = GeneratedFunctions.stbox_from_hexwkb(hex);
             if (s == null) return null;
             try {
                 Pointer b = org.mobilitydb.spark.MeosNative.INSTANCE.stbox_to_box3d(s);
@@ -855,14 +855,14 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 // Try tgeompoint → tgeometry first; if that fails, try tgeography → tgeometry
                 Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.tgeompoint_to_tgeometry(p);
                 if (r == null) r = org.mobilitydb.spark.MeosNative.INSTANCE.tgeography_to_tgeometry(p);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -871,13 +871,13 @@ public final class AccessorAliasUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.tgeogpoint_to_tgeography(p);
                 if (r == null) r = org.mobilitydb.spark.MeosNative.INSTANCE.tgeometry_to_tgeography(p);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };

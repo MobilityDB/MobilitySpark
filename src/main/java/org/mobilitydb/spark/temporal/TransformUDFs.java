@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -79,13 +79,13 @@ public final class TransformUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.temporal_to_tinstant(ptr);
+                Pointer result = GeneratedFunctions.temporal_to_tinstant(ptr);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -101,13 +101,13 @@ public final class TransformUDFs {
         (s, interp) -> {
             if (s == null || interp == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.temporal_to_tsequence(ptr, interpToInt(interp));
+                Pointer result = GeneratedFunctions.temporal_to_tsequence(ptr, interpToInt(interp));
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -123,13 +123,13 @@ public final class TransformUDFs {
         (s, interp) -> {
             if (s == null || interp == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.temporal_to_tsequenceset(ptr, interpToInt(interp));
+                Pointer result = GeneratedFunctions.temporal_to_tsequenceset(ptr, interpToInt(interp));
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -149,14 +149,14 @@ public final class TransformUDFs {
         (s, interpStr) -> {
             if (s == null || interpStr == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
                 int interpInt = interpToInt(interpStr);
-                Pointer result = functions.temporal_set_interp(ptr, interpInt);
+                Pointer result = GeneratedFunctions.temporal_set_interp(ptr, interpInt);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -175,13 +175,13 @@ public final class TransformUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.tfloat_to_tint(ptr);
+                Pointer result = GeneratedFunctions.tfloat_to_tint(ptr);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -196,13 +196,13 @@ public final class TransformUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.tint_to_tfloat(ptr);
+                Pointer result = GeneratedFunctions.tint_to_tfloat(ptr);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -223,13 +223,13 @@ public final class TransformUDFs {
         (s, shift) -> {
             if (s == null || shift == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.tint_shift_value(ptr, shift);
+                Pointer result = GeneratedFunctions.tint_shift_value(ptr, shift);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -242,13 +242,13 @@ public final class TransformUDFs {
         (s, width) -> {
             if (s == null || width == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.tint_scale_value(ptr, width);
+                Pointer result = GeneratedFunctions.tint_scale_value(ptr, width);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -261,13 +261,13 @@ public final class TransformUDFs {
         (s, shift, width) -> {
             if (s == null || shift == null || width == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.tint_shift_scale_value(ptr, shift, width);
+                Pointer result = GeneratedFunctions.tint_shift_scale_value(ptr, shift, width);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -286,13 +286,13 @@ public final class TransformUDFs {
         (s, shift) -> {
             if (s == null || shift == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.tfloat_shift_value(ptr, shift);
+                Pointer result = GeneratedFunctions.tfloat_shift_value(ptr, shift);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -307,13 +307,13 @@ public final class TransformUDFs {
         (s, width) -> {
             if (s == null || width == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.tfloat_scale_value(ptr, width);
+                Pointer result = GeneratedFunctions.tfloat_scale_value(ptr, width);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -328,13 +328,13 @@ public final class TransformUDFs {
         (s, shift, width) -> {
             if (s == null || shift == null || width == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.tfloat_shift_scale_value(ptr, shift, width);
+                Pointer result = GeneratedFunctions.tfloat_shift_scale_value(ptr, shift, width);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -353,16 +353,16 @@ public final class TransformUDFs {
         (s, shiftStr) -> {
             if (s == null || shiftStr == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer shiftPtr = functions.pg_interval_in(shiftStr, -1);
+                Pointer shiftPtr = GeneratedFunctions.pg_interval_in(shiftStr, -1);
                 if (shiftPtr == null) return null;
                 try {
-                    Pointer result = functions.temporal_shift_time(tptr, shiftPtr);
+                    Pointer result = GeneratedFunctions.temporal_shift_time(tptr, shiftPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -380,16 +380,16 @@ public final class TransformUDFs {
         (s, scaleStr) -> {
             if (s == null || scaleStr == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer scalePtr = functions.pg_interval_in(scaleStr, -1);
+                Pointer scalePtr = GeneratedFunctions.pg_interval_in(scaleStr, -1);
                 if (scalePtr == null) return null;
                 try {
-                    Pointer result = functions.temporal_scale_time(tptr, scalePtr);
+                    Pointer result = GeneratedFunctions.temporal_scale_time(tptr, scalePtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -408,19 +408,19 @@ public final class TransformUDFs {
         (s, shiftStr, scaleStr) -> {
             if (s == null || shiftStr == null || scaleStr == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(s);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (tptr == null) return null;
             try {
-                Pointer shiftPtr = functions.pg_interval_in(shiftStr, -1);
+                Pointer shiftPtr = GeneratedFunctions.pg_interval_in(shiftStr, -1);
                 if (shiftPtr == null) return null;
                 try {
-                    Pointer scalePtr = functions.pg_interval_in(scaleStr, -1);
+                    Pointer scalePtr = GeneratedFunctions.pg_interval_in(scaleStr, -1);
                     if (scalePtr == null) return null;
                     try {
-                        Pointer result = functions.temporal_shift_scale_time(tptr, shiftPtr, scalePtr);
+                        Pointer result = GeneratedFunctions.temporal_shift_scale_time(tptr, shiftPtr, scalePtr);
                         if (result == null) return null;
                         try {
-                            return functions.temporal_as_hexwkb(result, (byte) 0);
+                            return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                         } finally {
                             MeosMemory.free(result);
                         }
@@ -445,13 +445,13 @@ public final class TransformUDFs {
         (s, srid) -> {
             if (s == null || srid == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.tspatial_set_srid(ptr, srid);
+                Pointer result = GeneratedFunctions.tspatial_set_srid(ptr, srid);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -466,13 +466,13 @@ public final class TransformUDFs {
         (s, maxdd) -> {
             if (s == null || maxdd == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.temporal_round(ptr, maxdd);
+                Pointer result = GeneratedFunctions.temporal_round(ptr, maxdd);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -492,13 +492,13 @@ public final class TransformUDFs {
         (s, dist) -> {
             if (s == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.temporal_simplify_dp(ptr, dist, false);
+                Pointer result = GeneratedFunctions.temporal_simplify_dp(ptr, dist, false);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -514,13 +514,13 @@ public final class TransformUDFs {
         (s, dist) -> {
             if (s == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.temporal_simplify_max_dist(ptr, dist, false);
+                Pointer result = GeneratedFunctions.temporal_simplify_max_dist(ptr, dist, false);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -538,13 +538,13 @@ public final class TransformUDFs {
         (s, dist) -> {
             if (s == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.temporal_simplify_min_dist(ptr, dist);
+                Pointer result = GeneratedFunctions.temporal_simplify_min_dist(ptr, dist);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -560,16 +560,16 @@ public final class TransformUDFs {
         (s, durationStr) -> {
             if (s == null || durationStr == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer ivPtr = functions.pg_interval_in(durationStr, -1);
+                Pointer ivPtr = GeneratedFunctions.pg_interval_in(durationStr, -1);
                 if (ivPtr == null) return null;
                 try {
-                    Pointer result = functions.temporal_simplify_min_tdelta(ptr, ivPtr);
+                    Pointer result = GeneratedFunctions.temporal_simplify_min_tdelta(ptr, ivPtr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -588,16 +588,16 @@ public final class TransformUDFs {
         (s, durationStr) -> {
             if (s == null || durationStr == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer ivPtr = functions.pg_interval_in(durationStr, -1);
+                Pointer ivPtr = GeneratedFunctions.pg_interval_in(durationStr, -1);
                 if (ivPtr == null) return null;
                 try {
-                    Pointer result = functions.temporal_tprecision(ptr, ivPtr, PG_EPOCH);
+                    Pointer result = GeneratedFunctions.temporal_tprecision(ptr, ivPtr, PG_EPOCH);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -617,10 +617,10 @@ public final class TransformUDFs {
         (s, durationStr, interpStr) -> {
             if (s == null || durationStr == null || interpStr == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer ivPtr = functions.pg_interval_in(durationStr, -1);
+                Pointer ivPtr = GeneratedFunctions.pg_interval_in(durationStr, -1);
                 if (ivPtr == null) return null;
                 try {
                     int interp;
@@ -629,10 +629,10 @@ public final class TransformUDFs {
                         case "Step":     interp = 2; break;
                         default:         interp = 3; break;
                     }
-                    Pointer result = functions.temporal_tsample(ptr, ivPtr, PG_EPOCH, interp);
+                    Pointer result = GeneratedFunctions.temporal_tsample(ptr, ivPtr, PG_EPOCH, interp);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -651,13 +651,13 @@ public final class TransformUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(s);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(s);
             if (ptr == null) return null;
             try {
-                Pointer gsPtr = functions.tpoint_trajectory(ptr, false);
+                Pointer gsPtr = GeneratedFunctions.tpoint_trajectory(ptr, false);
                 if (gsPtr == null) return null;
                 try {
-                    return functions.geo_as_text(gsPtr, 6);
+                    return GeneratedFunctions.geo_as_text(gsPtr, 6);
                 } finally {
                     MeosMemory.free(gsPtr);
                 }
@@ -676,12 +676,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.floatset_ceil(p);
+                Pointer r = GeneratedFunctions.floatset_ceil(p);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -692,12 +692,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.floatset_floor(p);
+                Pointer r = GeneratedFunctions.floatset_floor(p);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -708,12 +708,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.floatset_degrees(p, false);
+                Pointer r = GeneratedFunctions.floatset_degrees(p, false);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -724,12 +724,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.floatset_radians(p);
+                Pointer r = GeneratedFunctions.floatset_radians(p);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -744,12 +744,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.textset_lower(p);
+                Pointer r = GeneratedFunctions.textset_lower(p);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -760,12 +760,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.textset_upper(p);
+                Pointer r = GeneratedFunctions.textset_upper(p);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -776,12 +776,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.textset_initcap(p);
+                Pointer r = GeneratedFunctions.textset_initcap(p);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -797,15 +797,15 @@ public final class TransformUDFs {
         (hex, shift, width) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 int s = (shift == null) ? 0 : shift;
                 int w = (width == null) ? 0 : width;
-                Pointer r = functions.intspan_shift_scale(p, s, w,
+                Pointer r = GeneratedFunctions.intspan_shift_scale(p, s, w,
                     shift != null, width != null);
                 if (r == null) return null;
-                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.span_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -816,15 +816,15 @@ public final class TransformUDFs {
         (hex, shift, width) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 double s = (shift == null) ? 0.0 : shift;
                 double w = (width == null) ? 0.0 : width;
-                Pointer r = functions.floatspan_shift_scale(p, s, w,
+                Pointer r = GeneratedFunctions.floatspan_shift_scale(p, s, w,
                     shift != null, width != null);
                 if (r == null) return null;
-                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.span_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -839,15 +839,15 @@ public final class TransformUDFs {
         (hex, shift, width) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 int s = (shift == null) ? 0 : shift;
                 int w = (width == null) ? 0 : width;
-                Pointer r = functions.intspanset_shift_scale(p, s, w,
+                Pointer r = GeneratedFunctions.intspanset_shift_scale(p, s, w,
                     shift != null, width != null);
                 if (r == null) return null;
-                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -858,15 +858,15 @@ public final class TransformUDFs {
         (hex, shift, width) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 double s = (shift == null) ? 0.0 : shift;
                 double w = (width == null) ? 0.0 : width;
-                Pointer r = functions.floatspanset_shift_scale(p, s, w,
+                Pointer r = GeneratedFunctions.floatspanset_shift_scale(p, s, w,
                     shift != null, width != null);
                 if (r == null) return null;
-                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -877,12 +877,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.floatspanset_ceil(p);
+                Pointer r = GeneratedFunctions.floatspanset_ceil(p);
                 if (r == null) return null;
-                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -893,12 +893,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.floatspanset_floor(p);
+                Pointer r = GeneratedFunctions.floatspanset_floor(p);
                 if (r == null) return null;
-                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -909,12 +909,12 @@ public final class TransformUDFs {
         (hex, decimals) -> {
             if (hex == null || decimals == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.floatspanset_round(p, decimals);
+                Pointer r = GeneratedFunctions.floatspanset_round(p, decimals);
                 if (r == null) return null;
-                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -925,12 +925,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.intspanset_to_floatspanset(p);
+                Pointer r = GeneratedFunctions.intspanset_to_floatspanset(p);
                 if (r == null) return null;
-                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -941,12 +941,12 @@ public final class TransformUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.floatspanset_to_intspanset(p);
+                Pointer r = GeneratedFunctions.floatspanset_to_intspanset(p);
                 if (r == null) return null;
-                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -1035,12 +1035,12 @@ public final class TransformUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tstzspan(p);
+                Pointer r = GeneratedFunctions.temporal_to_tstzspan(p);
                 if (r == null) return null;
-                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.span_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -1049,12 +1049,12 @@ public final class TransformUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.span_to_spanset(p);
+                Pointer r = GeneratedFunctions.span_to_spanset(p);
                 if (r == null) return null;
-                try { return functions.spanset_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -1063,12 +1063,12 @@ public final class TransformUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.tstzset_to_dateset(p);
+                Pointer r = GeneratedFunctions.tstzset_to_dateset(p);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -1077,12 +1077,12 @@ public final class TransformUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.dateset_to_tstzset(p);
+                Pointer r = GeneratedFunctions.dateset_to_tstzset(p);
                 if (r == null) return null;
-                try { return functions.set_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.set_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };

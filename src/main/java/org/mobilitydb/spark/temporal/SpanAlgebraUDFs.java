@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -59,15 +59,15 @@ public final class SpanAlgebraUDFs {
     // Helper: parse hex-WKB string → span Pointer
     // ------------------------------------------------------------------
     private static Pointer spanPtr(String hex) {
-        return hex == null ? null : functions.span_from_hexwkb(hex);
+        return hex == null ? null : GeneratedFunctions.span_from_hexwkb(hex);
     }
 
     private static Pointer spansetPtr(String hex) {
-        return hex == null ? null : functions.spanset_from_hexwkb(hex);
+        return hex == null ? null : GeneratedFunctions.spanset_from_hexwkb(hex);
     }
 
     private static Pointer setPtr(String hex) {
-        return hex == null ? null : functions.set_from_hexwkb(hex);
+        return hex == null ? null : GeneratedFunctions.set_from_hexwkb(hex);
     }
 
     // ------------------------------------------------------------------
@@ -84,7 +84,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.contains_span_span(p1, p2);
+            return GeneratedFunctions.contains_span_span(p1, p2);
         };
 
     // spanContainedIn("[2,5)", "[1,10)") → true
@@ -93,7 +93,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.contained_span_span(p1, p2);
+            return GeneratedFunctions.contained_span_span(p1, p2);
         };
 
     // spanOverlaps("[1,5)", "[3,10)") → true
@@ -102,7 +102,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.overlaps_span_span(p1, p2);
+            return GeneratedFunctions.overlaps_span_span(p1, p2);
         };
 
     // spanAdjacent("[1,5)", "[5,10)") → true
@@ -111,7 +111,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.adjacent_span_span(p1, p2);
+            return GeneratedFunctions.adjacent_span_span(p1, p2);
         };
 
     // spanLeft("[1,5)", "[6,10)") → true
@@ -120,7 +120,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.left_span_span(p1, p2);
+            return GeneratedFunctions.left_span_span(p1, p2);
         };
 
     // spanRight("[6,10)", "[1,5)") → true
@@ -129,7 +129,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.right_span_span(p1, p2);
+            return GeneratedFunctions.right_span_span(p1, p2);
         };
 
     // spanOverleft("[1,5)", "[3,10)") → true (s1 does not extend right of s2)
@@ -138,7 +138,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.overleft_span_span(p1, p2);
+            return GeneratedFunctions.overleft_span_span(p1, p2);
         };
 
     // spanOverright("[3,10)", "[1,5)") → true (s1 does not extend left of s2)
@@ -147,7 +147,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.overright_span_span(p1, p2);
+            return GeneratedFunctions.overright_span_span(p1, p2);
         };
 
     // ------------------------------------------------------------------
@@ -164,9 +164,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            Pointer ss = functions.union_span_span(p1, p2);
+            Pointer ss = GeneratedFunctions.union_span_span(p1, p2);
             if (ss == null) return null;
-            return functions.spanset_as_hexwkb(ss, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(ss, (byte) 0);
         };
 
     // spanIntersection("[1,10)", "[3,7)") → "[3,7)"  (Span hex-WKB; null if disjoint)
@@ -175,9 +175,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            Pointer s = functions.intersection_span_span(p1, p2);
+            Pointer s = GeneratedFunctions.intersection_span_span(p1, p2);
             if (s == null) return null;
-            return functions.span_as_hexwkb(s, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(s, (byte) 0);
         };
 
     // spanMinus("[1,10)", "[3,7)") → "{[1,3),[7,10)}"  (SpanSet hex-WKB)
@@ -186,9 +186,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            Pointer ss = functions.minus_span_span(p1, p2);
+            Pointer ss = GeneratedFunctions.minus_span_span(p1, p2);
             if (ss == null) return null;
-            return functions.spanset_as_hexwkb(ss, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(ss, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -203,7 +203,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.distance_tstzspan_tstzspan(p1, p2);
+            return GeneratedFunctions.distance_tstzspan_tstzspan(p1, p2);
         };
 
     // Per-type span distance (each returns the type's natural distance scalar)
@@ -212,28 +212,28 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.distance_intspan_intspan(p1, p2);
+            return GeneratedFunctions.distance_intspan_intspan(p1, p2);
         };
     public static final UDF2<String, String, Long> bigintspanDistance =
         (s1, s2) -> {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.distance_bigintspan_bigintspan(p1, p2);
+            return GeneratedFunctions.distance_bigintspan_bigintspan(p1, p2);
         };
     public static final UDF2<String, String, Double> floatspanDistance =
         (s1, s2) -> {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.distance_floatspan_floatspan(p1, p2);
+            return GeneratedFunctions.distance_floatspan_floatspan(p1, p2);
         };
     public static final UDF2<String, String, Integer> datespanDistance =
         (s1, s2) -> {
             MeosThread.ensureReady();
             Pointer p1 = spanPtr(s1), p2 = spanPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.distance_datespan_datespan(p1, p2);
+            return GeneratedFunctions.distance_datespan_datespan(p1, p2);
         };
 
     // Span expand: span + delta → expanded span
@@ -246,7 +246,7 @@ public final class SpanAlgebraUDFs {
             try {
                 Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.intspan_expand(p, v.intValue());
                 if (r == null) return null;
-                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.span_as_hexwkb(r, (byte) 0); }
                 finally { org.mobilitydb.spark.MeosMemory.free(r); }
             } finally { org.mobilitydb.spark.MeosMemory.free(p); }
         };
@@ -259,7 +259,7 @@ public final class SpanAlgebraUDFs {
             try {
                 Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.bigintspan_expand(p, v.longValue());
                 if (r == null) return null;
-                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.span_as_hexwkb(r, (byte) 0); }
                 finally { org.mobilitydb.spark.MeosMemory.free(r); }
             } finally { org.mobilitydb.spark.MeosMemory.free(p); }
         };
@@ -272,7 +272,7 @@ public final class SpanAlgebraUDFs {
             try {
                 Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE.floatspan_expand(p, v.doubleValue());
                 if (r == null) return null;
-                try { return functions.span_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.span_as_hexwkb(r, (byte) 0); }
                 finally { org.mobilitydb.spark.MeosMemory.free(r); }
             } finally { org.mobilitydb.spark.MeosMemory.free(p); }
         };
@@ -290,7 +290,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer pss = spansetPtr(ss), ps = spanPtr(s);
             if (pss == null || ps == null) return null;
-            return functions.contains_spanset_span(pss, ps);
+            return GeneratedFunctions.contains_spanset_span(pss, ps);
         };
 
     // spanContainedInSpanset("[2,4)", "{[1,5),[7,10)}") → true
@@ -299,7 +299,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer ps = spanPtr(s), pss = spansetPtr(ss);
             if (ps == null || pss == null) return null;
-            return functions.contained_span_spanset(ps, pss);
+            return GeneratedFunctions.contained_span_spanset(ps, pss);
         };
 
     // spansetOverlaps("{[1,5)}", "{[3,10)}") → true
@@ -308,7 +308,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spansetPtr(ss1), p2 = spansetPtr(ss2);
             if (p1 == null || p2 == null) return null;
-            return functions.overlaps_spanset_spanset(p1, p2);
+            return GeneratedFunctions.overlaps_spanset_spanset(p1, p2);
         };
 
     // ------------------------------------------------------------------
@@ -324,9 +324,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spansetPtr(ss1), p2 = spansetPtr(ss2);
             if (p1 == null || p2 == null) return null;
-            Pointer r = functions.union_spanset_spanset(p1, p2);
+            Pointer r = GeneratedFunctions.union_spanset_spanset(p1, p2);
             if (r == null) return null;
-            return functions.spanset_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0);
         };
 
     // spansetIntersection("{[1,10)}", "{[3,7)}") → "{[3,7)}"
@@ -335,9 +335,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spansetPtr(ss1), p2 = spansetPtr(ss2);
             if (p1 == null || p2 == null) return null;
-            Pointer r = functions.intersection_spanset_spanset(p1, p2);
+            Pointer r = GeneratedFunctions.intersection_spanset_spanset(p1, p2);
             if (r == null) return null;
-            return functions.spanset_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0);
         };
 
     // spansetMinus("{[1,10)}", "{[3,7)}") → "{[1,3),[7,10)}"
@@ -346,9 +346,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = spansetPtr(ss1), p2 = spansetPtr(ss2);
             if (p1 == null || p2 == null) return null;
-            Pointer r = functions.minus_spanset_spanset(p1, p2);
+            Pointer r = GeneratedFunctions.minus_spanset_spanset(p1, p2);
             if (r == null) return null;
-            return functions.spanset_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -364,9 +364,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer pss = spansetPtr(ss), ps = spanPtr(s);
             if (pss == null || ps == null) return null;
-            Pointer r = functions.intersection_spanset_span(pss, ps);
+            Pointer r = GeneratedFunctions.intersection_spanset_span(pss, ps);
             if (r == null) return null;
-            return functions.spanset_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0);
         };
 
     // spansetUnionSpan("{[1,5)}", "[7,10)") → "{[1,5),[7,10)}"
@@ -375,9 +375,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer pss = spansetPtr(ss), ps = spanPtr(s);
             if (pss == null || ps == null) return null;
-            Pointer r = functions.union_spanset_span(pss, ps);
+            Pointer r = GeneratedFunctions.union_spanset_span(pss, ps);
             if (r == null) return null;
-            return functions.spanset_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0);
         };
 
     // spansetMinusSpan("{[1,10)}", "[3,7)") → "{[1,3),[7,10)}"
@@ -386,9 +386,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer pss = spansetPtr(ss), ps = spanPtr(s);
             if (pss == null || ps == null) return null;
-            Pointer r = functions.minus_spanset_span(pss, ps);
+            Pointer r = GeneratedFunctions.minus_spanset_span(pss, ps);
             if (r == null) return null;
-            return functions.spanset_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -403,7 +403,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = setPtr(s1), p2 = setPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.contains_set_set(p1, p2);
+            return GeneratedFunctions.contains_set_set(p1, p2);
         };
 
     // setOverlaps("{1,2,3}", "{3,4,5}") → true
@@ -412,7 +412,7 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = setPtr(s1), p2 = setPtr(s2);
             if (p1 == null || p2 == null) return null;
-            return functions.overlaps_set_set(p1, p2);
+            return GeneratedFunctions.overlaps_set_set(p1, p2);
         };
 
     // ------------------------------------------------------------------
@@ -427,9 +427,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = setPtr(s1), p2 = setPtr(s2);
             if (p1 == null || p2 == null) return null;
-            Pointer r = functions.union_set_set(p1, p2);
+            Pointer r = GeneratedFunctions.union_set_set(p1, p2);
             if (r == null) return null;
-            return functions.set_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.set_as_hexwkb(r, (byte) 0);
         };
 
     // setIntersection("{1,2,3,4}", "{3,4,5}") → "{3,4}"
@@ -438,9 +438,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = setPtr(s1), p2 = setPtr(s2);
             if (p1 == null || p2 == null) return null;
-            Pointer r = functions.intersection_set_set(p1, p2);
+            Pointer r = GeneratedFunctions.intersection_set_set(p1, p2);
             if (r == null) return null;
-            return functions.set_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.set_as_hexwkb(r, (byte) 0);
         };
 
     // setMinus("{1,2,3,4}", "{3,4,5}") → "{1,2}"
@@ -449,9 +449,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p1 = setPtr(s1), p2 = setPtr(s2);
             if (p1 == null || p2 == null) return null;
-            Pointer r = functions.minus_set_set(p1, p2);
+            Pointer r = GeneratedFunctions.minus_set_set(p1, p2);
             if (r == null) return null;
-            return functions.set_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.set_as_hexwkb(r, (byte) 0);
         };
 
     // milliseconds from Unix epoch (1970-01-01) to PG epoch (2000-01-01)
@@ -468,9 +468,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p = spanPtr(hex);
             if (p == null) return null;
-            Pointer result = functions.intspan_to_floatspan(p);
+            Pointer result = GeneratedFunctions.intspan_to_floatspan(p);
             if (result == null) return null;
-            try { return functions.span_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.span_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         };
 
@@ -480,9 +480,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p = spanPtr(hex);
             if (p == null) return null;
-            Pointer result = functions.floatspan_to_intspan(p);
+            Pointer result = GeneratedFunctions.floatspan_to_intspan(p);
             if (result == null) return null;
-            try { return functions.span_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.span_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         };
 
@@ -492,9 +492,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p = spanPtr(hex);
             if (p == null) return null;
-            Pointer result = functions.datespan_to_tstzspan(p);
+            Pointer result = GeneratedFunctions.datespan_to_tstzspan(p);
             if (result == null) return null;
-            try { return functions.span_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.span_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         };
 
@@ -504,9 +504,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p = spanPtr(hex);
             if (p == null) return null;
-            Pointer result = functions.tstzspan_to_datespan(p);
+            Pointer result = GeneratedFunctions.tstzspan_to_datespan(p);
             if (result == null) return null;
-            try { return functions.span_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.span_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         };
 
@@ -521,11 +521,11 @@ public final class SpanAlgebraUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer result = functions.intset_to_floatset(p);
+            Pointer result = GeneratedFunctions.intset_to_floatset(p);
             if (result == null) return null;
-            try { return functions.set_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         };
 
@@ -533,11 +533,11 @@ public final class SpanAlgebraUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer result = functions.floatset_to_intset(p);
+            Pointer result = GeneratedFunctions.floatset_to_intset(p);
             if (result == null) return null;
-            try { return functions.set_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         };
 
@@ -545,11 +545,11 @@ public final class SpanAlgebraUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer result = functions.set_to_span(p);
+            Pointer result = GeneratedFunctions.set_to_span(p);
             if (result == null) return null;
-            try { return functions.span_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.span_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         };
 
@@ -557,11 +557,11 @@ public final class SpanAlgebraUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer result = functions.set_to_spanset(p);
+            Pointer result = GeneratedFunctions.set_to_spanset(p);
             if (result == null) return null;
-            try { return functions.spanset_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.spanset_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         };
 
@@ -578,9 +578,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p = spanPtr(hex);
             if (p == null) return null;
-            Pointer iv = functions.tstzspan_duration(p);
+            Pointer iv = GeneratedFunctions.tstzspan_duration(p);
             if (iv == null) return null;
-            return functions.pg_interval_out(iv);
+            return GeneratedFunctions.pg_interval_out(iv);
         };
 
     public static final UDF1<String, String> datespanDuration =
@@ -589,9 +589,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p = spanPtr(hex);
             if (p == null) return null;
-            Pointer iv = functions.datespan_duration(p);
+            Pointer iv = GeneratedFunctions.datespan_duration(p);
             if (iv == null) return null;
-            return functions.pg_interval_out(iv);
+            return GeneratedFunctions.pg_interval_out(iv);
         };
 
     // ------------------------------------------------------------------
@@ -608,11 +608,11 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p = spanPtr(hex);
             if (p == null) return null;
-            Pointer shiftIv = shiftStr != null ? functions.pg_interval_in(shiftStr, -1) : null;
-            Pointer scaleIv = scaleStr != null ? functions.pg_interval_in(scaleStr, -1) : null;
-            Pointer result = functions.tstzspan_shift_scale(p, shiftIv, scaleIv);
+            Pointer shiftIv = shiftStr != null ? GeneratedFunctions.pg_interval_in(shiftStr, -1) : null;
+            Pointer scaleIv = scaleStr != null ? GeneratedFunctions.pg_interval_in(scaleStr, -1) : null;
+            Pointer result = GeneratedFunctions.tstzspan_shift_scale(p, shiftIv, scaleIv);
             if (result == null) return null;
-            try { return functions.span_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.span_as_hexwkb(result, (byte) 0); }
             finally {
                 MeosMemory.free(result);
                 if (shiftIv != null) MeosMemory.free(shiftIv);
@@ -627,11 +627,11 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             Pointer p = spansetPtr(hex);
             if (p == null) return null;
-            Pointer shiftIv = shiftStr != null ? functions.pg_interval_in(shiftStr, -1) : null;
-            Pointer scaleIv = scaleStr != null ? functions.pg_interval_in(scaleStr, -1) : null;
-            Pointer result = functions.tstzspanset_shift_scale(p, shiftIv, scaleIv);
+            Pointer shiftIv = shiftStr != null ? GeneratedFunctions.pg_interval_in(shiftStr, -1) : null;
+            Pointer scaleIv = scaleStr != null ? GeneratedFunctions.pg_interval_in(scaleStr, -1) : null;
+            Pointer result = GeneratedFunctions.tstzspanset_shift_scale(p, shiftIv, scaleIv);
             if (result == null) return null;
-            try { return functions.spanset_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.spanset_as_hexwkb(result, (byte) 0); }
             finally {
                 MeosMemory.free(result);
                 if (shiftIv != null) MeosMemory.free(shiftIv);
@@ -651,9 +651,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             long pgMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
             OffsetDateTime odt = OffsetDateTime.ofInstant(Instant.ofEpochSecond(pgMicros, 0), ZoneOffset.UTC);
-            Pointer result = functions.timestamptz_to_span(odt);
+            Pointer result = GeneratedFunctions.timestamptz_to_span(odt);
             if (result == null) return null;
-            try { return functions.span_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.span_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         };
 
@@ -663,9 +663,9 @@ public final class SpanAlgebraUDFs {
             MeosThread.ensureReady();
             long pgMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
             OffsetDateTime odt = OffsetDateTime.ofInstant(Instant.ofEpochSecond(pgMicros, 0), ZoneOffset.UTC);
-            Pointer result = functions.timestamptz_to_set(odt);
+            Pointer result = GeneratedFunctions.timestamptz_to_set(odt);
             if (result == null) return null;
-            try { return functions.set_as_hexwkb(result, (byte) 0); }
+            try { return GeneratedFunctions.set_as_hexwkb(result, (byte) 0); }
             finally { MeosMemory.free(result); }
         };
 
@@ -752,53 +752,53 @@ public final class SpanAlgebraUDFs {
 
     public static final UDF1<Integer, String> intToSpan =
         (v) -> { if (v == null) return null; MeosThread.ensureReady();
-            Pointer r = functions.int_to_span(v);
+            Pointer r = GeneratedFunctions.int_to_span(v);
             if (r == null) return null;
-            String h = functions.span_as_hexwkb(r, (byte) 0);
+            String h = GeneratedFunctions.span_as_hexwkb(r, (byte) 0);
             MeosMemory.free(r); return h; };
 
     public static final UDF1<Integer, String> intToSet =
         (v) -> { if (v == null) return null; MeosThread.ensureReady();
-            Pointer r = functions.int_to_set(v);
+            Pointer r = GeneratedFunctions.int_to_set(v);
             if (r == null) return null;
-            String h = functions.set_as_hexwkb(r, (byte) 0);
+            String h = GeneratedFunctions.set_as_hexwkb(r, (byte) 0);
             MeosMemory.free(r); return h; };
 
     public static final UDF1<Integer, String> intToSpanset =
         (v) -> { if (v == null) return null; MeosThread.ensureReady();
-            Pointer r = functions.int_to_spanset(v);
+            Pointer r = GeneratedFunctions.int_to_spanset(v);
             if (r == null) return null;
-            String h = functions.spanset_as_hexwkb(r, (byte) 0);
+            String h = GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0);
             MeosMemory.free(r); return h; };
 
     public static final UDF1<Double, String> floatToSpan =
         (v) -> { if (v == null) return null; MeosThread.ensureReady();
-            Pointer r = functions.float_to_span(v);
+            Pointer r = GeneratedFunctions.float_to_span(v);
             if (r == null) return null;
-            String h = functions.span_as_hexwkb(r, (byte) 0);
+            String h = GeneratedFunctions.span_as_hexwkb(r, (byte) 0);
             MeosMemory.free(r); return h; };
 
     public static final UDF1<Double, String> floatToSet =
         (v) -> { if (v == null) return null; MeosThread.ensureReady();
-            Pointer r = functions.float_to_set(v);
+            Pointer r = GeneratedFunctions.float_to_set(v);
             if (r == null) return null;
-            String h = functions.set_as_hexwkb(r, (byte) 0);
+            String h = GeneratedFunctions.set_as_hexwkb(r, (byte) 0);
             MeosMemory.free(r); return h; };
 
     public static final UDF1<Double, String> floatToSpanset =
         (v) -> { if (v == null) return null; MeosThread.ensureReady();
-            Pointer r = functions.float_to_spanset(v);
+            Pointer r = GeneratedFunctions.float_to_spanset(v);
             if (r == null) return null;
-            String h = functions.spanset_as_hexwkb(r, (byte) 0);
+            String h = GeneratedFunctions.spanset_as_hexwkb(r, (byte) 0);
             MeosMemory.free(r); return h; };
 
     public static final UDF1<Integer, String> intToTbox =
         (v) -> {
             if (v == null) return null; MeosThread.ensureReady();
-            Pointer r = functions.int_to_tbox(v);
+            Pointer r = GeneratedFunctions.int_to_tbox(v);
             if (r == null) return null;
             jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
-            String h = functions.tbox_as_hexwkb(r, (byte) 0,
+            String h = GeneratedFunctions.tbox_as_hexwkb(r, (byte) 0,
                 rt.getMemoryManager().allocateDirect(8));
             MeosMemory.free(r); return h;
         };
@@ -806,10 +806,10 @@ public final class SpanAlgebraUDFs {
     public static final UDF1<Double, String> floatToTbox =
         (v) -> {
             if (v == null) return null; MeosThread.ensureReady();
-            Pointer r = functions.float_to_tbox(v);
+            Pointer r = GeneratedFunctions.float_to_tbox(v);
             if (r == null) return null;
             jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
-            String h = functions.tbox_as_hexwkb(r, (byte) 0,
+            String h = GeneratedFunctions.tbox_as_hexwkb(r, (byte) 0,
                 rt.getMemoryManager().allocateDirect(8));
             MeosMemory.free(r); return h;
         };

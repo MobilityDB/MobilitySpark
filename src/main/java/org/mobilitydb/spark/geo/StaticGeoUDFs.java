@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.geo;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF1;
@@ -58,13 +58,13 @@ public final class StaticGeoUDFs {
         (wkt1, wkt2) -> {
             if (wkt1 == null || wkt2 == null) return null;
             MeosThread.ensureReady();
-            Pointer g1 = functions.geo_from_text(wkt1, 0);
+            Pointer g1 = GeneratedFunctions.geo_from_text(wkt1, 0);
             if (g1 == null) return null;
             try {
-                Pointer g2 = functions.geo_from_text(wkt2, 0);
+                Pointer g2 = GeneratedFunctions.geo_from_text(wkt2, 0);
                 if (g2 == null) return null;
                 try {
-                    return functions.geom_contains(g1, g2);
+                    return GeneratedFunctions.geom_contains(g1, g2);
                 } finally {
                     MeosMemory.free(g2);
                 }
@@ -77,13 +77,13 @@ public final class StaticGeoUDFs {
         (wkt1, wkt2) -> {
             if (wkt1 == null || wkt2 == null) return null;
             MeosThread.ensureReady();
-            Pointer g1 = functions.geo_from_text(wkt1, 0);
+            Pointer g1 = GeneratedFunctions.geo_from_text(wkt1, 0);
             if (g1 == null) return null;
             try {
-                Pointer g2 = functions.geo_from_text(wkt2, 0);
+                Pointer g2 = GeneratedFunctions.geo_from_text(wkt2, 0);
                 if (g2 == null) return null;
                 try {
-                    return functions.geom_covers(g1, g2);
+                    return GeneratedFunctions.geom_covers(g1, g2);
                 } finally {
                     MeosMemory.free(g2);
                 }
@@ -96,13 +96,13 @@ public final class StaticGeoUDFs {
         (wkt1, wkt2) -> {
             if (wkt1 == null || wkt2 == null) return null;
             MeosThread.ensureReady();
-            Pointer g1 = functions.geo_from_text(wkt1, 0);
+            Pointer g1 = GeneratedFunctions.geo_from_text(wkt1, 0);
             if (g1 == null) return null;
             try {
-                Pointer g2 = functions.geo_from_text(wkt2, 0);
+                Pointer g2 = GeneratedFunctions.geo_from_text(wkt2, 0);
                 if (g2 == null) return null;
                 try {
-                    return functions.geom_disjoint2d(g1, g2);
+                    return GeneratedFunctions.geom_disjoint2d(g1, g2);
                 } finally {
                     MeosMemory.free(g2);
                 }
@@ -115,13 +115,13 @@ public final class StaticGeoUDFs {
         (wkt1, wkt2) -> {
             if (wkt1 == null || wkt2 == null) return null;
             MeosThread.ensureReady();
-            Pointer g1 = functions.geo_from_text(wkt1, 0);
+            Pointer g1 = GeneratedFunctions.geo_from_text(wkt1, 0);
             if (g1 == null) return null;
             try {
-                Pointer g2 = functions.geo_from_text(wkt2, 0);
+                Pointer g2 = GeneratedFunctions.geo_from_text(wkt2, 0);
                 if (g2 == null) return null;
                 try {
-                    return functions.geom_intersects2d(g1, g2);
+                    return GeneratedFunctions.geom_intersects2d(g1, g2);
                 } finally {
                     MeosMemory.free(g2);
                 }
@@ -134,13 +134,13 @@ public final class StaticGeoUDFs {
         (wkt1, wkt2) -> {
             if (wkt1 == null || wkt2 == null) return null;
             MeosThread.ensureReady();
-            Pointer g1 = functions.geo_from_text(wkt1, 0);
+            Pointer g1 = GeneratedFunctions.geo_from_text(wkt1, 0);
             if (g1 == null) return null;
             try {
-                Pointer g2 = functions.geo_from_text(wkt2, 0);
+                Pointer g2 = GeneratedFunctions.geo_from_text(wkt2, 0);
                 if (g2 == null) return null;
                 try {
-                    return functions.geom_touches(g1, g2);
+                    return GeneratedFunctions.geom_touches(g1, g2);
                 } finally {
                     MeosMemory.free(g2);
                 }
@@ -153,13 +153,13 @@ public final class StaticGeoUDFs {
         (wkt1, wkt2, dist) -> {
             if (wkt1 == null || wkt2 == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer g1 = functions.geo_from_text(wkt1, 0);
+            Pointer g1 = GeneratedFunctions.geo_from_text(wkt1, 0);
             if (g1 == null) return null;
             try {
-                Pointer g2 = functions.geo_from_text(wkt2, 0);
+                Pointer g2 = GeneratedFunctions.geo_from_text(wkt2, 0);
                 if (g2 == null) return null;
                 try {
-                    return functions.geom_dwithin2d(g1, g2, dist.doubleValue());
+                    return GeneratedFunctions.geom_dwithin2d(g1, g2, dist.doubleValue());
                 } finally {
                     MeosMemory.free(g2);
                 }
@@ -176,13 +176,13 @@ public final class StaticGeoUDFs {
         (wkt1, wkt2) -> {
             if (wkt1 == null || wkt2 == null) return null;
             MeosThread.ensureReady();
-            Pointer g1 = functions.geo_from_text(wkt1, 0);
+            Pointer g1 = GeneratedFunctions.geo_from_text(wkt1, 0);
             if (g1 == null) return null;
             try {
-                Pointer g2 = functions.geo_from_text(wkt2, 0);
+                Pointer g2 = GeneratedFunctions.geo_from_text(wkt2, 0);
                 if (g2 == null) return null;
                 try {
-                    return functions.geom_distance2d(g1, g2);
+                    return GeneratedFunctions.geom_distance2d(g1, g2);
                 } finally {
                     MeosMemory.free(g2);
                 }
@@ -195,10 +195,10 @@ public final class StaticGeoUDFs {
         (wkt) -> {
             if (wkt == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(wkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(wkt, 0);
             if (g == null) return null;
             try {
-                return functions.geom_length(g);
+                return GeneratedFunctions.geom_length(g);
             } finally {
                 MeosMemory.free(g);
             }
@@ -208,10 +208,10 @@ public final class StaticGeoUDFs {
         (wkt) -> {
             if (wkt == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(wkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(wkt, 0);
             if (g == null) return null;
             try {
-                return functions.geom_perimeter(g);
+                return GeneratedFunctions.geom_perimeter(g);
             } finally {
                 MeosMemory.free(g);
             }
@@ -225,13 +225,13 @@ public final class StaticGeoUDFs {
         (wkt) -> {
             if (wkt == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(wkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(wkt, 0);
             if (g == null) return null;
             try {
-                Pointer r = functions.geom_centroid(g);
+                Pointer r = GeneratedFunctions.geom_centroid(g);
                 if (r == null) return null;
                 try {
-                    return functions.geo_as_text(r, 15);
+                    return GeneratedFunctions.geo_as_text(r, 15);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -244,13 +244,13 @@ public final class StaticGeoUDFs {
         (wkt) -> {
             if (wkt == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(wkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(wkt, 0);
             if (g == null) return null;
             try {
-                Pointer r = functions.geom_boundary(g);
+                Pointer r = GeneratedFunctions.geom_boundary(g);
                 if (r == null) return null;
                 try {
-                    return functions.geo_as_text(r, 15);
+                    return GeneratedFunctions.geo_as_text(r, 15);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -263,16 +263,16 @@ public final class StaticGeoUDFs {
         (wkt1, wkt2) -> {
             if (wkt1 == null || wkt2 == null) return null;
             MeosThread.ensureReady();
-            Pointer g1 = functions.geo_from_text(wkt1, 0);
+            Pointer g1 = GeneratedFunctions.geo_from_text(wkt1, 0);
             if (g1 == null) return null;
             try {
-                Pointer g2 = functions.geo_from_text(wkt2, 0);
+                Pointer g2 = GeneratedFunctions.geo_from_text(wkt2, 0);
                 if (g2 == null) return null;
                 try {
-                    Pointer r = functions.geom_difference2d(g1, g2);
+                    Pointer r = GeneratedFunctions.geom_difference2d(g1, g2);
                     if (r == null) return null;
                     try {
-                        return functions.geo_as_text(r, 15);
+                        return GeneratedFunctions.geo_as_text(r, 15);
                     } finally {
                         MeosMemory.free(r);
                     }
@@ -288,13 +288,13 @@ public final class StaticGeoUDFs {
         (wkt, prec) -> {
             if (wkt == null || prec == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(wkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(wkt, 0);
             if (g == null) return null;
             try {
-                Pointer r = functions.geom_unary_union(g, prec);
+                Pointer r = GeneratedFunctions.geom_unary_union(g, prec);
                 if (r == null) return null;
                 try {
-                    return functions.geo_as_text(r, 15);
+                    return GeneratedFunctions.geo_as_text(r, 15);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -307,13 +307,13 @@ public final class StaticGeoUDFs {
         (wkt) -> {
             if (wkt == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(wkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(wkt, 0);
             if (g == null) return null;
             try {
-                Pointer r = functions.geo_reverse(g);
+                Pointer r = GeneratedFunctions.geo_reverse(g);
                 if (r == null) return null;
                 try {
-                    return functions.geo_as_text(r, 15);
+                    return GeneratedFunctions.geo_as_text(r, 15);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -326,13 +326,13 @@ public final class StaticGeoUDFs {
         (wkt, maxdd) -> {
             if (wkt == null || maxdd == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(wkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(wkt, 0);
             if (g == null) return null;
             try {
-                Pointer r = functions.geo_round(g, maxdd);
+                Pointer r = GeneratedFunctions.geo_round(g, maxdd);
                 if (r == null) return null;
                 try {
-                    return functions.geo_as_text(r, maxdd);
+                    return GeneratedFunctions.geo_as_text(r, maxdd);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -349,13 +349,13 @@ public final class StaticGeoUDFs {
         (wkt, fraction) -> {
             if (wkt == null || fraction == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(wkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(wkt, 0);
             if (g == null) return null;
             try {
-                Pointer r = functions.line_interpolate_point(g, fraction, false);
+                Pointer r = GeneratedFunctions.line_interpolate_point(g, fraction, false);
                 if (r == null) return null;
                 try {
-                    return functions.geo_as_text(r, 15);
+                    return GeneratedFunctions.geo_as_text(r, 15);
                 } finally {
                     MeosMemory.free(r);
                 }
@@ -368,13 +368,13 @@ public final class StaticGeoUDFs {
         (wkt, from, to) -> {
             if (wkt == null || from == null || to == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(wkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(wkt, 0);
             if (g == null) return null;
             try {
-                Pointer r = functions.line_substring(g, from, to);
+                Pointer r = GeneratedFunctions.line_substring(g, from, to);
                 if (r == null) return null;
                 try {
-                    return functions.geo_as_text(r, 15);
+                    return GeneratedFunctions.geo_as_text(r, 15);
                 } finally {
                     MeosMemory.free(r);
                 }

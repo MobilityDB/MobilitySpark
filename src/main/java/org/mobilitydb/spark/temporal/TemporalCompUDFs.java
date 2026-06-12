@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -61,12 +61,12 @@ public final class TemporalCompUDFs {
         return (hex, v) -> {
             if (hex == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer r = fn.apply(p, v);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -87,12 +87,12 @@ public final class TemporalCompUDFs {
         return (hex, v) -> {
             if (hex == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer r = fn.apply(p, v);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -102,12 +102,12 @@ public final class TemporalCompUDFs {
         return (hex, v) -> {
             if (hex == null || v == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer r = fn.apply(p, v);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -117,14 +117,14 @@ public final class TemporalCompUDFs {
         return (hex, txt) -> {
             if (hex == null || txt == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer t = functions.cstring2text(txt);
+            Pointer t = GeneratedFunctions.cstring_to_text(txt);
             if (t == null) { MeosMemory.free(p); return null; }
             try {
                 Pointer r = fn.apply(p, t);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p, t); }
         };
@@ -134,14 +134,14 @@ public final class TemporalCompUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(h1);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(h1);
             if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(h2);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try {
                 Pointer r = fn.apply(p1, p2);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p1, p2); }
         };
@@ -151,57 +151,57 @@ public final class TemporalCompUDFs {
     // teq — temporal equality
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, Integer, String> teqTintInt   = hexInt(functions::teq_tint_int);
-    public static final UDF2<String, Double, String>  teqTfloatFloat = hexFloat(functions::teq_tfloat_float);
-    public static final UDF2<String, Boolean, String> teqTboolBool = hexBool(functions::teq_tbool_bool);
-    public static final UDF2<String, String, String>  teqTtextText = hexText(functions::teq_ttext_text);
-    public static final UDF2<String, String, String>  teqTemporal  = hexHex(functions::teq_temporal_temporal);
+    public static final UDF2<String, Integer, String> teqTintInt   = hexInt(GeneratedFunctions::teq_tint_int);
+    public static final UDF2<String, Double, String>  teqTfloatFloat = hexFloat(GeneratedFunctions::teq_tfloat_float);
+    public static final UDF2<String, Boolean, String> teqTboolBool = hexBool(GeneratedFunctions::teq_tbool_bool);
+    public static final UDF2<String, String, String>  teqTtextText = hexText(GeneratedFunctions::teq_ttext_text);
+    public static final UDF2<String, String, String>  teqTemporal  = hexHex(GeneratedFunctions::teq_temporal_temporal);
 
     // ------------------------------------------------------------------
     // tne — temporal inequality
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, Integer, String> tneTintInt   = hexInt(functions::tne_tint_int);
-    public static final UDF2<String, Double, String>  tneTfloatFloat = hexFloat(functions::tne_tfloat_float);
-    public static final UDF2<String, Boolean, String> tneTboolBool = hexBool(functions::tne_tbool_bool);
-    public static final UDF2<String, String, String>  tneTtextText = hexText(functions::tne_ttext_text);
-    public static final UDF2<String, String, String>  tneTemporal  = hexHex(functions::tne_temporal_temporal);
+    public static final UDF2<String, Integer, String> tneTintInt   = hexInt(GeneratedFunctions::tne_tint_int);
+    public static final UDF2<String, Double, String>  tneTfloatFloat = hexFloat(GeneratedFunctions::tne_tfloat_float);
+    public static final UDF2<String, Boolean, String> tneTboolBool = hexBool(GeneratedFunctions::tne_tbool_bool);
+    public static final UDF2<String, String, String>  tneTtextText = hexText(GeneratedFunctions::tne_ttext_text);
+    public static final UDF2<String, String, String>  tneTemporal  = hexHex(GeneratedFunctions::tne_temporal_temporal);
 
     // ------------------------------------------------------------------
     // tlt — temporal less-than
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, Integer, String> tltTintInt   = hexInt(functions::tlt_tint_int);
-    public static final UDF2<String, Double, String>  tltTfloatFloat = hexFloat(functions::tlt_tfloat_float);
-    public static final UDF2<String, String, String>  tltTtextText = hexText(functions::tlt_ttext_text);
-    public static final UDF2<String, String, String>  tltTemporal  = hexHex(functions::tlt_temporal_temporal);
+    public static final UDF2<String, Integer, String> tltTintInt   = hexInt(GeneratedFunctions::tlt_tint_int);
+    public static final UDF2<String, Double, String>  tltTfloatFloat = hexFloat(GeneratedFunctions::tlt_tfloat_float);
+    public static final UDF2<String, String, String>  tltTtextText = hexText(GeneratedFunctions::tlt_ttext_text);
+    public static final UDF2<String, String, String>  tltTemporal  = hexHex(GeneratedFunctions::tlt_temporal_temporal);
 
     // ------------------------------------------------------------------
     // tle — temporal less-or-equal
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, Integer, String> tleTintInt   = hexInt(functions::tle_tint_int);
-    public static final UDF2<String, Double, String>  tleTfloatFloat = hexFloat(functions::tle_tfloat_float);
-    public static final UDF2<String, String, String>  tleTtextText = hexText(functions::tle_ttext_text);
-    public static final UDF2<String, String, String>  tleTemporal  = hexHex(functions::tle_temporal_temporal);
+    public static final UDF2<String, Integer, String> tleTintInt   = hexInt(GeneratedFunctions::tle_tint_int);
+    public static final UDF2<String, Double, String>  tleTfloatFloat = hexFloat(GeneratedFunctions::tle_tfloat_float);
+    public static final UDF2<String, String, String>  tleTtextText = hexText(GeneratedFunctions::tle_ttext_text);
+    public static final UDF2<String, String, String>  tleTemporal  = hexHex(GeneratedFunctions::tle_temporal_temporal);
 
     // ------------------------------------------------------------------
     // tgt — temporal greater-than
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, Integer, String> tgtTintInt   = hexInt(functions::tgt_tint_int);
-    public static final UDF2<String, Double, String>  tgtTfloatFloat = hexFloat(functions::tgt_tfloat_float);
-    public static final UDF2<String, String, String>  tgtTtextText = hexText(functions::tgt_ttext_text);
-    public static final UDF2<String, String, String>  tgtTemporal  = hexHex(functions::tgt_temporal_temporal);
+    public static final UDF2<String, Integer, String> tgtTintInt   = hexInt(GeneratedFunctions::tgt_tint_int);
+    public static final UDF2<String, Double, String>  tgtTfloatFloat = hexFloat(GeneratedFunctions::tgt_tfloat_float);
+    public static final UDF2<String, String, String>  tgtTtextText = hexText(GeneratedFunctions::tgt_ttext_text);
+    public static final UDF2<String, String, String>  tgtTemporal  = hexHex(GeneratedFunctions::tgt_temporal_temporal);
 
     // ------------------------------------------------------------------
     // tge — temporal greater-or-equal
     // ------------------------------------------------------------------
 
-    public static final UDF2<String, Integer, String> tgeTintInt   = hexInt(functions::tge_tint_int);
-    public static final UDF2<String, Double, String>  tgeTfloatFloat = hexFloat(functions::tge_tfloat_float);
-    public static final UDF2<String, String, String>  tgeTtextText = hexText(functions::tge_ttext_text);
-    public static final UDF2<String, String, String>  tgeTemporal  = hexHex(functions::tge_temporal_temporal);
+    public static final UDF2<String, Integer, String> tgeTintInt   = hexInt(GeneratedFunctions::tge_tint_int);
+    public static final UDF2<String, Double, String>  tgeTfloatFloat = hexFloat(GeneratedFunctions::tge_tfloat_float);
+    public static final UDF2<String, String, String>  tgeTtextText = hexText(GeneratedFunctions::tge_ttext_text);
+    public static final UDF2<String, String, String>  tgeTemporal  = hexHex(GeneratedFunctions::tge_temporal_temporal);
 
     public static void registerAll(SparkSession spark) {
         // teq

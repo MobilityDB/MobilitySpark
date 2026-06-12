@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -50,31 +50,31 @@ public final class SetOpsUDFs {
         return (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.set_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.set_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.set_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.set_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return fn.apply(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
         };
     }
 
-    public static final UDF2<String, String, Boolean> setLeft       = setSet(functions::left_set_set);
-    public static final UDF2<String, String, Boolean> setRight      = setSet(functions::right_set_set);
-    public static final UDF2<String, String, Boolean> setOverleft   = setSet(functions::overleft_set_set);
-    public static final UDF2<String, String, Boolean> setOverright  = setSet(functions::overright_set_set);
-    public static final UDF2<String, String, Boolean> setContains   = setSet(functions::contains_set_set);
-    public static final UDF2<String, String, Boolean> setContained  = setSet(functions::contained_set_set);
-    public static final UDF2<String, String, Boolean> setOverlaps   = setSet(functions::overlaps_set_set);
+    public static final UDF2<String, String, Boolean> setLeft       = setSet(GeneratedFunctions::left_set_set);
+    public static final UDF2<String, String, Boolean> setRight      = setSet(GeneratedFunctions::right_set_set);
+    public static final UDF2<String, String, Boolean> setOverleft   = setSet(GeneratedFunctions::overleft_set_set);
+    public static final UDF2<String, String, Boolean> setOverright  = setSet(GeneratedFunctions::overright_set_set);
+    public static final UDF2<String, String, Boolean> setContains   = setSet(GeneratedFunctions::contains_set_set);
+    public static final UDF2<String, String, Boolean> setContained  = setSet(GeneratedFunctions::contained_set_set);
+    public static final UDF2<String, String, Boolean> setOverlaps   = setSet(GeneratedFunctions::overlaps_set_set);
 
     // Per-type distance (set×set must be of matching element type).
     public static final UDF2<String, String, Integer> distanceIntsetIntset =
         (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.set_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.set_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.set_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.set_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
-            try { return functions.distance_intset_intset(p1, p2); }
+            try { return GeneratedFunctions.distance_intset_intset(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
         };
 
@@ -82,10 +82,10 @@ public final class SetOpsUDFs {
         (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.set_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.set_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.set_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.set_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
-            try { return functions.distance_bigintset_bigintset(p1, p2); }
+            try { return GeneratedFunctions.distance_bigintset_bigintset(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
         };
 
@@ -93,10 +93,10 @@ public final class SetOpsUDFs {
         (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.set_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.set_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.set_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.set_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
-            try { return functions.distance_floatset_floatset(p1, p2); }
+            try { return GeneratedFunctions.distance_floatset_floatset(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
         };
 
@@ -104,10 +104,10 @@ public final class SetOpsUDFs {
         (h1, h2) -> {
             if (h1 == null || h2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.set_from_hexwkb(h1); if (p1 == null) return null;
-            Pointer p2 = functions.set_from_hexwkb(h2);
+            Pointer p1 = GeneratedFunctions.set_from_hexwkb(h1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.set_from_hexwkb(h2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
-            try { return functions.distance_tstzset_tstzset(p1, p2); }
+            try { return GeneratedFunctions.distance_tstzset_tstzset(p1, p2); }
             finally { MeosMemory.free(p1, p2); }
         };
 

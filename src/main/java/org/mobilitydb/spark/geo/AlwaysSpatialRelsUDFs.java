@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.geo;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -64,8 +64,8 @@ public final class AlwaysSpatialRelsUDFs {
         return (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip); if (t == null) return null;
-            Pointer g = functions.geo_from_text(geomWkt, 0);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip); if (t == null) return null;
+            Pointer g = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (g == null) { MeosMemory.free(t); return null; }
             try { return tri(fn.apply(t, g)); }
             finally { MeosMemory.free(t, g); }
@@ -76,8 +76,8 @@ public final class AlwaysSpatialRelsUDFs {
         return (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1); if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return tri(fn.apply(p1, p2)); }
             finally { MeosMemory.free(p1, p2); }
@@ -88,8 +88,8 @@ public final class AlwaysSpatialRelsUDFs {
         return (geomWkt, trip) -> {
             if (geomWkt == null || trip == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(geomWkt, 0); if (g == null) return null;
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer g = GeneratedFunctions.geo_from_text(geomWkt, 0); if (g == null) return null;
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) { MeosMemory.free(g); return null; }
             try { return tri(fn.apply(g, t)); }
             finally { MeosMemory.free(g, t); }
@@ -100,8 +100,8 @@ public final class AlwaysSpatialRelsUDFs {
         return (trip, geomWkt, dist) -> {
             if (trip == null || geomWkt == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip); if (t == null) return null;
-            Pointer g = functions.geo_from_text(geomWkt, 0);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip); if (t == null) return null;
+            Pointer g = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (g == null) { MeosMemory.free(t); return null; }
             try { return tri(fn.apply(t, g, dist)); }
             finally { MeosMemory.free(t, g); }
@@ -112,27 +112,27 @@ public final class AlwaysSpatialRelsUDFs {
         return (trip1, trip2, dist) -> {
             if (trip1 == null || trip2 == null || dist == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1); if (p1 == null) return null;
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1); if (p1 == null) return null;
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p2 == null) { MeosMemory.free(p1); return null; }
             try { return tri(fn.apply(p1, p2, dist)); }
             finally { MeosMemory.free(p1, p2); }
         };
     }
 
-    public static final UDF2<String, String, Boolean> aDisjointTgeoGeo   = tgeoGeo(functions::adisjoint_tgeo_geo);
-    public static final UDF2<String, String, Boolean> aDisjointTgeoTgeo  = tgeoTgeo(functions::adisjoint_tgeo_tgeo);
-    public static final UDF2<String, String, Boolean> aIntersectsTgeoGeo = tgeoGeo(functions::aintersects_tgeo_geo);
-    public static final UDF2<String, String, Boolean> aIntersectsTgeoTgeo = tgeoTgeo(functions::aintersects_tgeo_tgeo);
-    public static final UDF2<String, String, Boolean> aTouchesTgeoGeo    = tgeoGeo(functions::atouches_tgeo_geo);
-    public static final UDF2<String, String, Boolean> aTouchesTgeoTgeo   = tgeoTgeo(functions::atouches_tgeo_tgeo);
-    public static final UDF2<String, String, Boolean> aContainsTgeoGeo   = tgeoGeo(functions::acontains_tgeo_geo);
-    public static final UDF2<String, String, Boolean> aContainsTgeoTgeo  = tgeoTgeo(functions::acontains_tgeo_tgeo);
-    public static final UDF2<String, String, Boolean> aContainsGeoTgeo   = geoTgeo(functions::acontains_geo_tgeo);
-    public static final UDF2<String, String, Boolean> aCoversTgeoGeo     = tgeoGeo(functions::acovers_tgeo_geo);
+    public static final UDF2<String, String, Boolean> aDisjointTgeoGeo   = tgeoGeo(GeneratedFunctions::adisjoint_tgeo_geo);
+    public static final UDF2<String, String, Boolean> aDisjointTgeoTgeo  = tgeoTgeo(GeneratedFunctions::adisjoint_tgeo_tgeo);
+    public static final UDF2<String, String, Boolean> aIntersectsTgeoGeo = tgeoGeo(GeneratedFunctions::aintersects_tgeo_geo);
+    public static final UDF2<String, String, Boolean> aIntersectsTgeoTgeo = tgeoTgeo(GeneratedFunctions::aintersects_tgeo_tgeo);
+    public static final UDF2<String, String, Boolean> aTouchesTgeoGeo    = tgeoGeo(GeneratedFunctions::atouches_tgeo_geo);
+    public static final UDF2<String, String, Boolean> aTouchesTgeoTgeo   = tgeoTgeo(GeneratedFunctions::atouches_tgeo_tgeo);
+    public static final UDF2<String, String, Boolean> aContainsTgeoGeo   = tgeoGeo(GeneratedFunctions::acontains_tgeo_geo);
+    public static final UDF2<String, String, Boolean> aContainsTgeoTgeo  = tgeoTgeo(GeneratedFunctions::acontains_tgeo_tgeo);
+    public static final UDF2<String, String, Boolean> aContainsGeoTgeo   = geoTgeo(GeneratedFunctions::acontains_geo_tgeo);
+    public static final UDF2<String, String, Boolean> aCoversTgeoGeo     = tgeoGeo(GeneratedFunctions::acovers_tgeo_geo);
 
-    public static final UDF3<String, String, Double, Boolean> aDwithinTgeoGeo  = tgeoGeoDist(functions::adwithin_tgeo_geo);
-    public static final UDF3<String, String, Double, Boolean> aDwithinTgeoTgeo = tgeoTgeoDist(functions::adwithin_tgeo_tgeo);
+    public static final UDF3<String, String, Double, Boolean> aDwithinTgeoGeo  = tgeoGeoDist(GeneratedFunctions::adwithin_tgeo_geo);
+    public static final UDF3<String, String, Double, Boolean> aDwithinTgeoTgeo = tgeoTgeoDist(GeneratedFunctions::adwithin_tgeo_tgeo);
 
     public static void registerAll(SparkSession spark) {
         spark.udf().register("aDisjointTgeoGeo",     aDisjointTgeoGeo,     DataTypes.BooleanType);

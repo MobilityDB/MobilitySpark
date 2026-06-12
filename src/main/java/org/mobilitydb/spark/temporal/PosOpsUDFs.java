@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -52,11 +52,11 @@ public final class PosOpsUDFs {
     private PosOpsUDFs() {}
 
     private static Pointer tempPtr(String hex) {
-        return hex == null ? null : functions.temporal_from_hexwkb(hex);
+        return hex == null ? null : GeneratedFunctions.temporal_from_hexwkb(hex);
     }
 
     private static Pointer spanPtr(String hex) {
-        return hex == null ? null : functions.span_from_hexwkb(hex);
+        return hex == null ? null : GeneratedFunctions.span_from_hexwkb(hex);
     }
 
     // ------------------------------------------------------------------
@@ -74,7 +74,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.before_temporal_temporal(p1, p2);
+                    return GeneratedFunctions.before_temporal_temporal(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -89,7 +89,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.after_temporal_temporal(p1, p2);
+                    return GeneratedFunctions.after_temporal_temporal(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -104,7 +104,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.overbefore_temporal_temporal(p1, p2);
+                    return GeneratedFunctions.overbefore_temporal_temporal(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -119,7 +119,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.overafter_temporal_temporal(p1, p2);
+                    return GeneratedFunctions.overafter_temporal_temporal(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -139,7 +139,7 @@ public final class PosOpsUDFs {
                 Pointer sp = spanPtr(spanHex);
                 if (sp == null) return null;
                 try {
-                    return functions.before_temporal_tstzspan(p, sp);
+                    return GeneratedFunctions.before_temporal_tstzspan(p, sp);
                 } finally { MeosMemory.free(sp); }
             } finally { MeosMemory.free(p); }
         };
@@ -154,7 +154,7 @@ public final class PosOpsUDFs {
                 Pointer sp = spanPtr(spanHex);
                 if (sp == null) return null;
                 try {
-                    return functions.after_temporal_tstzspan(p, sp);
+                    return GeneratedFunctions.after_temporal_tstzspan(p, sp);
                 } finally { MeosMemory.free(sp); }
             } finally { MeosMemory.free(p); }
         };
@@ -169,7 +169,7 @@ public final class PosOpsUDFs {
                 Pointer sp = spanPtr(spanHex);
                 if (sp == null) return null;
                 try {
-                    return functions.overbefore_temporal_tstzspan(p, sp);
+                    return GeneratedFunctions.overbefore_temporal_tstzspan(p, sp);
                 } finally { MeosMemory.free(sp); }
             } finally { MeosMemory.free(p); }
         };
@@ -184,7 +184,7 @@ public final class PosOpsUDFs {
                 Pointer sp = spanPtr(spanHex);
                 if (sp == null) return null;
                 try {
-                    return functions.overafter_temporal_tstzspan(p, sp);
+                    return GeneratedFunctions.overafter_temporal_tstzspan(p, sp);
                 } finally { MeosMemory.free(sp); }
             } finally { MeosMemory.free(p); }
         };
@@ -204,7 +204,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.left_tnumber_tnumber(p1, p2);
+                    return GeneratedFunctions.left_tnumber_tnumber(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -219,7 +219,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.right_tnumber_tnumber(p1, p2);
+                    return GeneratedFunctions.right_tnumber_tnumber(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -234,7 +234,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.overleft_tnumber_tnumber(p1, p2);
+                    return GeneratedFunctions.overleft_tnumber_tnumber(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -249,7 +249,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.overright_tnumber_tnumber(p1, p2);
+                    return GeneratedFunctions.overright_tnumber_tnumber(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -269,7 +269,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.left_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.left_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -284,7 +284,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.right_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.right_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -299,7 +299,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.overleft_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.overleft_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -314,7 +314,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.overright_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.overright_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -334,7 +334,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.below_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.below_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -349,7 +349,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.above_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.above_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -364,7 +364,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.overbelow_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.overbelow_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -379,7 +379,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.overabove_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.overabove_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -399,7 +399,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.front_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.front_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -414,7 +414,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.back_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.back_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -429,7 +429,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.overfront_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.overfront_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };
@@ -444,7 +444,7 @@ public final class PosOpsUDFs {
                 Pointer p2 = tempPtr(s2);
                 if (p2 == null) return null;
                 try {
-                    return functions.overback_tspatial_tspatial(p1, p2);
+                    return GeneratedFunctions.overback_tspatial_tspatial(p1, p2);
                 } finally { MeosMemory.free(p2); }
             } finally { MeosMemory.free(p1); }
         };

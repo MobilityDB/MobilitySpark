@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
@@ -61,9 +61,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.tint_in(s);
+            Pointer ptr = GeneratedFunctions.tint_in(s);
             if (ptr == null) return null;
-            return functions.temporal_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(ptr, (byte) 0);
         };
 
     // tfloat("1.5@2020-01-01") → hex-WKB
@@ -72,9 +72,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.tfloat_in(s);
+            Pointer ptr = GeneratedFunctions.tfloat_in(s);
             if (ptr == null) return null;
-            return functions.temporal_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(ptr, (byte) 0);
         };
 
     // tbool("true@2020-01-01") → hex-WKB
@@ -83,9 +83,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.tbool_in(s);
+            Pointer ptr = GeneratedFunctions.tbool_in(s);
             if (ptr == null) return null;
-            return functions.temporal_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(ptr, (byte) 0);
         };
 
     // ttext("hello@2020-01-01") → hex-WKB
@@ -94,9 +94,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.ttext_in(s);
+            Pointer ptr = GeneratedFunctions.ttext_in(s);
             if (ptr == null) return null;
-            return functions.temporal_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(ptr, (byte) 0);
         };
 
     // tgeogpoint("POINT(4.35 50.85)@2020-01-01") → hex-WKB
@@ -105,9 +105,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.tgeogpoint_in(s);
+            Pointer ptr = GeneratedFunctions.tgeogpoint_in(s);
             if (ptr == null) return null;
-            return functions.temporal_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(ptr, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -120,9 +120,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.tstzspan_in(s);
+            Pointer ptr = GeneratedFunctions.tstzspan_in(s);
             if (ptr == null) return null;
-            return functions.span_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(ptr, (byte) 0);
         };
 
     // tstzspanset("{[2020-01-01, 2020-01-02), [2020-03-01, 2020-04-01)}") → hex-WKB
@@ -131,9 +131,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.tstzspanset_in(s);
+            Pointer ptr = GeneratedFunctions.tstzspanset_in(s);
             if (ptr == null) return null;
-            return functions.spanset_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(ptr, (byte) 0);
         };
 
     // intspan("[1, 10)") → hex-WKB
@@ -142,9 +142,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.intspan_in(s);
+            Pointer ptr = GeneratedFunctions.intspan_in(s);
             if (ptr == null) return null;
-            return functions.span_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(ptr, (byte) 0);
         };
 
     // floatspan("[1.0, 10.0)") → hex-WKB
@@ -153,9 +153,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.floatspan_in(s);
+            Pointer ptr = GeneratedFunctions.floatspan_in(s);
             if (ptr == null) return null;
-            return functions.span_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(ptr, (byte) 0);
         };
 
     // datespan("[2020-01-01, 2020-01-31)") → hex-WKB
@@ -164,9 +164,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.datespan_in(s);
+            Pointer ptr = GeneratedFunctions.datespan_in(s);
             if (ptr == null) return null;
-            return functions.span_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(ptr, (byte) 0);
         };
 
     // datespanset("{[2020-01-01, 2020-01-31), [2020-06-01, 2020-06-30)}") → hex-WKB
@@ -175,9 +175,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.datespanset_in(s);
+            Pointer ptr = GeneratedFunctions.datespanset_in(s);
             if (ptr == null) return null;
-            return functions.spanset_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(ptr, (byte) 0);
         };
 
     // intset("{1, 2, 3, 4}") → hex-WKB
@@ -186,9 +186,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.intset_in(s);
+            Pointer ptr = GeneratedFunctions.intset_in(s);
             if (ptr == null) return null;
-            return functions.set_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.set_as_hexwkb(ptr, (byte) 0);
         };
 
     // floatset("{1.1, 2.2, 3.3}") → hex-WKB
@@ -197,9 +197,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.floatset_in(s);
+            Pointer ptr = GeneratedFunctions.floatset_in(s);
             if (ptr == null) return null;
-            return functions.set_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.set_as_hexwkb(ptr, (byte) 0);
         };
 
     // tstzset("{2020-01-01, 2020-02-01, 2020-03-01}") → hex-WKB
@@ -208,9 +208,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.tstzset_in(s);
+            Pointer ptr = GeneratedFunctions.tstzset_in(s);
             if (ptr == null) return null;
-            return functions.set_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.set_as_hexwkb(ptr, (byte) 0);
         };
 
     // textset("{hello, world}") → hex-WKB
@@ -219,9 +219,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.textset_in(s);
+            Pointer ptr = GeneratedFunctions.textset_in(s);
             if (ptr == null) return null;
-            return functions.set_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.set_as_hexwkb(ptr, (byte) 0);
         };
 
     // bigintset("{1000, 2000, 3000}") → hex-WKB
@@ -230,9 +230,9 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.bigintset_in(s);
+            Pointer ptr = GeneratedFunctions.bigintset_in(s);
             if (ptr == null) return null;
-            return functions.set_as_hexwkb(ptr, (byte) 0);
+            return GeneratedFunctions.set_as_hexwkb(ptr, (byte) 0);
         };
 
     // stbox("STBOX X((1,2),(3,4))") → hex-WKB
@@ -241,10 +241,10 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.stbox_in(s);
+            Pointer ptr = GeneratedFunctions.stbox_in(s);
             if (ptr == null) return null;
             Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-            return functions.stbox_as_hexwkb(ptr, (byte) 0, sizeOut);
+            return GeneratedFunctions.stbox_as_hexwkb(ptr, (byte) 0, sizeOut);
         };
 
     // tbox("TBOX T([2020-01-01,2020-01-02))") → hex-WKB
@@ -253,10 +253,10 @@ public final class ConstructorUDFs {
         (s) -> {
             if (s == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.tbox_in(s);
+            Pointer ptr = GeneratedFunctions.tbox_in(s);
             if (ptr == null) return null;
             Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-            return functions.tbox_as_hexwkb(ptr, (byte) 0, sizeOut);
+            return GeneratedFunctions.tbox_as_hexwkb(ptr, (byte) 0, sizeOut);
         };
 
     // ------------------------------------------------------------------
@@ -271,54 +271,54 @@ public final class ConstructorUDFs {
         (json) -> {
             if (json == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.tbool_from_mfjson(json);
+            Pointer p = GeneratedFunctions.tbool_from_mfjson(json);
             if (p == null) return null;
-            return functions.temporal_as_hexwkb(p, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
         };
 
     public static final UDF1<String, String> tintFromMfjson =
         (json) -> {
             if (json == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.tint_from_mfjson(json);
+            Pointer p = GeneratedFunctions.tint_from_mfjson(json);
             if (p == null) return null;
-            return functions.temporal_as_hexwkb(p, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
         };
 
     public static final UDF1<String, String> tfloatFromMfjson =
         (json) -> {
             if (json == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.tfloat_from_mfjson(json);
+            Pointer p = GeneratedFunctions.tfloat_from_mfjson(json);
             if (p == null) return null;
-            return functions.temporal_as_hexwkb(p, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
         };
 
     public static final UDF1<String, String> ttextFromMfjson =
         (json) -> {
             if (json == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.ttext_from_mfjson(json);
+            Pointer p = GeneratedFunctions.ttext_from_mfjson(json);
             if (p == null) return null;
-            return functions.temporal_as_hexwkb(p, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
         };
 
     public static final UDF1<String, String> tgeompointFromMfjson =
         (json) -> {
             if (json == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.tgeompoint_from_mfjson(json);
+            Pointer p = GeneratedFunctions.tgeompoint_from_mfjson(json);
             if (p == null) return null;
-            return functions.temporal_as_hexwkb(p, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
         };
 
     public static final UDF1<String, String> tgeogpointFromMfjson =
         (json) -> {
             if (json == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.tgeogpoint_from_mfjson(json);
+            Pointer p = GeneratedFunctions.tgeogpoint_from_mfjson(json);
             if (p == null) return null;
-            return functions.temporal_as_hexwkb(p, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -336,13 +336,13 @@ public final class ConstructorUDFs {
         (val, refHex) -> {
             if (val == null || refHex == null) return null;
             MeosThread.ensureReady();
-            Pointer ref = functions.temporal_from_hexwkb(refHex);
+            Pointer ref = GeneratedFunctions.temporal_from_hexwkb(refHex);
             if (ref == null) return null;
             try {
-                Pointer result = functions.tbool_from_base_temp(val, ref);
+                Pointer result = GeneratedFunctions.tbool_from_base_temp(val, ref);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -356,13 +356,13 @@ public final class ConstructorUDFs {
         (val, refHex) -> {
             if (val == null || refHex == null) return null;
             MeosThread.ensureReady();
-            Pointer ref = functions.temporal_from_hexwkb(refHex);
+            Pointer ref = GeneratedFunctions.temporal_from_hexwkb(refHex);
             if (ref == null) return null;
             try {
-                Pointer result = functions.tint_from_base_temp(val, ref);
+                Pointer result = GeneratedFunctions.tint_from_base_temp(val, ref);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -376,13 +376,13 @@ public final class ConstructorUDFs {
         (val, refHex) -> {
             if (val == null || refHex == null) return null;
             MeosThread.ensureReady();
-            Pointer ref = functions.temporal_from_hexwkb(refHex);
+            Pointer ref = GeneratedFunctions.temporal_from_hexwkb(refHex);
             if (ref == null) return null;
             try {
-                Pointer result = functions.tfloat_from_base_temp(val, ref);
+                Pointer result = GeneratedFunctions.tfloat_from_base_temp(val, ref);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -398,19 +398,19 @@ public final class ConstructorUDFs {
             if (val == null || refHex == null) return null;
             MeosThread.ensureReady();
             // Wrap val in a single-instant ttext so we can extract a text* from it.
-            Pointer dummyTtext = functions.ttext_in(val + "@2000-01-01 00:00:00+00");
+            Pointer dummyTtext = GeneratedFunctions.ttext_in(val + "@2000-01-01 00:00:00+00");
             if (dummyTtext == null) return null;
             Pointer textPtr = null;
             Pointer ref = null;
             Pointer result = null;
             try {
-                textPtr = functions.ttext_value_n(dummyTtext, 1);
+                textPtr = GeneratedFunctions.ttext_value_n(dummyTtext, 1);
                 if (textPtr == null) return null;
-                ref = functions.temporal_from_hexwkb(refHex);
+                ref = GeneratedFunctions.temporal_from_hexwkb(refHex);
                 if (ref == null) return null;
-                result = functions.ttext_from_base_temp(textPtr, ref);
+                result = GeneratedFunctions.ttext_from_base_temp(textPtr, ref);
                 if (result == null) return null;
-                return functions.temporal_as_hexwkb(result, (byte) 0);
+                return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
             } finally {
                 MeosMemory.free(dummyTtext);
                 if (textPtr != null) MeosMemory.free(textPtr);
@@ -427,16 +427,16 @@ public final class ConstructorUDFs {
         (geoWkt, refHex) -> {
             if (geoWkt == null || refHex == null) return null;
             MeosThread.ensureReady();
-            Pointer gptr = functions.geo_from_text(geoWkt, 0);
+            Pointer gptr = GeneratedFunctions.geo_from_text(geoWkt, 0);
             if (gptr == null) return null;
             try {
-                Pointer ref = functions.temporal_from_hexwkb(refHex);
+                Pointer ref = GeneratedFunctions.temporal_from_hexwkb(refHex);
                 if (ref == null) return null;
                 try {
-                    Pointer result = functions.tpoint_from_base_temp(gptr, ref);
+                    Pointer result = GeneratedFunctions.tpoint_from_base_temp(gptr, ref);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }

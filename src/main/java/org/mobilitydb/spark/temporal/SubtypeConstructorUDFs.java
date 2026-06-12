@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -63,9 +63,9 @@ public final class SubtypeConstructorUDFs {
         (v, ts) -> {
             if (v == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.tboolinst_make(v, toOdt(ts));
+            Pointer p = GeneratedFunctions.tboolinst_make(v, toOdt(ts));
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
 
@@ -73,9 +73,9 @@ public final class SubtypeConstructorUDFs {
         (v, ts) -> {
             if (v == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.tintinst_make(v, toOdt(ts));
+            Pointer p = GeneratedFunctions.tintinst_make(v, toOdt(ts));
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
 
@@ -83,9 +83,9 @@ public final class SubtypeConstructorUDFs {
         (v, ts) -> {
             if (v == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.tfloatinst_make(v, toOdt(ts));
+            Pointer p = GeneratedFunctions.tfloatinst_make(v, toOdt(ts));
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
 
@@ -94,12 +94,12 @@ public final class SubtypeConstructorUDFs {
         (geomWkt, ts) -> {
             if (geomWkt == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(geomWkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (g == null) return null;
             try {
-                Pointer p = functions.tpointinst_make(g, toOdt(ts));
+                Pointer p = GeneratedFunctions.tpointinst_make(g, toOdt(ts));
                 if (p == null) return null;
-                try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
                 finally { MeosMemory.free(p); }
             } finally { MeosMemory.free(g); }
         };
@@ -111,13 +111,13 @@ public final class SubtypeConstructorUDFs {
         (geomWkt, ts) -> {
             if (geomWkt == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer g = functions.geo_from_text(geomWkt, 0);
+            Pointer g = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (g == null) return null;
             try {
                 Pointer p = org.mobilitydb.spark.MeosNative.INSTANCE
                     .tgeoinst_make(g, toPgEpochMicros(ts));
                 if (p == null) return null;
-                try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
                 finally { MeosMemory.free(p); }
             } finally { MeosMemory.free(g); }
         };
@@ -128,12 +128,12 @@ public final class SubtypeConstructorUDFs {
         (v, ts) -> {
             if (v == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer txt = functions.cstring2text(v);
+            Pointer txt = GeneratedFunctions.cstring_to_text(v);
             if (txt == null) return null;
             try {
-                Pointer p = functions.ttextinst_make(txt, toOdt(ts));
+                Pointer p = GeneratedFunctions.ttextinst_make(txt, toOdt(ts));
                 if (p == null) return null;
-                try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
                 finally { MeosMemory.free(p); }
             } finally { MeosMemory.free(txt); }
         };
@@ -147,12 +147,12 @@ public final class SubtypeConstructorUDFs {
         return hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequence(p, 3);
+                Pointer r = GeneratedFunctions.temporal_to_tsequence(p, 3);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -162,12 +162,12 @@ public final class SubtypeConstructorUDFs {
         return hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_to_tsequenceset(p, 3);
+                Pointer r = GeneratedFunctions.temporal_to_tsequenceset(p, 3);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -200,9 +200,9 @@ public final class SubtypeConstructorUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.temporal_subtype(p); }
+            try { return GeneratedFunctions.temporal_subtype(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -211,7 +211,7 @@ public final class SubtypeConstructorUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try { return org.mobilitydb.spark.MeosNative.INSTANCE.temporal_mem_size(p); }
             finally { MeosMemory.free(p); }
@@ -222,12 +222,12 @@ public final class SubtypeConstructorUDFs {
         hex -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer ss = functions.temporal_time(p);
+                Pointer ss = GeneratedFunctions.temporal_time(p);
                 if (ss == null) return null;
-                try { return functions.spanset_as_hexwkb(ss, (byte) 0); }
+                try { return GeneratedFunctions.spanset_as_hexwkb(ss, (byte) 0); }
                 finally { MeosMemory.free(ss); }
             } finally { MeosMemory.free(p); }
         };
@@ -237,12 +237,12 @@ public final class SubtypeConstructorUDFs {
         (hex, ts) -> {
             if (hex == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer r = functions.temporal_delete_timestamptz(p, toOdt(ts), true);
+                Pointer r = GeneratedFunctions.temporal_delete_timestamptz(p, toOdt(ts), true);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -256,13 +256,13 @@ public final class SubtypeConstructorUDFs {
         (hex, ts) -> {
             if (hex == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE
                     .temporal_before_timestamptz(p, toPgEpochMicros(ts));
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };
@@ -271,13 +271,13 @@ public final class SubtypeConstructorUDFs {
         (hex, ts) -> {
             if (hex == null || ts == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
             if (p == null) return null;
             try {
                 Pointer r = org.mobilitydb.spark.MeosNative.INSTANCE
                     .temporal_after_timestamptz(p, toPgEpochMicros(ts));
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(p); }
         };

@@ -25,8 +25,9 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
+import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
 import org.apache.spark.sql.SparkSession;
@@ -67,27 +68,27 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.intspan_lower(p);
+            return GeneratedFunctions.intspan_lower(p);
         };
 
     public static final UDF1<String, Integer> intspanUpper =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.intspan_upper(p);
+            return GeneratedFunctions.intspan_upper(p);
         };
 
     public static final UDF1<String, Integer> intspanWidth =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.intspan_width(p);
+            return GeneratedFunctions.intspan_width(p);
         };
 
     // ------------------------------------------------------------------
@@ -98,27 +99,27 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.floatspan_lower(p);
+            return GeneratedFunctions.floatspan_lower(p);
         };
 
     public static final UDF1<String, Double> floatspanUpper =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.floatspan_upper(p);
+            return GeneratedFunctions.floatspan_upper(p);
         };
 
     public static final UDF1<String, Double> floatspanWidth =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.floatspan_width(p);
+            return GeneratedFunctions.floatspan_width(p);
         };
 
     // ------------------------------------------------------------------
@@ -129,18 +130,18 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.bigintspan_lower(p);
+            return GeneratedFunctions.bigintspan_lower(p);
         };
 
     public static final UDF1<String, Long> bigintspanUpper =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.bigintspan_upper(p);
+            return GeneratedFunctions.bigintspan_upper(p);
         };
 
     // ------------------------------------------------------------------
@@ -151,9 +152,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            int days = functions.datespan_lower(p);
+            int days = GeneratedFunctions.datespan_lower(p);
             return new java.sql.Date((days + TimeUtil.PG_UNIX_EPOCH_OFFSET_DAYS) * 86400000L);
         };
 
@@ -161,9 +162,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            int days = functions.datespan_upper(p);
+            int days = GeneratedFunctions.datespan_upper(p);
             return new java.sql.Date((days + TimeUtil.PG_UNIX_EPOCH_OFFSET_DAYS) * 86400000L);
         };
 
@@ -175,18 +176,18 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return odtToTimestamp(functions.tstzspan_lower(p));
+            return odtToTimestamp(GeneratedFunctions.tstzspan_lower(p));
         };
 
     public static final UDF1<String, java.sql.Timestamp> tstzspanUpper =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return odtToTimestamp(functions.tstzspan_upper(p));
+            return odtToTimestamp(GeneratedFunctions.tstzspan_upper(p));
         };
 
     // ------------------------------------------------------------------
@@ -197,18 +198,18 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.span_lower_inc(p);
+            return GeneratedFunctions.span_lower_inc(p);
         };
 
     public static final UDF1<String, Boolean> spanUpperInc =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.span_upper_inc(p);
+            return GeneratedFunctions.span_upper_inc(p);
         };
 
     // ------------------------------------------------------------------
@@ -219,31 +220,31 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.spanset_num_spans(p);
+            return GeneratedFunctions.spanset_num_spans(p);
         };
 
     public static final UDF1<String, String> spansetStartSpan =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer span = functions.spanset_start_span(p);
+            Pointer span = GeneratedFunctions.spanset_start_span(p);
             if (span == null) return null;
-            return functions.span_as_hexwkb(span, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(span, (byte) 0);
         };
 
     public static final UDF1<String, String> spansetEndSpan =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer span = functions.spanset_end_span(p);
+            Pointer span = GeneratedFunctions.spanset_end_span(p);
             if (span == null) return null;
-            return functions.span_as_hexwkb(span, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(span, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -256,9 +257,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.spanset_lower_inc(p);
+            return GeneratedFunctions.spanset_lower_inc(p);
         };
 
     // spansetUpperInc(hex STRING) → BOOLEAN  (upper bound of the last span)
@@ -267,9 +268,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.spanset_upper_inc(p);
+            return GeneratedFunctions.spanset_upper_inc(p);
         };
 
     // ------------------------------------------------------------------
@@ -282,11 +283,11 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.span_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.span_from_hexwkb(hex);
             if (p == null) return null;
-            Pointer ss = functions.span_to_spanset(p);
+            Pointer ss = GeneratedFunctions.span_to_spanset(p);
             if (ss == null) return null;
-            return functions.spanset_as_hexwkb(ss, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(ss, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -301,36 +302,36 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            return odtToTimestamp(functions.tstzspanset_lower(p));
+            return odtToTimestamp(GeneratedFunctions.tstzspanset_lower(p));
         };
 
     public static final UDF1<String, java.sql.Timestamp> tstzspansetUpper =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            return odtToTimestamp(functions.tstzspanset_upper(p));
+            return odtToTimestamp(GeneratedFunctions.tstzspanset_upper(p));
         };
 
     public static final UDF1<String, java.sql.Timestamp> tstzspansetStartTimestamptz =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            return odtToTimestamp(functions.tstzspanset_start_timestamptz(p));
+            return odtToTimestamp(GeneratedFunctions.tstzspanset_start_timestamptz(p));
         };
 
     public static final UDF1<String, java.sql.Timestamp> tstzspansetEndTimestamptz =
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            return odtToTimestamp(functions.tstzspanset_end_timestamptz(p));
+            return odtToTimestamp(GeneratedFunctions.tstzspanset_end_timestamptz(p));
         };
 
     // ------------------------------------------------------------------
@@ -341,9 +342,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            return functions.set_num_values(p);
+            return GeneratedFunctions.set_num_values(p);
         };
 
     // ------------------------------------------------------------------
@@ -354,9 +355,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.intset_start_value(p); }
+            try { return GeneratedFunctions.intset_start_value(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -364,9 +365,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.intset_end_value(p); }
+            try { return GeneratedFunctions.intset_end_value(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -375,11 +376,11 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int n = functions.set_num_values(p);
-                Pointer arr = functions.intset_values(p);
+                int n = GeneratedFunctions.set_num_values(p);
+                Pointer arr = GeneratedFunctions.intset_values(p, Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4));
                 if (arr == null) return null;
                 try {
                     List<Integer> result = new ArrayList<>(n);
@@ -397,9 +398,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.floatset_start_value(p); }
+            try { return GeneratedFunctions.floatset_start_value(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -407,9 +408,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.floatset_end_value(p); }
+            try { return GeneratedFunctions.floatset_end_value(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -418,11 +419,11 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int n = functions.set_num_values(p);
-                Pointer arr = functions.floatset_values(p);
+                int n = GeneratedFunctions.set_num_values(p);
+                Pointer arr = GeneratedFunctions.floatset_values(p, Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4));
                 if (arr == null) return null;
                 try {
                     List<Double> result = new ArrayList<>(n);
@@ -440,10 +441,10 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int days = functions.dateset_start_value(p);
+                int days = GeneratedFunctions.dateset_start_value(p);
                 return new java.sql.Date((days + TimeUtil.PG_UNIX_EPOCH_OFFSET_DAYS) * 86400000L);
             } finally { MeosMemory.free(p); }
         };
@@ -452,10 +453,10 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int days = functions.dateset_end_value(p);
+                int days = GeneratedFunctions.dateset_end_value(p);
                 return new java.sql.Date((days + TimeUtil.PG_UNIX_EPOCH_OFFSET_DAYS) * 86400000L);
             } finally { MeosMemory.free(p); }
         };
@@ -465,11 +466,11 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int n = functions.set_num_values(p);
-                Pointer arr = functions.dateset_values(p);
+                int n = GeneratedFunctions.set_num_values(p);
+                Pointer arr = GeneratedFunctions.dateset_values(p, Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4));
                 if (arr == null) return null;
                 try {
                     List<java.sql.Date> result = new ArrayList<>(n);
@@ -490,9 +491,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return odtToTimestamp(functions.tstzset_start_value(p)); }
+            try { return odtToTimestamp(GeneratedFunctions.tstzset_start_value(p)); }
             finally { MeosMemory.free(p); }
         };
 
@@ -500,9 +501,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
-            try { return odtToTimestamp(functions.tstzset_end_value(p)); }
+            try { return odtToTimestamp(GeneratedFunctions.tstzset_end_value(p)); }
             finally { MeosMemory.free(p); }
         };
 
@@ -511,11 +512,11 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int n = functions.set_num_values(p);
-                Pointer arr = functions.tstzset_values(p);
+                int n = GeneratedFunctions.set_num_values(p);
+                Pointer arr = GeneratedFunctions.tstzset_values(p, Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4));
                 if (arr == null) return null;
                 try {
                     List<java.sql.Timestamp> result = new ArrayList<>(n);
@@ -536,12 +537,12 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer textPtr = functions.textset_start_value(p);
+                Pointer textPtr = GeneratedFunctions.textset_start_value(p);
                 if (textPtr == null) return null;
-                return functions.text_out(textPtr);
+                return GeneratedFunctions.text_out(textPtr);
             } finally { MeosMemory.free(p); }
         };
 
@@ -549,12 +550,12 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer textPtr = functions.textset_end_value(p);
+                Pointer textPtr = GeneratedFunctions.textset_end_value(p);
                 if (textPtr == null) return null;
-                return functions.text_out(textPtr);
+                return GeneratedFunctions.text_out(textPtr);
             } finally { MeosMemory.free(p); }
         };
 
@@ -563,17 +564,17 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.set_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.set_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int n = functions.set_num_values(p);
-                Pointer arr = functions.textset_values(p);
+                int n = GeneratedFunctions.set_num_values(p);
+                Pointer arr = GeneratedFunctions.textset_values(p, Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4));
                 if (arr == null) return null;
                 try {
                     List<String> result = new ArrayList<>(n);
                     for (int i = 0; i < n; i++) {
                         Pointer textPtr = arr.getPointer((long) i * 8);
-                        if (textPtr != null) result.add(functions.text_out(textPtr));
+                        if (textPtr != null) result.add(GeneratedFunctions.text_out(textPtr));
                     }
                     return result;
                 } finally { MeosMemory.free(arr); }
@@ -659,9 +660,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.intspanset_lower(p); }
+            try { return GeneratedFunctions.intspanset_lower(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -671,9 +672,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.intspanset_upper(p); }
+            try { return GeneratedFunctions.intspanset_upper(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -683,10 +684,10 @@ public final class SpanAccessorUDFs {
         (hex, ignoreGaps) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                return functions.intspanset_width(p, ignoreGaps != null && ignoreGaps);
+                return GeneratedFunctions.intspanset_width(p, ignoreGaps != null && ignoreGaps);
             } finally { MeosMemory.free(p); }
         };
 
@@ -697,12 +698,12 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer firstSpan = functions.spanset_start_span(p);
+                Pointer firstSpan = GeneratedFunctions.spanset_start_span(p);
                 if (firstSpan == null) return null;
-                return functions.floatspan_lower(firstSpan);
+                return GeneratedFunctions.floatspan_lower(firstSpan);
             } finally { MeosMemory.free(p); }
         };
 
@@ -713,12 +714,12 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer lastSpan = functions.spanset_end_span(p);
+                Pointer lastSpan = GeneratedFunctions.spanset_end_span(p);
                 if (lastSpan == null) return null;
-                return functions.floatspan_upper(lastSpan);
+                return GeneratedFunctions.floatspan_upper(lastSpan);
             } finally { MeosMemory.free(p); }
         };
 
@@ -728,10 +729,10 @@ public final class SpanAccessorUDFs {
         (hex, ignoreGaps) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                return functions.floatspanset_width(p, ignoreGaps != null && ignoreGaps);
+                return GeneratedFunctions.floatspanset_width(p, ignoreGaps != null && ignoreGaps);
             } finally { MeosMemory.free(p); }
         };
 
@@ -745,9 +746,9 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
-            try { return functions.tstzspanset_num_timestamps(p); }
+            try { return GeneratedFunctions.tstzspanset_num_timestamps(p); }
             finally { MeosMemory.free(p); }
         };
 
@@ -758,11 +759,11 @@ public final class SpanAccessorUDFs {
         (hex) -> {
             if (hex == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                int n = functions.tstzspanset_num_timestamps(p);
-                Pointer arr = functions.tstzspanset_timestamps(p);
+                int n = GeneratedFunctions.tstzspanset_num_timestamps(p);
+                Pointer arr = GeneratedFunctions.tstzspanset_timestamps(p);
                 if (arr == null) return null;
                 try {
                     List<java.sql.Timestamp> result = new ArrayList<>(n);
@@ -782,12 +783,12 @@ public final class SpanAccessorUDFs {
             if (hex == null) return null;
             MeosThread.ensureReady();
             boolean ignore = (ignoreGaps != null && ignoreGaps);
-            Pointer p = functions.spanset_from_hexwkb(hex);
+            Pointer p = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (p == null) return null;
             try {
-                Pointer iv = functions.tstzspanset_duration(p, ignore);
+                Pointer iv = GeneratedFunctions.tstzspanset_duration(p, ignore);
                 if (iv == null) return null;
-                try { return functions.pg_interval_out(iv); }
+                try { return GeneratedFunctions.pg_interval_out(iv); }
                 finally { MeosMemory.free(iv); }
             } finally { MeosMemory.free(p); }
         };
@@ -801,12 +802,12 @@ public final class SpanAccessorUDFs {
         (hex, n) -> {
             if (hex == null || n == null) return null;
             MeosThread.ensureReady();
-            Pointer ss = functions.spanset_from_hexwkb(hex);
+            Pointer ss = GeneratedFunctions.spanset_from_hexwkb(hex);
             if (ss == null) return null;
             try {
-                Pointer span = functions.spanset_span_n(ss, n);
+                Pointer span = GeneratedFunctions.spanset_span_n(ss, n);
                 if (span == null) return null;
-                return functions.span_as_hexwkb(span, (byte) 0);
+                return GeneratedFunctions.span_as_hexwkb(span, (byte) 0);
             } finally {
                 MeosMemory.free(ss);
             }

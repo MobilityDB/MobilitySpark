@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.geo;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
@@ -66,14 +66,14 @@ public final class STBoxUDFs {
     // milliseconds from Unix epoch (1970-01-01) to PG epoch (2000-01-01)
     private static Pointer stboxPtr(String hex) {
         if (hex == null) return null;
-        return functions.stbox_from_hexwkb(hex);
+        return GeneratedFunctions.stbox_from_hexwkb(hex);
     }
 
     // stbox_as_hexwkb requires a non-null size_out scratch Pointer
     private static String stboxHex(Pointer p) {
         if (p == null) return null;
         Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-        return functions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
+        return GeneratedFunctions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
     }
 
     // ------------------------------------------------------------------
@@ -84,21 +84,21 @@ public final class STBoxUDFs {
         (hex) -> {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
-            return p == null ? null : functions.stbox_hasx(p);
+            return p == null ? null : GeneratedFunctions.stbox_hasx(p);
         };
 
     public static final UDF1<String, Boolean> stboxHast =
         (hex) -> {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
-            return p == null ? null : functions.stbox_hast(p);
+            return p == null ? null : GeneratedFunctions.stbox_hast(p);
         };
 
     public static final UDF1<String, Boolean> stboxHasz =
         (hex) -> {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
-            return p == null ? null : functions.stbox_hasz(p);
+            return p == null ? null : GeneratedFunctions.stbox_hasz(p);
         };
 
     // ------------------------------------------------------------------
@@ -110,7 +110,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_xmin(p);
+            Pointer r = GeneratedFunctions.stbox_xmin(p);
             return r == null ? null : r.getDouble(0);
         };
 
@@ -119,7 +119,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_xmax(p);
+            Pointer r = GeneratedFunctions.stbox_xmax(p);
             return r == null ? null : r.getDouble(0);
         };
 
@@ -128,7 +128,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_ymin(p);
+            Pointer r = GeneratedFunctions.stbox_ymin(p);
             return r == null ? null : r.getDouble(0);
         };
 
@@ -137,7 +137,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_ymax(p);
+            Pointer r = GeneratedFunctions.stbox_ymax(p);
             return r == null ? null : r.getDouble(0);
         };
 
@@ -146,7 +146,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_zmin(p);
+            Pointer r = GeneratedFunctions.stbox_zmin(p);
             return r == null ? null : r.getDouble(0);
         };
 
@@ -155,7 +155,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_zmax(p);
+            Pointer r = GeneratedFunctions.stbox_zmax(p);
             return r == null ? null : r.getDouble(0);
         };
 
@@ -168,7 +168,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_tmin(p);
+            Pointer r = GeneratedFunctions.stbox_tmin(p);
             if (r == null) return null;
             return new java.sql.Timestamp(r.getLong(0) / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS);
         };
@@ -178,7 +178,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_tmax(p);
+            Pointer r = GeneratedFunctions.stbox_tmax(p);
             if (r == null) return null;
             return new java.sql.Timestamp(r.getLong(0) / 1000L + TimeUtil.PG_UNIX_EPOCH_OFFSET_MS);
         };
@@ -192,7 +192,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_tmin_inc(p);
+            Pointer r = GeneratedFunctions.stbox_tmin_inc(p);
             return r == null ? null : r.getByte(0) != 0;
         };
 
@@ -201,7 +201,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_tmax_inc(p);
+            Pointer r = GeneratedFunctions.stbox_tmax_inc(p);
             return r == null ? null : r.getByte(0) != 0;
         };
 
@@ -213,7 +213,7 @@ public final class STBoxUDFs {
         (hex) -> {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
-            return p == null ? null : functions.stbox_srid(p);
+            return p == null ? null : GeneratedFunctions.stbox_srid(p);
         };
 
     // ------------------------------------------------------------------
@@ -227,7 +227,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer r = functions.stbox_expand_space(p, d);
+            Pointer r = GeneratedFunctions.stbox_expand_space(p, d);
             return stboxHex(r);
         };
 
@@ -238,9 +238,9 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) return null;
-            Pointer r = functions.stbox_expand_time(p, iv);
+            Pointer r = GeneratedFunctions.stbox_expand_time(p, iv);
             return stboxHex(r);
         };
 
@@ -258,7 +258,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            return functions.stbox_area(p, false);
+            return GeneratedFunctions.stbox_area(p, false);
         };
 
     public static final UDF1<String, Double> stboxPerimeter =
@@ -267,7 +267,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            return functions.stbox_perimeter(p, false);
+            return GeneratedFunctions.stbox_perimeter(p, false);
         };
 
     public static final UDF1<String, Double> stboxVolume =
@@ -276,7 +276,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            return functions.stbox_volume(p);
+            return GeneratedFunctions.stbox_volume(p);
         };
 
     // stboxIsGeodetic(hex) → Boolean
@@ -286,7 +286,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            return functions.stbox_isgeodetic(p);
+            return GeneratedFunctions.stbox_isgeodetic(p);
         };
 
     // stboxToGeo(hex) → WKT of the bounding envelope polygon
@@ -296,9 +296,9 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer g = functions.stbox_to_geo(p);
+            Pointer g = GeneratedFunctions.stbox_to_geo(p);
             if (g == null) return null;
-            return functions.geo_as_text(g, 15);
+            return GeneratedFunctions.geo_as_text(g, 15);
         };
 
     // stboxToTstzspan(hex) → tstzspan hex-WKB
@@ -308,9 +308,9 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer span = functions.stbox_to_tstzspan(p);
+            Pointer span = GeneratedFunctions.stbox_to_tstzspan(p);
             if (span == null) return null;
-            return functions.span_as_hexwkb(span, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(span, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -325,7 +325,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer result = functions.stbox_round(p, maxDecimals);
+            Pointer result = GeneratedFunctions.stbox_round(p, maxDecimals);
             if (result == null) return null;
             try {
                 return stboxHex(result);
@@ -346,7 +346,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer result = functions.stbox_set_srid(p, srid);
+            Pointer result = GeneratedFunctions.stbox_set_srid(p, srid);
             if (result == null) return null;
             try {
                 return stboxHex(result);
@@ -368,10 +368,10 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer shiftIv = shift == null ? null : functions.pg_interval_in(shift, Integer.MIN_VALUE);
-            Pointer scaleIv = scale == null ? null : functions.pg_interval_in(scale, Integer.MIN_VALUE);
+            Pointer shiftIv = shift == null ? null : GeneratedFunctions.pg_interval_in(shift, Integer.MIN_VALUE);
+            Pointer scaleIv = scale == null ? null : GeneratedFunctions.pg_interval_in(scale, Integer.MIN_VALUE);
             try {
-                Pointer result = functions.stbox_shift_scale_time(p, shiftIv, scaleIv);
+                Pointer result = GeneratedFunctions.stbox_shift_scale_time(p, shiftIv, scaleIv);
                 if (result == null) return null;
                 try {
                     return stboxHex(result);
@@ -397,9 +397,9 @@ public final class STBoxUDFs {
         (wkt) -> {
             if (wkt == null) return null;
             MeosThread.ensureReady();
-            Pointer geo = functions.geo_from_text(wkt, 0);
+            Pointer geo = GeneratedFunctions.geo_from_text(wkt, 0);
             if (geo == null) return null;
-            Pointer result = functions.geo_to_stbox(geo);
+            Pointer result = GeneratedFunctions.geo_to_stbox(geo);
             if (result == null) return null;
             try {
                 return stboxHex(result);
@@ -415,9 +415,9 @@ public final class STBoxUDFs {
         (spanHex) -> {
             if (spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer span = functions.span_from_hexwkb(spanHex);
+            Pointer span = GeneratedFunctions.span_from_hexwkb(spanHex);
             if (span == null) return null;
-            Pointer result = functions.tstzspan_to_stbox(span);
+            Pointer result = GeneratedFunctions.tstzspan_to_stbox(span);
             if (result == null) return null;
             try {
                 return stboxHex(result);
@@ -435,7 +435,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             long pgMicros = (ts.getTime() - TimeUtil.PG_UNIX_EPOCH_OFFSET_MS) * 1000L;
             OffsetDateTime odt = OffsetDateTime.ofInstant(Instant.ofEpochSecond(pgMicros, 0), ZoneOffset.UTC);
-            Pointer result = functions.timestamptz_to_stbox(odt);
+            Pointer result = GeneratedFunctions.timestamptz_to_stbox(odt);
             if (result == null) return null;
             try {
                 return stboxHex(result);
@@ -456,7 +456,7 @@ public final class STBoxUDFs {
             MeosThread.ensureReady();
             Pointer p = stboxPtr(hex);
             if (p == null) return null;
-            Pointer result = functions.stbox_get_space(p);
+            Pointer result = GeneratedFunctions.stbox_get_space(p);
             if (result == null) return null;
             try {
                 return stboxHex(result);
@@ -556,10 +556,10 @@ public final class STBoxUDFs {
     }
 
     public static final UDF2<String, String, String> intersectionStboxStbox =
-        (h1, h2) -> stboxBinOp(h1, h2, functions::intersection_stbox_stbox);
+        (h1, h2) -> stboxBinOp(h1, h2, GeneratedFunctions::intersection_stbox_stbox);
 
     public static final UDF2<String, String, String> unionStboxStbox =
-        (h1, h2) -> stboxBinOp(h1, h2, (p1, p2) -> functions.union_stbox_stbox(p1, p2, false));
+        (h1, h2) -> stboxBinOp(h1, h2, (p1, p2) -> GeneratedFunctions.union_stbox_stbox(p1, p2, false));
 
     // ------------------------------------------------------------------
     // STBox positional predicates  (stbox, stbox) → Boolean
@@ -582,38 +582,38 @@ public final class STBoxUDFs {
     // ------------------------------------------------------------------
 
     public static final UDF2<String, String, Boolean> stboxContains =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::contains_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::contains_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxContained =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::contained_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::contained_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxOverlaps =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::overlaps_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::overlaps_stbox_stbox);
 
     public static final UDF2<String, String, Boolean> stboxLeft =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::left_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::left_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxOverleft =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::overleft_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::overleft_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxRight =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::right_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::right_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxOverright =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::overright_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::overright_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxBelow =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::below_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::below_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxOverbelow =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::overbelow_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::overbelow_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxAbove =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::above_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::above_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxOverabove =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::overabove_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::overabove_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxBefore =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::before_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::before_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxOverbefore =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::overbefore_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::overbefore_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxAfter =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::after_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::after_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxOverafter =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::overafter_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::overafter_stbox_stbox);
     public static final UDF2<String, String, Boolean> stboxAdjacent =
-        (h1, h2) -> stboxBoolOp(h1, h2, functions::adjacent_stbox_stbox);
+        (h1, h2) -> stboxBoolOp(h1, h2, GeneratedFunctions::adjacent_stbox_stbox);
 
     // ------------------------------------------------------------------
     // Typed STBox constructors — delegate to stbox_make with the correct
@@ -626,14 +626,14 @@ public final class STBoxUDFs {
             double xmin, double ymin, double zmin, double xmax, double ymax, double zmax,
             String tstzspanHex) {
         MeosThread.ensureReady();
-        Pointer period = (tstzspanHex == null) ? null : functions.span_from_hexwkb(tstzspanHex);
+        Pointer period = (tstzspanHex == null) ? null : GeneratedFunctions.span_from_hexwkb(tstzspanHex);
         try {
-            Pointer p = functions.stbox_make(hasx, hasz, geodetic, srid,
+            Pointer p = GeneratedFunctions.stbox_make(hasx, hasz, geodetic, srid,
                 xmin, ymin, zmin, xmax, ymax, zmax, period);
             if (p == null) return null;
             try {
                 Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                return functions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
+                return GeneratedFunctions.stbox_as_hexwkb(p, (byte) 0, sizeOut);
             } finally { MeosMemory.free(p); }
         } finally { if (period != null) MeosMemory.free(period); }
     }

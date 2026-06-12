@@ -27,7 +27,7 @@ package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -98,12 +98,13 @@ class MathUDFsExtTest {
     }
 
     @Test @Order(5)
-    void tnumberTrend_tint_returns_null() throws Exception {
-        // tnumber_trend is derivative-based and requires linear interpolation
-        // (MEOS ensure_linear_interp).  A tint is step-interpolated, so it has
-        // no defined trend and MEOS correctly returns null.
+    void tnumberTrend_tint_returns_nonnull() throws Exception {
+        // At the current MEOS pin tnumber_trend is defined for both step and
+        // linear interpolation (the prior ensure_linear_interp NULL guard was
+        // removed), so a step-interpolated tint has a well-defined trend.
         String r = AnalyticsUDFs.tnumberTrend.call(TINT_SEQ);
-        assertNull(r);
+        assertNotNull(r);
+        assertFalse(r.isBlank());
     }
 
     // ------------------------------------------------------------------

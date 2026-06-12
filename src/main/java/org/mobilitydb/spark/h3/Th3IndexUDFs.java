@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.h3;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.apache.spark.sql.SparkSession;
@@ -85,10 +85,10 @@ public final class Th3IndexUDFs {
     private static OffsetDateTime parseTs(Object arg) {
         if (arg == null) return null;
         if (arg instanceof java.sql.Timestamp) {
-            return functions.pg_timestamptz_in(
+            return GeneratedFunctions.pg_timestamptz_in(
                 ((java.sql.Timestamp) arg).toInstant().atOffset(ZoneOffset.UTC).format(PG_FMT), -1);
         }
-        return functions.pg_timestamptz_in(arg.toString().trim(), -1);
+        return GeneratedFunctions.pg_timestamptz_in(arg.toString().trim(), -1);
     }
 
     /** Convert a Number arg (Spark sends Int / Long / BigDecimal) to int. */
@@ -97,14 +97,14 @@ public final class Th3IndexUDFs {
     /** Serialise a Temporal* result as hex-WKB and free the input pointer. */
     private static String tempHex(Pointer t) {
         if (t == null) return null;
-        try { return functions.temporal_as_hexwkb(t, (byte) 0); }
+        try { return GeneratedFunctions.temporal_as_hexwkb(t, (byte) 0); }
         finally { MeosMemory.free(t); }
     }
 
     /** Serialise a Set* result as hex-WKB and free the input pointer. */
     private static String setHex(Pointer s) {
         if (s == null) return null;
-        try { return functions.set_as_hexwkb(s, (byte) 0); }
+        try { return GeneratedFunctions.set_as_hexwkb(s, (byte) 0); }
         finally { MeosMemory.free(s); }
     }
 
@@ -115,73 +115,73 @@ public final class Th3IndexUDFs {
     public static final UDF1<String, Long> h3IndexFromText = (s) -> {
         if (s == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_in(s);
+        return GeneratedFunctions.h3index_in(s);
     };
 
     public static final UDF1<Long, String> h3IndexAsText = (cell) -> {
         if (cell == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_out(cell);
+        return GeneratedFunctions.h3index_out(cell);
     };
 
     public static final UDF1<String, Long> h3IndexParse = (s) -> {
         if (s == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_parse(s);
+        return GeneratedFunctions.h3index_in(s);
     };
 
     public static final UDF1<Long, String> h3IndexToString = (cell) -> {
         if (cell == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_to_string(cell);
+        return GeneratedFunctions.h3index_out(cell);
     };
 
     public static final UDF2<Long, Long, Boolean> h3IndexEq = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_eq(a, b);
+        return GeneratedFunctions.h3index_eq(a, b);
     };
 
     public static final UDF2<Long, Long, Boolean> h3IndexNe = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_ne(a, b);
+        return GeneratedFunctions.h3index_ne(a, b);
     };
 
     public static final UDF2<Long, Long, Boolean> h3IndexLt = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_lt(a, b);
+        return GeneratedFunctions.h3index_lt(a, b);
     };
 
     public static final UDF2<Long, Long, Boolean> h3IndexLe = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_le(a, b);
+        return GeneratedFunctions.h3index_le(a, b);
     };
 
     public static final UDF2<Long, Long, Boolean> h3IndexGt = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_gt(a, b);
+        return GeneratedFunctions.h3index_gt(a, b);
     };
 
     public static final UDF2<Long, Long, Boolean> h3IndexGe = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_ge(a, b);
+        return GeneratedFunctions.h3index_ge(a, b);
     };
 
     public static final UDF2<Long, Long, Integer> h3IndexCmp = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        return functions.h3index_cmp(a, b);
+        return GeneratedFunctions.h3index_cmp(a, b);
     };
 
     public static final UDF1<Long, Long> h3IndexHash = (cell) -> {
         if (cell == null) return null;
         MeosThread.ensureReady();
-        return (long) functions.h3index_hash(cell);
+        return (long) GeneratedFunctions.h3index_hash(cell);
     };
 
     // ==================================================================
@@ -192,61 +192,61 @@ public final class Th3IndexUDFs {
     public static final UDF2<Long, Integer, String> h3GridDisk = (origin, k) -> {
         if (origin == null || k == null) return null;
         MeosThread.ensureReady();
-        return setHex(functions.h3_grid_disk(origin, k));
+        return setHex(GeneratedFunctions.h3_grid_disk(origin, k));
     };
 
     public static final UDF2<Long, Integer, String> h3GridRing = (origin, k) -> {
         if (origin == null || k == null) return null;
         MeosThread.ensureReady();
-        return setHex(functions.h3_grid_ring(origin, k));
+        return setHex(GeneratedFunctions.h3_grid_ring(origin, k));
     };
 
     public static final UDF2<Long, Long, String> h3GridPathCells = (start, end) -> {
         if (start == null || end == null) return null;
         MeosThread.ensureReady();
-        return setHex(functions.h3_grid_path_cells(start, end));
+        return setHex(GeneratedFunctions.h3_grid_path_cells(start, end));
     };
 
     public static final UDF2<Long, Integer, String> h3CellToChildren = (origin, childRes) -> {
         if (origin == null || childRes == null) return null;
         MeosThread.ensureReady();
-        return setHex(functions.h3_cell_to_children(origin, childRes));
+        return setHex(GeneratedFunctions.h3_cell_to_children(origin, childRes));
     };
 
     public static final UDF1<String, String> h3CompactCells = (cellsHex) -> {
         if (cellsHex == null) return null;
         MeosThread.ensureReady();
-        Pointer in = functions.set_from_hexwkb(cellsHex);
+        Pointer in = GeneratedFunctions.set_from_hexwkb(cellsHex);
         if (in == null) return null;
-        try { return setHex(functions.h3_compact_cells(in)); }
+        try { return setHex(GeneratedFunctions.h3_compact_cells(in)); }
         finally { MeosMemory.free(in); }
     };
 
     public static final UDF2<String, Integer, String> h3UncompactCells = (cellsHex, res) -> {
         if (cellsHex == null || res == null) return null;
         MeosThread.ensureReady();
-        Pointer in = functions.set_from_hexwkb(cellsHex);
+        Pointer in = GeneratedFunctions.set_from_hexwkb(cellsHex);
         if (in == null) return null;
-        try { return setHex(functions.h3_uncompact_cells(in, res)); }
+        try { return setHex(GeneratedFunctions.h3_uncompact_cells(in, res)); }
         finally { MeosMemory.free(in); }
     };
 
     public static final UDF1<Long, String> h3OriginToDirectedEdges = (origin) -> {
         if (origin == null) return null;
         MeosThread.ensureReady();
-        return setHex(functions.h3_origin_to_directed_edges(origin));
+        return setHex(GeneratedFunctions.h3_origin_to_directed_edges(origin));
     };
 
     public static final UDF1<Long, String> h3CellToVertexes = (cell) -> {
         if (cell == null) return null;
         MeosThread.ensureReady();
-        return setHex(functions.h3_cell_to_vertexes(cell));
+        return setHex(GeneratedFunctions.h3_cell_to_vertexes(cell));
     };
 
     public static final UDF1<Long, String> h3GetIcosahedronFaces = (cell) -> {
         if (cell == null) return null;
         MeosThread.ensureReady();
-        return setHex(functions.h3_get_icosahedron_faces(cell));
+        return setHex(GeneratedFunctions.h3_get_icosahedron_faces(cell));
     };
 
     // ==================================================================
@@ -256,33 +256,33 @@ public final class Th3IndexUDFs {
     public static final UDF1<String, String> th3IndexFromText = (s) -> {
         if (s == null) return null;
         MeosThread.ensureReady();
-        return tempHex(functions.th3index_in(s));
+        return tempHex(GeneratedFunctions.th3index_in(s));
     };
 
     public static final UDF1<String, String> th3IndexInstFromText = (s) -> {
         if (s == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.th3indexinst_in(s);
+        Pointer p = GeneratedFunctions.th3indexinst_in(s);
         if (p == null) return null;
-        try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+        try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
         finally { MeosMemory.free(p); }
     };
 
     public static final UDF2<String, Integer, String> th3IndexSeqFromText = (s, interp) -> {
         if (s == null || interp == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.th3indexseq_in(s, interp);
+        Pointer p = GeneratedFunctions.th3indexseq_in(s, interp);
         if (p == null) return null;
-        try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+        try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
         finally { MeosMemory.free(p); }
     };
 
     public static final UDF1<String, String> th3IndexSeqSetFromText = (s) -> {
         if (s == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.th3indexseqset_in(s);
+        Pointer p = GeneratedFunctions.th3indexseqset_in(s);
         if (p == null) return null;
-        try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+        try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
         finally { MeosMemory.free(p); }
     };
 
@@ -298,16 +298,16 @@ public final class Th3IndexUDFs {
         if (cell == null || tsArg == null) return null;
         MeosThread.ensureReady();
         OffsetDateTime t = parseTs(tsArg);
-        return tempHex(functions.th3index_make(cell, t));
+        return tempHex(GeneratedFunctions.th3index_make(cell, t));
     };
 
     public static final UDF2<Long, Object, String> th3IndexInstMake = (cell, tsArg) -> {
         if (cell == null || tsArg == null) return null;
         MeosThread.ensureReady();
         OffsetDateTime t = parseTs(tsArg);
-        Pointer p = functions.th3indexinst_make(cell, t);
+        Pointer p = GeneratedFunctions.th3indexinst_make(cell, t);
         if (p == null) return null;
-        try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+        try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
         finally { MeosMemory.free(p); }
     };
 
@@ -335,12 +335,12 @@ public final class Th3IndexUDFs {
                 if (odt == null) return null;
                 tbuf.putLong(8L * i, TimeUtil.toMeosTimestamp(odt));
             }
-            Pointer p = functions.th3indexseq_make(
+            Pointer p = GeneratedFunctions.th3indexseq_make(
                 vbuf, tbuf, n,
                 lowerInc != null && lowerInc,
                 upperInc != null && upperInc);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         };
 
@@ -357,16 +357,16 @@ public final class Th3IndexUDFs {
         Pointer[] seqs = new Pointer[sequencesHex.length];
         try {
             for (int i = 0; i < sequencesHex.length; i++) {
-                seqs[i] = functions.temporal_from_hexwkb(sequencesHex[i]);
+                seqs[i] = GeneratedFunctions.temporal_from_hexwkb(sequencesHex[i]);
                 if (seqs[i] == null) return null;
             }
             // Marshal the Pointer[] of sequences into a native pointer array.
             Runtime rt = Runtime.getSystemRuntime();
             Pointer sbuf = rt.getMemoryManager().allocateDirect(8L * seqs.length);
             for (int i = 0; i < seqs.length; i++) sbuf.putPointer(8L * i, seqs[i]);
-            Pointer p = functions.th3indexseqset_make(sbuf, seqs.length);
+            Pointer p = GeneratedFunctions.th3indexseqset_make(sbuf, seqs.length);
             if (p == null) return null;
-            try { return functions.temporal_as_hexwkb(p, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0); }
             finally { MeosMemory.free(p); }
         } finally {
             for (Pointer s : seqs) if (s != null) MeosMemory.free(s);
@@ -380,18 +380,18 @@ public final class Th3IndexUDFs {
     public static final UDF1<String, Long> th3IndexStartValue = (th3idx) -> {
         if (th3idx == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(th3idx);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
-        try { return functions.th3index_start_value(t); }
+        try { return GeneratedFunctions.th3index_start_value(t); }
         finally { MeosMemory.free(t); }
     };
 
     public static final UDF1<String, Long> th3IndexEndValue = (th3idx) -> {
         if (th3idx == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(th3idx);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
-        try { return functions.th3index_end_value(t); }
+        try { return GeneratedFunctions.th3index_end_value(t); }
         finally { MeosMemory.free(t); }
     };
 
@@ -404,11 +404,11 @@ public final class Th3IndexUDFs {
     public static final UDF1<String, long[]> th3IndexValues = (th3idx) -> {
         if (th3idx == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(th3idx);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
         try {
             Pointer countPtr = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
-            Pointer arr = functions.th3index_values(t, countPtr);
+            Pointer arr = GeneratedFunctions.th3index_values(t, countPtr);
             if (arr == null) return null;
             int n = countPtr.getInt(0);
             long[] out = new long[n];
@@ -427,10 +427,10 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, Integer, Long> th3IndexValueN = (th3idx, n) -> {
         if (th3idx == null || n == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(th3idx);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
         try {
-            Pointer result = functions.th3index_value_n(t, n);
+            Pointer result = GeneratedFunctions.th3index_value_n(t, n);
             return result == null ? null : result.getLong(0);
         } finally {
             MeosMemory.free(t);
@@ -449,10 +449,10 @@ public final class Th3IndexUDFs {
             if (th3idx == null || tsArg == null) return null;
             MeosThread.ensureReady();
             OffsetDateTime ts = parseTs(tsArg);
-            Pointer t = functions.temporal_from_hexwkb(th3idx);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
             if (t == null) return null;
             try {
-                Pointer result = functions.th3index_value_at_timestamptz(
+                Pointer result = GeneratedFunctions.th3index_value_at_timestamptz(
                     t, ts, strict != null && strict);
                 return result == null ? null : result.getLong(0);
             } finally {
@@ -467,18 +467,18 @@ public final class Th3IndexUDFs {
     public static final UDF1<String, String> tbigintToTh3Index = (tbi) -> {
         if (tbi == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(tbi);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(tbi);
         if (t == null) return null;
-        try { return tempHex(functions.tbigint_to_th3index(t)); }
+        try { return tempHex(GeneratedFunctions.tbigint_to_th3index(t)); }
         finally { MeosMemory.free(t); }
     };
 
     public static final UDF1<String, String> th3IndexToTbigint = (th3idx) -> {
         if (th3idx == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(th3idx);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
-        try { return tempHex(functions.th3index_to_tbigint(t)); }
+        try { return tempHex(GeneratedFunctions.th3index_to_tbigint(t)); }
         finally { MeosMemory.free(t); }
     };
 
@@ -507,19 +507,19 @@ public final class Th3IndexUDFs {
     private static Boolean evCmp(Long cell, String th3idx, boolean ever, String op) {
         if (cell == null || th3idx == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(th3idx);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
         try {
             int r;
             switch (op) {
-                case "ever_eq":     r = functions.ever_eq_h3index_th3index(cell, t); break;
-                case "ever_eq_t":   r = functions.ever_eq_th3index_h3index(t, cell); break;
-                case "ever_ne":     r = functions.ever_ne_h3index_th3index(cell, t); break;
-                case "ever_ne_t":   r = functions.ever_ne_th3index_h3index(t, cell); break;
-                case "always_eq":   r = functions.always_eq_h3index_th3index(cell, t); break;
-                case "always_eq_t": r = functions.always_eq_th3index_h3index(t, cell); break;
-                case "always_ne":   r = functions.always_ne_h3index_th3index(cell, t); break;
-                case "always_ne_t": r = functions.always_ne_th3index_h3index(t, cell); break;
+                case "ever_eq":     r = GeneratedFunctions.ever_eq_h3index_th3index(cell, t); break;
+                case "ever_eq_t":   r = GeneratedFunctions.ever_eq_th3index_h3index(t, cell); break;
+                case "ever_ne":     r = GeneratedFunctions.ever_ne_h3index_th3index(cell, t); break;
+                case "ever_ne_t":   r = GeneratedFunctions.ever_ne_th3index_h3index(t, cell); break;
+                case "always_eq":   r = GeneratedFunctions.always_eq_h3index_th3index(cell, t); break;
+                case "always_eq_t": r = GeneratedFunctions.always_eq_th3index_h3index(t, cell); break;
+                case "always_ne":   r = GeneratedFunctions.always_ne_h3index_th3index(cell, t); break;
+                case "always_ne_t": r = GeneratedFunctions.always_ne_th3index_h3index(t, cell); break;
                 default: throw new IllegalStateException(op);
             }
             return r < 0 ? null : r == 1;
@@ -541,18 +541,18 @@ public final class Th3IndexUDFs {
     private static Boolean ttCmp(String a, String b, String op) {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.temporal_from_hexwkb(a);
+        Pointer p = GeneratedFunctions.temporal_from_hexwkb(a);
         if (p == null) return null;
         try {
-            Pointer q = functions.temporal_from_hexwkb(b);
+            Pointer q = GeneratedFunctions.temporal_from_hexwkb(b);
             if (q == null) return null;
             try {
                 int r;
                 switch (op) {
-                    case "ever_eq":   r = functions.ever_eq_th3index_th3index(p, q); break;
-                    case "ever_ne":   r = functions.ever_ne_th3index_th3index(p, q); break;
-                    case "always_eq": r = functions.always_eq_th3index_th3index(p, q); break;
-                    case "always_ne": r = functions.always_ne_th3index_th3index(p, q); break;
+                    case "ever_eq":   r = GeneratedFunctions.ever_eq_th3index_th3index(p, q); break;
+                    case "ever_ne":   r = GeneratedFunctions.ever_ne_th3index_th3index(p, q); break;
+                    case "always_eq": r = GeneratedFunctions.always_eq_th3index_th3index(p, q); break;
+                    case "always_ne": r = GeneratedFunctions.always_ne_th3index_th3index(p, q); break;
                     default: throw new IllegalStateException(op);
                 }
                 return r < 0 ? null : r == 1;
@@ -572,30 +572,30 @@ public final class Th3IndexUDFs {
     public static final UDF2<Long, String, String> teqH3IndexTh3Index = (cell, th3idx) -> {
         if (cell == null || th3idx == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(th3idx);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
-        try { return tempHex(functions.teq_h3index_th3index(cell, t)); }
+        try { return tempHex(GeneratedFunctions.teq_h3index_th3index(cell, t)); }
         finally { MeosMemory.free(t); }
     };
 
     public static final UDF2<String, Long, String> teqTh3IndexH3Index = (th3idx, cell) -> {
         if (th3idx == null || cell == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(th3idx);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
-        try { return tempHex(functions.teq_th3index_h3index(t, cell)); }
+        try { return tempHex(GeneratedFunctions.teq_th3index_h3index(t, cell)); }
         finally { MeosMemory.free(t); }
     };
 
     public static final UDF2<String, String, String> teqTh3IndexTh3Index = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.temporal_from_hexwkb(a);
+        Pointer p = GeneratedFunctions.temporal_from_hexwkb(a);
         if (p == null) return null;
         try {
-            Pointer q = functions.temporal_from_hexwkb(b);
+            Pointer q = GeneratedFunctions.temporal_from_hexwkb(b);
             if (q == null) return null;
-            try { return tempHex(functions.teq_th3index_th3index(p, q)); }
+            try { return tempHex(GeneratedFunctions.teq_th3index_th3index(p, q)); }
             finally { MeosMemory.free(q); }
         } finally { MeosMemory.free(p); }
     };
@@ -603,30 +603,30 @@ public final class Th3IndexUDFs {
     public static final UDF2<Long, String, String> tneH3IndexTh3Index = (cell, th3idx) -> {
         if (cell == null || th3idx == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(th3idx);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
-        try { return tempHex(functions.tne_h3index_th3index(cell, t)); }
+        try { return tempHex(GeneratedFunctions.tne_h3index_th3index(cell, t)); }
         finally { MeosMemory.free(t); }
     };
 
     public static final UDF2<String, Long, String> tneTh3IndexH3Index = (th3idx, cell) -> {
         if (th3idx == null || cell == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(th3idx);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
         if (t == null) return null;
-        try { return tempHex(functions.tne_th3index_h3index(t, cell)); }
+        try { return tempHex(GeneratedFunctions.tne_th3index_h3index(t, cell)); }
         finally { MeosMemory.free(t); }
     };
 
     public static final UDF2<String, String, String> tneTh3IndexTh3Index = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.temporal_from_hexwkb(a);
+        Pointer p = GeneratedFunctions.temporal_from_hexwkb(a);
         if (p == null) return null;
         try {
-            Pointer q = functions.temporal_from_hexwkb(b);
+            Pointer q = GeneratedFunctions.temporal_from_hexwkb(b);
             if (q == null) return null;
-            try { return tempHex(functions.tne_th3index_th3index(p, q)); }
+            try { return tempHex(GeneratedFunctions.tne_th3index_th3index(p, q)); }
             finally { MeosMemory.free(q); }
         } finally { MeosMemory.free(p); }
     };
@@ -651,32 +651,32 @@ public final class Th3IndexUDFs {
     private static String tempUnary(String h, String op) {
         if (h == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(h);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(h);
         if (t == null) return null;
         try {
             Pointer r;
             switch (op) {
-                case "get_resolution":      r = functions.th3index_get_resolution(t); break;
-                case "get_base_cell_number":r = functions.th3index_get_base_cell_number(t); break;
-                case "is_valid_cell":       r = functions.th3index_is_valid_cell(t); break;
-                case "is_res_class_iii":    r = functions.th3index_is_res_class_iii(t); break;
-                case "is_pentagon":         r = functions.th3index_is_pentagon(t); break;
-                case "cell_to_parent_next": r = functions.th3index_cell_to_parent_next(t); break;
+                case "get_resolution":      r = GeneratedFunctions.th3index_get_resolution(t); break;
+                case "get_base_cell_number":r = GeneratedFunctions.th3index_get_base_cell_number(t); break;
+                case "is_valid_cell":       r = GeneratedFunctions.th3index_is_valid_cell(t); break;
+                case "is_res_class_iii":    r = GeneratedFunctions.th3index_is_res_class_iii(t); break;
+                case "is_pentagon":         r = GeneratedFunctions.th3index_is_pentagon(t); break;
+                case "cell_to_parent_next": r = GeneratedFunctions.th3index_cell_to_parent_next(t); break;
                 case "cell_to_center_child_next":
-                                            r = functions.th3index_cell_to_center_child_next(t); break;
+                                            r = GeneratedFunctions.th3index_cell_to_center_child_next(t); break;
                 case "is_valid_directed_edge":
-                                            r = functions.th3index_is_valid_directed_edge(t); break;
+                                            r = GeneratedFunctions.th3index_is_valid_directed_edge(t); break;
                 case "get_directed_edge_origin":
-                                            r = functions.th3index_get_directed_edge_origin(t); break;
+                                            r = GeneratedFunctions.th3index_get_directed_edge_origin(t); break;
                 case "get_directed_edge_destination":
-                                            r = functions.th3index_get_directed_edge_destination(t); break;
+                                            r = GeneratedFunctions.th3index_get_directed_edge_destination(t); break;
                 case "directed_edge_to_boundary":
-                                            r = functions.th3index_directed_edge_to_boundary(t); break;
-                case "vertex_to_latlng":    r = functions.th3index_vertex_to_latlng(t); break;
-                case "is_valid_vertex":     r = functions.th3index_is_valid_vertex(t); break;
-                case "to_tgeogpoint":       r = functions.th3index_to_tgeogpoint(t); break;
-                case "to_tgeompoint":       r = functions.th3index_to_tgeompoint(t); break;
-                case "cell_to_boundary":    r = functions.th3index_cell_to_boundary(t); break;
+                                            r = GeneratedFunctions.th3index_directed_edge_to_boundary(t); break;
+                case "vertex_to_latlng":    r = GeneratedFunctions.th3index_vertex_to_latlng(t); break;
+                case "is_valid_vertex":     r = GeneratedFunctions.th3index_is_valid_vertex(t); break;
+                case "to_tgeogpoint":       r = GeneratedFunctions.th3index_to_tgeogpoint(t); break;
+                case "to_tgeompoint":       r = GeneratedFunctions.th3index_to_tgeompoint(t); break;
+                case "cell_to_boundary":    r = GeneratedFunctions.th3index_cell_to_boundary(t); break;
                 default: throw new IllegalStateException(op);
             }
             return tempHex(r);
@@ -692,9 +692,9 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, Integer, String> th3IndexCellToParent = (h, res) -> {
         if (h == null || res == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(h);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(h);
         if (t == null) return null;
-        try { return tempHex(functions.th3index_cell_to_parent(t, res)); }
+        try { return tempHex(GeneratedFunctions.th3index_cell_to_parent(t, res)); }
         finally { MeosMemory.free(t); }
     };
 
@@ -704,9 +704,9 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, Integer, String> th3IndexCellToCenterChild = (h, res) -> {
         if (h == null || res == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(h);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(h);
         if (t == null) return null;
-        try { return tempHex(functions.th3index_cell_to_center_child(t, res)); }
+        try { return tempHex(GeneratedFunctions.th3index_cell_to_center_child(t, res)); }
         finally { MeosMemory.free(t); }
     };
 
@@ -716,9 +716,9 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, Integer, String> th3IndexCellToChildPos = (h, parentRes) -> {
         if (h == null || parentRes == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(h);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(h);
         if (t == null) return null;
-        try { return tempHex(functions.th3index_cell_to_child_pos(t, parentRes)); }
+        try { return tempHex(GeneratedFunctions.th3index_cell_to_child_pos(t, parentRes)); }
         finally { MeosMemory.free(t); }
     };
 
@@ -726,12 +726,12 @@ public final class Th3IndexUDFs {
         (childPos, parent, childRes) -> {
             if (childPos == null || parent == null || childRes == null) return null;
             MeosThread.ensureReady();
-            Pointer cp = functions.temporal_from_hexwkb(childPos);
+            Pointer cp = GeneratedFunctions.temporal_from_hexwkb(childPos);
             if (cp == null) return null;
             try {
-                Pointer pa = functions.temporal_from_hexwkb(parent);
+                Pointer pa = GeneratedFunctions.temporal_from_hexwkb(parent);
                 if (pa == null) return null;
-                try { return tempHex(functions.th3index_child_pos_to_cell(cp, pa, childRes)); }
+                try { return tempHex(GeneratedFunctions.th3index_child_pos_to_cell(cp, pa, childRes)); }
                 finally { MeosMemory.free(pa); }
             } finally {
                 MeosMemory.free(cp);
@@ -745,18 +745,18 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, Integer, String> tgeogpointToTh3Index = (h, res) -> {
         if (h == null || res == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(h);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(h);
         if (t == null) return null;
-        try { return tempHex(functions.tgeogpoint_to_th3index(t, res)); }
+        try { return tempHex(GeneratedFunctions.tgeogpoint_to_th3index(t, res)); }
         finally { MeosMemory.free(t); }
     };
 
     public static final UDF2<String, Integer, String> tgeompointToTh3Index = (h, res) -> {
         if (h == null || res == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(h);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(h);
         if (t == null) return null;
-        try { return tempHex(functions.tgeompoint_to_th3index(t, res)); }
+        try { return tempHex(GeneratedFunctions.tgeompoint_to_th3index(t, res)); }
         finally { MeosMemory.free(t); }
     };
 
@@ -780,18 +780,18 @@ public final class Th3IndexUDFs {
         (geomWkt, resolution) -> {
             if (geomWkt == null || resolution == null) return null;
             MeosThread.ensureReady();
-            Pointer gs = functions.geo_from_text(geomWkt, 0);
+            Pointer gs = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (gs == null) return null;
             try {
                 // The instant time is irrelevant for cell extraction; use the
                 // MEOS epoch (2000-01-01Z). tpointinst_make takes OffsetDateTime.
-                Pointer inst = functions.tpointinst_make(gs,
+                Pointer inst = GeneratedFunctions.tpointinst_make(gs,
                     OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
                 if (inst == null) return null;
                 try {
-                    Pointer th3 = functions.tgeompoint_to_th3index(inst, resolution);
+                    Pointer th3 = GeneratedFunctions.tgeompoint_to_th3index(inst, resolution);
                     if (th3 == null) return null;
-                    try { return functions.th3index_start_value(th3); }
+                    try { return GeneratedFunctions.th3index_start_value(th3); }
                     finally { MeosMemory.free(th3); }
                 } finally {
                     MeosMemory.free(inst);
@@ -813,7 +813,7 @@ public final class Th3IndexUDFs {
         (geomWkt, resolution) -> {
             if (geomWkt == null || resolution == null) return null;
             MeosThread.ensureReady();
-            Pointer gs = functions.geo_from_text(geomWkt, 0);
+            Pointer gs = GeneratedFunctions.geo_from_text(geomWkt, 0);
             if (gs == null) return null;
             try {
                 Pointer set = H3IndexJnrBindings.LIB.geo_to_h3index_set(gs, resolution);
@@ -835,10 +835,10 @@ public final class Th3IndexUDFs {
         (cellSetHex, th3idx) -> {
             if (cellSetHex == null || th3idx == null) return null;
             MeosThread.ensureReady();
-            Pointer cells = functions.set_from_hexwkb(cellSetHex);
+            Pointer cells = GeneratedFunctions.set_from_hexwkb(cellSetHex);
             if (cells == null) return null;
             try {
-                Pointer t = functions.temporal_from_hexwkb(th3idx);
+                Pointer t = GeneratedFunctions.temporal_from_hexwkb(th3idx);
                 if (t == null) return null;
                 try {
                     int r = H3IndexJnrBindings.LIB.ever_eq_anyof_h3indexset_th3index(cells, t);
@@ -858,12 +858,12 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, String, String> th3IndexAreNeighborCells = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.temporal_from_hexwkb(a);
+        Pointer p = GeneratedFunctions.temporal_from_hexwkb(a);
         if (p == null) return null;
         try {
-            Pointer q = functions.temporal_from_hexwkb(b);
+            Pointer q = GeneratedFunctions.temporal_from_hexwkb(b);
             if (q == null) return null;
-            try { return tempHex(functions.th3index_are_neighbor_cells(p, q)); }
+            try { return tempHex(GeneratedFunctions.th3index_are_neighbor_cells(p, q)); }
             finally { MeosMemory.free(q); }
         } finally { MeosMemory.free(p); }
     };
@@ -871,12 +871,12 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, String, String> th3IndexCellsToDirectedEdge = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.temporal_from_hexwkb(a);
+        Pointer p = GeneratedFunctions.temporal_from_hexwkb(a);
         if (p == null) return null;
         try {
-            Pointer q = functions.temporal_from_hexwkb(b);
+            Pointer q = GeneratedFunctions.temporal_from_hexwkb(b);
             if (q == null) return null;
-            try { return tempHex(functions.th3index_cells_to_directed_edge(p, q)); }
+            try { return tempHex(GeneratedFunctions.th3index_cells_to_directed_edge(p, q)); }
             finally { MeosMemory.free(q); }
         } finally { MeosMemory.free(p); }
     };
@@ -897,9 +897,9 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, Integer, String> th3IndexCellToVertex = (h, vertexNum) -> {
         if (h == null || vertexNum == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(h);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(h);
         if (t == null) return null;
-        try { return tempHex(functions.th3index_cell_to_vertex(t, vertexNum)); }
+        try { return tempHex(GeneratedFunctions.th3index_cell_to_vertex(t, vertexNum)); }
         finally { MeosMemory.free(t); }
     };
 
@@ -915,12 +915,12 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, String, String> th3IndexGridDistance = (a, b) -> {
         if (a == null || b == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.temporal_from_hexwkb(a);
+        Pointer p = GeneratedFunctions.temporal_from_hexwkb(a);
         if (p == null) return null;
         try {
-            Pointer q = functions.temporal_from_hexwkb(b);
+            Pointer q = GeneratedFunctions.temporal_from_hexwkb(b);
             if (q == null) return null;
-            try { return tempHex(functions.th3index_grid_distance(p, q)); }
+            try { return tempHex(GeneratedFunctions.th3index_grid_distance(p, q)); }
             finally { MeosMemory.free(q); }
         } finally { MeosMemory.free(p); }
     };
@@ -928,12 +928,12 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, String, String> th3IndexCellToLocalIj = (origin, cell) -> {
         if (origin == null || cell == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.temporal_from_hexwkb(origin);
+        Pointer p = GeneratedFunctions.temporal_from_hexwkb(origin);
         if (p == null) return null;
         try {
-            Pointer q = functions.temporal_from_hexwkb(cell);
+            Pointer q = GeneratedFunctions.temporal_from_hexwkb(cell);
             if (q == null) return null;
-            try { return tempHex(functions.th3index_cell_to_local_ij(p, q)); }
+            try { return tempHex(GeneratedFunctions.th3index_cell_to_local_ij(p, q)); }
             finally { MeosMemory.free(q); }
         } finally { MeosMemory.free(p); }
     };
@@ -941,12 +941,12 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, String, String> th3IndexLocalIjToCell = (origin, coord) -> {
         if (origin == null || coord == null) return null;
         MeosThread.ensureReady();
-        Pointer p = functions.temporal_from_hexwkb(origin);
+        Pointer p = GeneratedFunctions.temporal_from_hexwkb(origin);
         if (p == null) return null;
         try {
-            Pointer q = functions.temporal_from_hexwkb(coord);
+            Pointer q = GeneratedFunctions.temporal_from_hexwkb(coord);
             if (q == null) return null;
-            try { return tempHex(functions.th3index_local_ij_to_cell(p, q)); }
+            try { return tempHex(GeneratedFunctions.th3index_local_ij_to_cell(p, q)); }
             finally { MeosMemory.free(q); }
         } finally { MeosMemory.free(p); }
     };
@@ -958,18 +958,18 @@ public final class Th3IndexUDFs {
     public static final UDF2<String, String, String> th3IndexCellArea = (h, unit) -> {
         if (h == null || unit == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(h);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(h);
         if (t == null) return null;
-        try { return tempHex(functions.th3index_cell_area(t, unit)); }
+        try { return tempHex(GeneratedFunctions.th3index_cell_area(t, unit)); }
         finally { MeosMemory.free(t); }
     };
 
     public static final UDF2<String, String, String> th3IndexEdgeLength = (h, unit) -> {
         if (h == null || unit == null) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(h);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(h);
         if (t == null) return null;
-        try { return tempHex(functions.th3index_edge_length(t, unit)); }
+        try { return tempHex(GeneratedFunctions.th3index_edge_length(t, unit)); }
         finally { MeosMemory.free(t); }
     };
 
@@ -977,12 +977,12 @@ public final class Th3IndexUDFs {
         (a, b, unit) -> {
             if (a == null || b == null || unit == null) return null;
             MeosThread.ensureReady();
-            Pointer p = functions.temporal_from_hexwkb(a);
+            Pointer p = GeneratedFunctions.temporal_from_hexwkb(a);
             if (p == null) return null;
             try {
-                Pointer q = functions.temporal_from_hexwkb(b);
+                Pointer q = GeneratedFunctions.temporal_from_hexwkb(b);
                 if (q == null) return null;
-                try { return tempHex(functions.tgeogpoint_great_circle_distance(p, q, unit)); }
+                try { return tempHex(GeneratedFunctions.tgeogpoint_great_circle_distance(p, q, unit)); }
                 finally { MeosMemory.free(q); }
             } finally { MeosMemory.free(p); }
         };

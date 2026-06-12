@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
@@ -79,7 +79,7 @@ public final class TemporalUDFs {
         (trip, timeArg) -> {
             if (trip == null || timeArg == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
                 Pointer result;
@@ -88,26 +88,26 @@ public final class TemporalUDFs {
                     java.time.OffsetDateTime odt = java.time.OffsetDateTime.ofInstant(
                         java.time.Instant.ofEpochSecond(pgEpochMicros, 0),
                         java.time.ZoneOffset.UTC);
-                    result = functions.temporal_at_timestamptz(tptr, odt);
+                    result = GeneratedFunctions.temporal_at_timestamptz(tptr, odt);
                 } else {
                     String s = timeArg.toString().trim();
                     if (!s.isEmpty() && (s.charAt(0) == '[' || s.charAt(0) == '(')) {
-                        Pointer spanPtr = functions.tstzspan_in(s);
+                        Pointer spanPtr = GeneratedFunctions.tstzspan_in(s);
                         if (spanPtr == null) return null;
                         try {
-                            result = functions.temporal_at_tstzspan(tptr, spanPtr);
+                            result = GeneratedFunctions.temporal_at_tstzspan(tptr, spanPtr);
                         } finally {
                             MeosMemory.free(spanPtr);
                         }
                     } else {
-                        java.time.OffsetDateTime odt = functions.pg_timestamptz_in(s, -1);
+                        java.time.OffsetDateTime odt = GeneratedFunctions.pg_timestamptz_in(s, -1);
                         if (odt == null) return null;
-                        result = functions.temporal_at_timestamptz(tptr, odt);
+                        result = GeneratedFunctions.temporal_at_timestamptz(tptr, odt);
                     }
                 }
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -125,10 +125,10 @@ public final class TemporalUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                return fromJmeosTimestamp(functions.temporal_start_timestamptz(ptr));
+                return fromJmeosTimestamp(GeneratedFunctions.temporal_start_timestamptz(ptr));
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -143,10 +143,10 @@ public final class TemporalUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                return fromJmeosTimestamp(functions.temporal_end_timestamptz(ptr));
+                return fromJmeosTimestamp(GeneratedFunctions.temporal_end_timestamptz(ptr));
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -161,10 +161,10 @@ public final class TemporalUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                return functions.temporal_num_instants(ptr);
+                return GeneratedFunctions.temporal_num_instants(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -179,13 +179,13 @@ public final class TemporalUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                Pointer result = functions.tpoint_speed(ptr);
+                Pointer result = GeneratedFunctions.tpoint_speed(ptr);
                 if (result == null) return null;
                 try {
-                    return functions.temporal_as_hexwkb(result, (byte) 0);
+                    return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                 } finally {
                     MeosMemory.free(result);
                 }
@@ -206,16 +206,16 @@ public final class TemporalUDFs {
         (trip, geomWkt) -> {
             if (trip == null || geomWkt == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (tptr == null) return null;
             try {
-                Pointer gptr = functions.geo_from_text(geomWkt, 0);
+                Pointer gptr = GeneratedFunctions.geo_from_text(geomWkt, 0);
                 if (gptr == null) return null;
                 try {
-                    Pointer result = functions.tgeo_at_geom(tptr, gptr);
+                    Pointer result = GeneratedFunctions.tgeo_at_geom(tptr, gptr);
                     if (result == null) return null;
                     try {
-                        return functions.temporal_as_hexwkb(result, (byte) 0);
+                        return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
                     } finally {
                         MeosMemory.free(result);
                     }
@@ -239,10 +239,10 @@ public final class TemporalUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                return functions.temporal_as_hexwkb(ptr, (byte) 0);
+                return GeneratedFunctions.temporal_as_hexwkb(ptr, (byte) 0);
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -260,10 +260,10 @@ public final class TemporalUDFs {
             if (trip == null) return null;
             MeosThread.ensureReady();
             int prec = (precision == null) ? 6 : precision;
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                return functions.temporal_as_mfjson(ptr, false, 0, prec, null);
+                return GeneratedFunctions.temporal_as_mfjson(ptr, false, 0, prec, null);
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -273,17 +273,17 @@ public final class TemporalUDFs {
     // Text output  (hex-WKB in → WKT-like text string out)
     //
     // MEOS: tbool_out, tint_out, tfloat_out (with precision), ttext_out
-    // These mirror the PostgreSQL temporal type output functions.
+    // These mirror the PostgreSQL temporal type output GeneratedFunctions.
     // ------------------------------------------------------------------
 
     public static final UDF1<String, String> tboolOut =
         (tbool) -> {
             if (tbool == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(tbool);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(tbool);
             if (ptr == null) return null;
             try {
-                return functions.tbool_out(ptr);
+                return GeneratedFunctions.tbool_out(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -293,10 +293,10 @@ public final class TemporalUDFs {
         (tint) -> {
             if (tint == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(tint);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(tint);
             if (ptr == null) return null;
             try {
-                return functions.tint_out(ptr);
+                return GeneratedFunctions.tint_out(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -307,10 +307,10 @@ public final class TemporalUDFs {
             if (tfloat == null) return null;
             MeosThread.ensureReady();
             int prec = (precision == null) ? 6 : precision;
-            Pointer ptr = functions.temporal_from_hexwkb(tfloat);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(tfloat);
             if (ptr == null) return null;
             try {
-                return functions.tfloat_out(ptr, prec);
+                return GeneratedFunctions.tfloat_out(ptr, prec);
             } finally {
                 MeosMemory.free(ptr);
             }
@@ -320,10 +320,10 @@ public final class TemporalUDFs {
         (ttext) -> {
             if (ttext == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(ttext);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(ttext);
             if (ptr == null) return null;
             try {
-                return functions.ttext_out(ptr);
+                return GeneratedFunctions.ttext_out(ptr);
             } finally {
                 MeosMemory.free(ptr);
             }

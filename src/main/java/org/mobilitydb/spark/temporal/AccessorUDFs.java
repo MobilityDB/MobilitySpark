@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -59,9 +59,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.temporal_num_sequences(ptr);
+            return GeneratedFunctions.temporal_num_sequences(ptr);
         };
 
     // interp(trip STRING) → STRING  ("Discrete" | "Stepwise" | "Linear")
@@ -70,9 +70,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.temporal_interp(ptr);
+            return GeneratedFunctions.temporal_interp(ptr);
         };
 
     // time(trip STRING) → STRING  (hex-WKB of tstzspanset bounding the instants)
@@ -81,11 +81,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer ss = functions.temporal_time(ptr);
+            Pointer ss = GeneratedFunctions.temporal_time(ptr);
             if (ss == null) return null;
-            return functions.spanset_as_hexwkb(ss, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(ss, (byte) 0);
         };
 
     // timespan(trip STRING) → STRING  (hex-WKB of tstzspan — overall bounding period)
@@ -94,11 +94,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer s = functions.temporal_to_tstzspan(ptr);
+            Pointer s = GeneratedFunctions.temporal_to_tstzspan(ptr);
             if (s == null) return null;
-            return functions.span_as_hexwkb(s, (byte) 0);
+            return GeneratedFunctions.span_as_hexwkb(s, (byte) 0);
         };
 
     // merge(trip1 STRING, trip2 STRING) → STRING
@@ -107,12 +107,12 @@ public final class AccessorUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p1 == null || p2 == null) return null;
-            Pointer result = functions.temporal_merge(p1, p2);
+            Pointer result = GeneratedFunctions.temporal_merge(p1, p2);
             if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
         };
 
     // shift(trip STRING, deltaStr STRING) → STRING
@@ -122,12 +122,12 @@ public final class AccessorUDFs {
         (trip, deltaStr) -> {
             if (trip == null || deltaStr == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer ivPtr = functions.pg_interval_in(deltaStr, -1);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer ivPtr = GeneratedFunctions.pg_interval_in(deltaStr, -1);
             if (tptr == null || ivPtr == null) return null;
-            Pointer result = functions.temporal_shift_time(tptr, ivPtr);
+            Pointer result = GeneratedFunctions.temporal_shift_time(tptr, ivPtr);
             if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
         };
 
     // scale(trip STRING, durationStr STRING) → STRING
@@ -136,12 +136,12 @@ public final class AccessorUDFs {
         (trip, durationStr) -> {
             if (trip == null || durationStr == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer ivPtr = functions.pg_interval_in(durationStr, -1);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer ivPtr = GeneratedFunctions.pg_interval_in(durationStr, -1);
             if (tptr == null || ivPtr == null) return null;
-            Pointer result = functions.temporal_scale_time(tptr, ivPtr);
+            Pointer result = GeneratedFunctions.temporal_scale_time(tptr, ivPtr);
             if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
         };
 
     // atSpan(trip STRING, spanHex STRING) → STRING
@@ -150,12 +150,12 @@ public final class AccessorUDFs {
         (trip, spanHex) -> {
             if (trip == null || spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer sptr = functions.span_from_hexwkb(spanHex);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer sptr = GeneratedFunctions.span_from_hexwkb(spanHex);
             if (tptr == null || sptr == null) return null;
-            Pointer result = functions.temporal_at_tstzspan(tptr, sptr);
+            Pointer result = GeneratedFunctions.temporal_at_tstzspan(tptr, sptr);
             if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
         };
 
     // atSpanset(trip STRING, spansetHex STRING) → STRING
@@ -164,12 +164,12 @@ public final class AccessorUDFs {
         (trip, spansetHex) -> {
             if (trip == null || spansetHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer ssptr = functions.spanset_from_hexwkb(spansetHex);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer ssptr = GeneratedFunctions.spanset_from_hexwkb(spansetHex);
             if (tptr == null || ssptr == null) return null;
-            Pointer result = functions.temporal_at_tstzspanset(tptr, ssptr);
+            Pointer result = GeneratedFunctions.temporal_at_tstzspanset(tptr, ssptr);
             if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
         };
 
     // insert(trip1 STRING, trip2 STRING) → STRING
@@ -178,12 +178,12 @@ public final class AccessorUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p1 == null || p2 == null) return null;
-            Pointer result = functions.temporal_insert(p1, p2, true);
+            Pointer result = GeneratedFunctions.temporal_insert(p1, p2, true);
             if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
         };
 
     // update(trip1 STRING, trip2 STRING) → STRING
@@ -192,12 +192,12 @@ public final class AccessorUDFs {
         (trip1, trip2) -> {
             if (trip1 == null || trip2 == null) return null;
             MeosThread.ensureReady();
-            Pointer p1 = functions.temporal_from_hexwkb(trip1);
-            Pointer p2 = functions.temporal_from_hexwkb(trip2);
+            Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(trip1);
+            Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(trip2);
             if (p1 == null || p2 == null) return null;
-            Pointer result = functions.temporal_update(p1, p2, true);
+            Pointer result = GeneratedFunctions.temporal_update(p1, p2, true);
             if (result == null) return null;
-            return functions.temporal_as_hexwkb(result, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(result, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -210,9 +210,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.tfloat_start_value(ptr);
+            return GeneratedFunctions.tfloat_start_value(ptr);
         };
 
     // tfloatEndValue(trip STRING) → DOUBLE
@@ -221,9 +221,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.tfloat_end_value(ptr);
+            return GeneratedFunctions.tfloat_end_value(ptr);
         };
 
     // tfloatMinValue(trip STRING) → DOUBLE
@@ -232,9 +232,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.tfloat_min_value(ptr);
+            return GeneratedFunctions.tfloat_min_value(ptr);
         };
 
     // tfloatMaxValue(trip STRING) → DOUBLE
@@ -243,9 +243,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.tfloat_max_value(ptr);
+            return GeneratedFunctions.tfloat_max_value(ptr);
         };
 
     // tintStartValue(trip STRING) → INT
@@ -254,9 +254,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.tint_start_value(ptr);
+            return GeneratedFunctions.tint_start_value(ptr);
         };
 
     // tintEndValue(trip STRING) → INT
@@ -265,9 +265,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.tint_end_value(ptr);
+            return GeneratedFunctions.tint_end_value(ptr);
         };
 
     // tintMinValue(trip STRING) → INT
@@ -276,9 +276,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.tint_min_value(ptr);
+            return GeneratedFunctions.tint_min_value(ptr);
         };
 
     // tintMaxValue(trip STRING) → INT
@@ -287,9 +287,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.tint_max_value(ptr);
+            return GeneratedFunctions.tint_max_value(ptr);
         };
 
     // tboolStartValue(trip STRING) → BOOLEAN
@@ -298,9 +298,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.tbool_start_value(ptr);
+            return GeneratedFunctions.tbool_start_value(ptr);
         };
 
     // tboolEndValue(trip STRING) → BOOLEAN
@@ -309,9 +309,9 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            return functions.tbool_end_value(ptr);
+            return GeneratedFunctions.tbool_end_value(ptr);
         };
 
     // tpointStartValue(trip STRING) → STRING  (WKT of start geometry)
@@ -320,11 +320,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer gs = functions.tgeo_start_value(ptr);
+            Pointer gs = GeneratedFunctions.tgeo_start_value(ptr);
             if (gs == null) return null;
-            return functions.geo_as_text(gs, 6);
+            return GeneratedFunctions.geo_as_text(gs, 6);
         };
 
     // tpointEndValue(trip STRING) → STRING  (WKT of end geometry)
@@ -333,11 +333,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer gs = functions.tgeo_end_value(ptr);
+            Pointer gs = GeneratedFunctions.tgeo_end_value(ptr);
             if (gs == null) return null;
-            return functions.geo_as_text(gs, 6);
+            return GeneratedFunctions.geo_as_text(gs, 6);
         };
 
     // ttextStartValue(trip STRING) → STRING  (text value at start)
@@ -346,11 +346,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer txt = functions.ttext_start_value(ptr);
+            Pointer txt = GeneratedFunctions.ttext_start_value(ptr);
             if (txt == null) return null;
-            return functions.text_out(txt);
+            return GeneratedFunctions.text_out(txt);
         };
 
     // ttextEndValue(trip STRING) → STRING  (text value at end)
@@ -359,11 +359,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer txt = functions.ttext_end_value(ptr);
+            Pointer txt = GeneratedFunctions.ttext_end_value(ptr);
             if (txt == null) return null;
-            return functions.text_out(txt);
+            return GeneratedFunctions.text_out(txt);
         };
 
     // ------------------------------------------------------------------
@@ -375,11 +375,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer r = functions.temporal_at_min(ptr);
+            Pointer r = GeneratedFunctions.temporal_at_min(ptr);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // atMax(trip STRING) → STRING
@@ -387,11 +387,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer r = functions.temporal_at_max(ptr);
+            Pointer r = GeneratedFunctions.temporal_at_max(ptr);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // atValues(trip STRING, setHex STRING) → STRING
@@ -399,12 +399,12 @@ public final class AccessorUDFs {
         (trip, setHex) -> {
             if (trip == null || setHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer sptr = functions.set_from_hexwkb(setHex);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer sptr = GeneratedFunctions.set_from_hexwkb(setHex);
             if (tptr == null || sptr == null) return null;
-            Pointer r = functions.temporal_at_values(tptr, sptr);
+            Pointer r = GeneratedFunctions.temporal_at_values(tptr, sptr);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // minusTime(trip STRING, tstzspanHex STRING) → STRING
@@ -412,12 +412,12 @@ public final class AccessorUDFs {
         (trip, spanHex) -> {
             if (trip == null || spanHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer sptr = functions.span_from_hexwkb(spanHex);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer sptr = GeneratedFunctions.span_from_hexwkb(spanHex);
             if (tptr == null || sptr == null) return null;
-            Pointer r = functions.temporal_minus_tstzspan(tptr, sptr);
+            Pointer r = GeneratedFunctions.temporal_minus_tstzspan(tptr, sptr);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // minusMin(trip STRING) → STRING
@@ -425,11 +425,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer r = functions.temporal_minus_min(ptr);
+            Pointer r = GeneratedFunctions.temporal_minus_min(ptr);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // minusMax(trip STRING) → STRING
@@ -437,11 +437,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer r = functions.temporal_minus_max(ptr);
+            Pointer r = GeneratedFunctions.temporal_minus_max(ptr);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -453,12 +453,12 @@ public final class AccessorUDFs {
         (trip, stboxHex) -> {
             if (trip == null || stboxHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer bptr = functions.stbox_from_hexwkb(stboxHex);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer bptr = GeneratedFunctions.stbox_from_hexwkb(stboxHex);
             if (tptr == null || bptr == null) return null;
-            Pointer r = functions.tgeo_at_stbox(tptr, bptr, true);
+            Pointer r = GeneratedFunctions.tgeo_at_stbox(tptr, bptr, true);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // minusStbox(trip STRING, stboxHex STRING) → STRING
@@ -466,12 +466,12 @@ public final class AccessorUDFs {
         (trip, stboxHex) -> {
             if (trip == null || stboxHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer bptr = functions.stbox_from_hexwkb(stboxHex);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer bptr = GeneratedFunctions.stbox_from_hexwkb(stboxHex);
             if (tptr == null || bptr == null) return null;
-            Pointer r = functions.tgeo_minus_stbox(tptr, bptr, true);
+            Pointer r = GeneratedFunctions.tgeo_minus_stbox(tptr, bptr, true);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // tnumberAtTbox(trip STRING, tboxHex STRING) → STRING
@@ -479,12 +479,12 @@ public final class AccessorUDFs {
         (trip, tboxHex) -> {
             if (trip == null || tboxHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer bptr = functions.tbox_from_hexwkb(tboxHex);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer bptr = GeneratedFunctions.tbox_from_hexwkb(tboxHex);
             if (tptr == null || bptr == null) return null;
-            Pointer r = functions.tnumber_at_tbox(tptr, bptr);
+            Pointer r = GeneratedFunctions.tnumber_at_tbox(tptr, bptr);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // tnumberMinusTbox(trip STRING, tboxHex STRING) → STRING
@@ -492,12 +492,12 @@ public final class AccessorUDFs {
         (trip, tboxHex) -> {
             if (trip == null || tboxHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer bptr = functions.tbox_from_hexwkb(tboxHex);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer bptr = GeneratedFunctions.tbox_from_hexwkb(tboxHex);
             if (tptr == null || bptr == null) return null;
-            Pointer r = functions.tnumber_minus_tbox(tptr, bptr);
+            Pointer r = GeneratedFunctions.tnumber_minus_tbox(tptr, bptr);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -509,12 +509,12 @@ public final class AccessorUDFs {
         (trip, instantHex) -> {
             if (trip == null || instantHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer iptr = functions.temporal_from_hexwkb(instantHex);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer iptr = GeneratedFunctions.temporal_from_hexwkb(instantHex);
             if (tptr == null || iptr == null) return null;
-            Pointer r = functions.temporal_append_tinstant(tptr, iptr, 3 /* LINEAR */, 0.0, null, false);
+            Pointer r = GeneratedFunctions.temporal_append_tinstant(tptr, iptr, 3 /* LINEAR */, 0.0, null, false);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // appendSequence(trip STRING, seqHex STRING) → STRING
@@ -522,12 +522,12 @@ public final class AccessorUDFs {
         (trip, seqHex) -> {
             if (trip == null || seqHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tptr = functions.temporal_from_hexwkb(trip);
-            Pointer sptr = functions.temporal_from_hexwkb(seqHex);
+            Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
+            Pointer sptr = GeneratedFunctions.temporal_from_hexwkb(seqHex);
             if (tptr == null || sptr == null) return null;
-            Pointer r = functions.temporal_append_tsequence(tptr, sptr, false);
+            Pointer r = GeneratedFunctions.temporal_append_tsequence(tptr, sptr, false);
             if (r == null) return null;
-            return functions.temporal_as_hexwkb(r, (byte) 0);
+            return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0);
         };
 
     // ------------------------------------------------------------------
@@ -539,11 +539,11 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
-            Pointer ss = functions.tnumber_valuespans(ptr);
+            Pointer ss = GeneratedFunctions.tnumber_valuespans(ptr);
             if (ss == null) return null;
-            return functions.spanset_as_hexwkb(ss, (byte) 0);
+            return GeneratedFunctions.spanset_as_hexwkb(ss, (byte) 0);
         };
 
     // tnumberToSpan(trip STRING) → STRING  (hex-WKB of value span covering all values)
@@ -552,13 +552,13 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                Pointer sp = functions.tnumber_to_span(ptr);
+                Pointer sp = GeneratedFunctions.tnumber_to_span(ptr);
                 if (sp == null) return null;
                 try {
-                    return functions.span_as_hexwkb(sp, (byte) 0);
+                    return GeneratedFunctions.span_as_hexwkb(sp, (byte) 0);
                 } finally {
                     MeosMemory.free(sp);
                 }
@@ -573,15 +573,15 @@ public final class AccessorUDFs {
         (trip) -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer ptr = functions.temporal_from_hexwkb(trip);
+            Pointer ptr = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (ptr == null) return null;
             try {
-                Pointer tb = functions.tnumber_to_tbox(ptr);
+                Pointer tb = GeneratedFunctions.tnumber_to_tbox(ptr);
                 if (tb == null) return null;
                 try {
                     jnr.ffi.Runtime rt = jnr.ffi.Runtime.getSystemRuntime();
                     jnr.ffi.Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
-                    return functions.tbox_as_hexwkb(tb, (byte) 0, sizeOut);
+                    return GeneratedFunctions.tbox_as_hexwkb(tb, (byte) 0, sizeOut);
                 } finally {
                     MeosMemory.free(tb);
                 }

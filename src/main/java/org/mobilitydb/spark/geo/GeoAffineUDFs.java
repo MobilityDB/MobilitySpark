@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.geo;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
@@ -80,12 +80,12 @@ public final class GeoAffineUDFs {
     }
 
     private static String applyAffine(String hex, Pointer affine) {
-        Pointer t = functions.temporal_from_hexwkb(hex);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(hex);
         if (t == null) return null;
         try {
             Pointer r = MeosNative.INSTANCE.tgeo_affine(t, affine);
             if (r == null) return null;
-            try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+            try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
             finally { MeosMemory.free(r); }
         } finally { MeosMemory.free(t); }
     }

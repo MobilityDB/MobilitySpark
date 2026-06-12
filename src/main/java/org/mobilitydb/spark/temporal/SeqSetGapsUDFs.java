@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
@@ -73,18 +73,18 @@ public final class SeqSetGapsUDFs {
         try {
             for (int i = 0; i < n; i++) {
                 if (instants[i] == null) return null;
-                insts[i] = functions.temporal_from_hexwkb(instants[i]);
+                insts[i] = GeneratedFunctions.temporal_from_hexwkb(instants[i]);
                 if (insts[i] == null) return null;
             }
             Pointer buf = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8L * n);
             for (int i = 0; i < n; i++) {
                 buf.putAddress(i * 8L, insts[i].address());
             }
-            Pointer maxt = (maxtStr == null) ? null : functions.pg_interval_in(maxtStr, -1);
+            Pointer maxt = (maxtStr == null) ? null : GeneratedFunctions.pg_interval_in(maxtStr, -1);
             try {
-                Pointer r = functions.tsequenceset_make_gaps(buf, n, interp, maxt, maxdist);
+                Pointer r = GeneratedFunctions.tsequenceset_make_gaps(buf, n, interp, maxt, maxdist);
                 if (r == null) return null;
-                try { return functions.temporal_as_hexwkb(r, (byte) 0); }
+                try { return GeneratedFunctions.temporal_as_hexwkb(r, (byte) 0); }
                 finally { MeosMemory.free(r); }
             } finally {
                 if (maxt != null) MeosMemory.free(maxt);

@@ -71,7 +71,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 
 /**
  * Entry point for MobilitySpark.

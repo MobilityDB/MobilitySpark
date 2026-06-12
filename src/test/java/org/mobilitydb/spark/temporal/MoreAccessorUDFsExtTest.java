@@ -29,7 +29,7 @@ import org.junit.jupiter.api.*;
 
 import java.sql.Timestamp;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -154,7 +154,8 @@ class MoreAccessorUDFsExtTest {
     void ttextValueAtTimestamptz_at_start_returns_correct_value() throws Exception {
         String r = MoreAccessorUDFs.ttextValueAtTimestamptz.call(TTEXT_SEQ, TS_START);
         assertNotNull(r, "Value at start timestamp must be non-null");
-        assertEquals("\"hello\"", r, "ttext value at t0 must be '\"hello\"'");
+        // text_out() is PostgreSQL textout(): the raw, unquoted text value.
+        assertEquals("hello", r, "ttext value at t0 must be 'hello'");
     }
 
     @Test @Order(11)

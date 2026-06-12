@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.portable;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.UDF2;
@@ -51,7 +51,7 @@ import org.mobilitydb.spark.temporal.TemporalCompUDFs;
  *
  * <p><b>Equivalence by construction.</b> Every alias here reuses the
  * operator's own existing backing UDF field verbatim (the exact same
- * {@code functions.*} MEOS C symbol the typed UDF dispatches to). No
+ * {@code GeneratedFunctions.*} MEOS C symbol the typed UDF dispatches to). No
  * operator logic is reimplemented; the alias cannot drift from the
  * operator because it <em>is</em> the operator's backing.
  *
@@ -87,10 +87,10 @@ public final class PortableOperatorAliasUDFs {
      * existing backing field to delegate to — never to compute a result.
      */
     private static boolean isTnumber(String hex) {
-        Pointer p = functions.temporal_from_hexwkb(hex);
+        Pointer p = GeneratedFunctions.temporal_from_hexwkb(hex);
         if (p == null) return false;
         try {
-            Pointer box = functions.tnumber_to_tbox(p);
+            Pointer box = GeneratedFunctions.tnumber_to_tbox(p);
             if (box == null) return false;
             MeosMemory.free(box);
             return true;

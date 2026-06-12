@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark.temporal;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
 import org.mobilitydb.spark.MeosMemory;
@@ -80,14 +80,14 @@ public final class TileUDFs {
         (t, intervalStr, torigin) -> {
             if (t == null || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) return null;
             try {
                 Pointer r = MeosNative.INSTANCE.stbox_get_time_tile(pgEpoch(t), iv, pgEpoch(torigin));
                 if (r == null) return null;
                 try {
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                    return functions.stbox_as_hexwkb(r, (byte) 0, sizeOut);
+                    return GeneratedFunctions.stbox_as_hexwkb(r, (byte) 0, sizeOut);
                 } finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(iv); }
         };
@@ -97,15 +97,15 @@ public final class TileUDFs {
         (pointWkt, xsize, ysize, zsize, originWkt) -> {
             if (pointWkt == null || xsize == null || ysize == null || zsize == null) return null;
             MeosThread.ensureReady();
-            Pointer pt = functions.geo_from_text(pointWkt, 0);
+            Pointer pt = GeneratedFunctions.geo_from_text(pointWkt, 0);
             if (pt == null) return null;
-            Pointer origin = (originWkt == null) ? null : functions.geo_from_text(originWkt, 0);
+            Pointer origin = (originWkt == null) ? null : GeneratedFunctions.geo_from_text(originWkt, 0);
             try {
                 Pointer r = MeosNative.INSTANCE.stbox_get_space_tile(pt, xsize, ysize, zsize, origin);
                 if (r == null) return null;
                 try {
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                    return functions.stbox_as_hexwkb(r, (byte) 0, sizeOut);
+                    return GeneratedFunctions.stbox_as_hexwkb(r, (byte) 0, sizeOut);
                 } finally { MeosMemory.free(r); }
             } finally {
                 MeosMemory.free(pt);
@@ -119,18 +119,18 @@ public final class TileUDFs {
             if (pointWkt == null || t == null || xsize == null || ysize == null || zsize == null
                 || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer pt = functions.geo_from_text(pointWkt, 0);
+            Pointer pt = GeneratedFunctions.geo_from_text(pointWkt, 0);
             if (pt == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(pt); return null; }
-            Pointer origin = (originWkt == null) ? null : functions.geo_from_text(originWkt, 0);
+            Pointer origin = (originWkt == null) ? null : GeneratedFunctions.geo_from_text(originWkt, 0);
             try {
                 Pointer r = MeosNative.INSTANCE.stbox_get_space_time_tile(
                     pt, pgEpoch(t), xsize, ysize, zsize, iv, origin, pgEpoch(torigin));
                 if (r == null) return null;
                 try {
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                    return functions.stbox_as_hexwkb(r, (byte) 0, sizeOut);
+                    return GeneratedFunctions.stbox_as_hexwkb(r, (byte) 0, sizeOut);
                 } finally { MeosMemory.free(r); }
             } finally {
                 MeosMemory.free(pt, iv);
@@ -147,9 +147,9 @@ public final class TileUDFs {
         spaceBoxes = (trip, xsize, ysize, zsize, originWkt, bitmatrix, borderInc) -> {
             if (trip == null || xsize == null || ysize == null || zsize == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            Pointer origin = (originWkt == null) ? null : functions.geo_from_text(originWkt, 0);
+            Pointer origin = (originWkt == null) ? null : GeneratedFunctions.geo_from_text(originWkt, 0);
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
@@ -161,7 +161,7 @@ public final class TileUDFs {
                     String[] out = new String[n];
                     Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++)
-                        out[i] = functions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally {
@@ -176,11 +176,11 @@ public final class TileUDFs {
             if (trip == null || xsize == null || ysize == null || zsize == null
                 || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
-            Pointer origin = (originWkt == null) ? null : functions.geo_from_text(originWkt, 0);
+            Pointer origin = (originWkt == null) ? null : GeneratedFunctions.geo_from_text(originWkt, 0);
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
@@ -193,7 +193,7 @@ public final class TileUDFs {
                     String[] out = new String[n];
                     Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++)
-                        out[i] = functions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally {
@@ -208,9 +208,9 @@ public final class TileUDFs {
         valueTimeBoxesTfloat = (trip, vsize, intervalStr, vorigin, torigin) -> {
             if (trip == null || vsize == null || intervalStr == null || vorigin == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
@@ -224,7 +224,7 @@ public final class TileUDFs {
                     String[] out = new String[n];
                     Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++)
-                        out[i] = functions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(t, iv); }
@@ -235,9 +235,9 @@ public final class TileUDFs {
         valueTimeBoxesTint = (trip, vsize, intervalStr, vorigin, torigin) -> {
             if (trip == null || vsize == null || intervalStr == null || vorigin == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
@@ -250,7 +250,7 @@ public final class TileUDFs {
                     String[] out = new String[n];
                     Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++)
-                        out[i] = functions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(t, iv); }
@@ -267,9 +267,9 @@ public final class TileUDFs {
         timeSplit = (trip, intervalStr, torigin) -> {
             if (trip == null || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
@@ -283,7 +283,7 @@ public final class TileUDFs {
                     for (int i = 0; i < n; i++) {
                         Pointer p = arr.getPointer(i * 8L);
                         if (p == null) continue;
-                        out[i] = functions.temporal_as_hexwkb(p, (byte) 0);
+                        out[i] = GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
                         MeosMemory.free(p);
                     }
                     return out;
@@ -300,9 +300,9 @@ public final class TileUDFs {
         spaceSplit = (trip, xsize, ysize, zsize, originWkt, bitmatrix, borderInc) -> {
             if (trip == null || xsize == null || ysize == null || zsize == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            Pointer origin = (originWkt == null) ? null : functions.geo_from_text(originWkt, 0);
+            Pointer origin = (originWkt == null) ? null : GeneratedFunctions.geo_from_text(originWkt, 0);
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
@@ -316,7 +316,7 @@ public final class TileUDFs {
                     for (int i = 0; i < n; i++) {
                         Pointer p = arr.getPointer(i * 8L);
                         if (p == null) continue;
-                        out[i] = functions.temporal_as_hexwkb(p, (byte) 0);
+                        out[i] = GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
                         MeosMemory.free(p);
                     }
                     return out;
@@ -337,11 +337,11 @@ public final class TileUDFs {
             if (trip == null || xsize == null || ysize == null || zsize == null
                 || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
-            Pointer origin = (originWkt == null) ? null : functions.geo_from_text(originWkt, 0);
+            Pointer origin = (originWkt == null) ? null : GeneratedFunctions.geo_from_text(originWkt, 0);
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut    = rt.getMemoryManager().allocateDirect(4);
@@ -358,7 +358,7 @@ public final class TileUDFs {
                     for (int i = 0; i < n; i++) {
                         Pointer p = arr.getPointer(i * 8L);
                         if (p == null) continue;
-                        out[i] = functions.temporal_as_hexwkb(p, (byte) 0);
+                        out[i] = GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
                         MeosMemory.free(p);
                     }
                     return out;
@@ -386,9 +386,9 @@ public final class TileUDFs {
         spaceTiles = (boundsHex, xsize, ysize, zsize, originWkt, borderInc) -> {
             if (boundsHex == null || xsize == null || ysize == null || zsize == null) return null;
             MeosThread.ensureReady();
-            Pointer b = functions.stbox_from_hexwkb(boundsHex);
+            Pointer b = GeneratedFunctions.stbox_from_hexwkb(boundsHex);
             if (b == null) return null;
-            Pointer origin = (originWkt == null) ? null : functions.geo_from_text(originWkt, 0);
+            Pointer origin = (originWkt == null) ? null : GeneratedFunctions.geo_from_text(originWkt, 0);
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
@@ -400,7 +400,7 @@ public final class TileUDFs {
                     String[] out = new String[n];
                     Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++)
-                        out[i] = functions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally {
@@ -414,9 +414,9 @@ public final class TileUDFs {
         stboxTimeTiles = (boundsHex, intervalStr, torigin, borderInc) -> {
             if (boundsHex == null || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer b = functions.stbox_from_hexwkb(boundsHex);
+            Pointer b = GeneratedFunctions.stbox_from_hexwkb(boundsHex);
             if (b == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(b); return null; }
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
@@ -429,7 +429,7 @@ public final class TileUDFs {
                     String[] out = new String[n];
                     Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++)
-                        out[i] = functions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(b, iv); }
@@ -441,11 +441,11 @@ public final class TileUDFs {
             if (boundsHex == null || xsize == null || ysize == null || zsize == null
                 || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer b = functions.stbox_from_hexwkb(boundsHex);
+            Pointer b = GeneratedFunctions.stbox_from_hexwkb(boundsHex);
             if (b == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(b); return null; }
-            Pointer origin = (originWkt == null) ? null : functions.geo_from_text(originWkt, 0);
+            Pointer origin = (originWkt == null) ? null : GeneratedFunctions.geo_from_text(originWkt, 0);
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
                 Pointer countOut = rt.getMemoryManager().allocateDirect(4);
@@ -457,7 +457,7 @@ public final class TileUDFs {
                     String[] out = new String[n];
                     Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++)
-                        out[i] = functions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally {
@@ -476,9 +476,9 @@ public final class TileUDFs {
     private static String[] tboxTimeTilesImpl(String boundsHex, String intervalStr, Timestamp torigin, boolean isFloat) {
         if (boundsHex == null || intervalStr == null || torigin == null) return null;
         MeosThread.ensureReady();
-        Pointer b = functions.tbox_from_hexwkb(boundsHex);
+        Pointer b = GeneratedFunctions.tbox_from_hexwkb(boundsHex);
         if (b == null) return null;
-        Pointer iv = functions.pg_interval_in(intervalStr, -1);
+        Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
         if (iv == null) { MeosMemory.free(b); return null; }
         try {
             jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
@@ -492,7 +492,7 @@ public final class TileUDFs {
                 String[] out = new String[n];
                 Pointer sizeOut = rt.getMemoryManager().allocateDirect(8);
                 for (int i = 0; i < n; i++)
-                    out[i] = functions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
+                    out[i] = GeneratedFunctions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
                 return out;
             } finally { MeosMemory.free(arr); }
         } finally { MeosMemory.free(b, iv); }
@@ -503,7 +503,7 @@ public final class TileUDFs {
         trip -> {
             if (trip == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
             try {
                 Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
@@ -515,7 +515,7 @@ public final class TileUDFs {
                     for (int i = 0; i < n; i++) {
                         Pointer p = arr.getPointer(i * 8L);
                         if (p == null) continue;
-                        out[i] = functions.temporal_as_hexwkb(p, (byte) 0);
+                        out[i] = GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
                         MeosMemory.free(p);
                     }
                     return out;
@@ -529,9 +529,9 @@ public final class TileUDFs {
         tfloatTimeBoxes = (trip, intervalStr, torigin) -> {
             if (trip == null || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
             try {
                 Pointer box = MeosNative.INSTANCE.tnumber_to_tbox(t);
@@ -545,7 +545,7 @@ public final class TileUDFs {
                         String[] out = new String[n];
                         Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
                         for (int i = 0; i < n; i++)
-                            out[i] = functions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
+                            out[i] = GeneratedFunctions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
                         return out;
                     } finally { MeosMemory.free(arr); }
                 } finally { MeosMemory.free(box); }
@@ -556,9 +556,9 @@ public final class TileUDFs {
         tintTimeBoxes = (trip, intervalStr, torigin) -> {
             if (trip == null || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
             try {
                 Pointer box = MeosNative.INSTANCE.tnumber_to_tbox(t);
@@ -572,7 +572,7 @@ public final class TileUDFs {
                         String[] out = new String[n];
                         Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
                         for (int i = 0; i < n; i++)
-                            out[i] = functions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
+                            out[i] = GeneratedFunctions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
                         return out;
                     } finally { MeosMemory.free(arr); }
                 } finally { MeosMemory.free(box); }
@@ -584,12 +584,12 @@ public final class TileUDFs {
         tgeoTimeBoxes = (trip, intervalStr, torigin) -> {
             if (trip == null || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer t = functions.temporal_from_hexwkb(trip);
+            Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
             if (t == null) return null;
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) { MeosMemory.free(t); return null; }
             try {
-                Pointer box = functions.tspatial_to_stbox(t);
+                Pointer box = GeneratedFunctions.tspatial_to_stbox(t);
                 if (box == null) return null;
                 try {
                     Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
@@ -600,7 +600,7 @@ public final class TileUDFs {
                         String[] out = new String[n];
                         Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
                         for (int i = 0; i < n; i++)
-                            out[i] = functions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
+                            out[i] = GeneratedFunctions.stbox_as_hexwkb(arr.slice(i * STBOX_SIZE), (byte) 0, sizeOut);
                         return out;
                     } finally { MeosMemory.free(arr); }
                 } finally { MeosMemory.free(box); }
@@ -612,7 +612,7 @@ public final class TileUDFs {
         tfloatValueTiles = (boxHex, vsize, vorigin) -> {
             if (boxHex == null || vsize == null || vorigin == null) return null;
             MeosThread.ensureReady();
-            Pointer b = functions.tbox_from_hexwkb(boxHex);
+            Pointer b = GeneratedFunctions.tbox_from_hexwkb(boxHex);
             if (b == null) return null;
             try {
                 Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
@@ -623,7 +623,7 @@ public final class TileUDFs {
                     String[] out = new String[n];
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++)
-                        out[i] = functions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(b); }
@@ -633,7 +633,7 @@ public final class TileUDFs {
         tintValueTiles = (boxHex, vsize, vorigin) -> {
             if (boxHex == null || vsize == null || vorigin == null) return null;
             MeosThread.ensureReady();
-            Pointer b = functions.tbox_from_hexwkb(boxHex);
+            Pointer b = GeneratedFunctions.tbox_from_hexwkb(boxHex);
             if (b == null) return null;
             try {
                 Pointer countOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(4);
@@ -644,7 +644,7 @@ public final class TileUDFs {
                     String[] out = new String[n];
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
                     for (int i = 0; i < n; i++)
-                        out[i] = functions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
+                        out[i] = GeneratedFunctions.tbox_as_hexwkb(arr.slice(i * TBOX_SIZE), (byte) 0, sizeOut);
                     return out;
                 } finally { MeosMemory.free(arr); }
             } finally { MeosMemory.free(b); }
@@ -681,9 +681,9 @@ public final class TileUDFs {
             long vorigin, Timestamp torigin, boolean nullArgs) {
         if (trip == null || nullArgs) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(trip);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
         if (t == null) return null;
-        Pointer iv = functions.pg_interval_in(intervalStr, -1);
+        Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
         if (iv == null) { MeosMemory.free(t); return null; }
         try {
             jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
@@ -699,7 +699,7 @@ public final class TileUDFs {
                 for (int i = 0; i < n; i++) {
                     Pointer p = arr.getPointer(i * 8L);
                     if (p == null) continue;
-                    out[i] = functions.temporal_as_hexwkb(p, (byte) 0);
+                    out[i] = GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
                     MeosMemory.free(p);
                 }
                 return out;
@@ -716,7 +716,7 @@ public final class TileUDFs {
     private static String[] tnumberValueSplitImpl(String trip, long vsize, long vorigin, boolean nullArgs) {
         if (trip == null || nullArgs) return null;
         MeosThread.ensureReady();
-        Pointer t = functions.temporal_from_hexwkb(trip);
+        Pointer t = GeneratedFunctions.temporal_from_hexwkb(trip);
         if (t == null) return null;
         try {
             jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
@@ -730,7 +730,7 @@ public final class TileUDFs {
                 for (int i = 0; i < n; i++) {
                     Pointer p = arr.getPointer(i * 8L);
                     if (p == null) continue;
-                    out[i] = functions.temporal_as_hexwkb(p, (byte) 0);
+                    out[i] = GeneratedFunctions.temporal_as_hexwkb(p, (byte) 0);
                     MeosMemory.free(p);
                 }
                 return out;
@@ -766,7 +766,7 @@ public final class TileUDFs {
             if (r == null) return null;
             try {
                 Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                return functions.tbox_as_hexwkb(r, (byte) 0, sizeOut);
+                return GeneratedFunctions.tbox_as_hexwkb(r, (byte) 0, sizeOut);
             } finally { MeosMemory.free(r); }
         };
 
@@ -775,7 +775,7 @@ public final class TileUDFs {
         getTBoxTimeTile = (t, intervalStr, torigin) -> {
             if (t == null || intervalStr == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) return null;
             try {
                 Pointer r = MeosNative.INSTANCE.tbox_get_value_time_tile(
@@ -786,7 +786,7 @@ public final class TileUDFs {
                 if (r == null) return null;
                 try {
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                    return functions.tbox_as_hexwkb(r, (byte) 0, sizeOut);
+                    return GeneratedFunctions.tbox_as_hexwkb(r, (byte) 0, sizeOut);
                 } finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(iv); }
         };
@@ -798,7 +798,7 @@ public final class TileUDFs {
             if (v == null || t == null || vsize == null || intervalStr == null
                 || vorigin == null || torigin == null) return null;
             MeosThread.ensureReady();
-            Pointer iv = functions.pg_interval_in(intervalStr, -1);
+            Pointer iv = GeneratedFunctions.pg_interval_in(intervalStr, -1);
             if (iv == null) return null;
             try {
                 Pointer r = MeosNative.INSTANCE.tbox_get_value_time_tile(
@@ -809,7 +809,7 @@ public final class TileUDFs {
                 if (r == null) return null;
                 try {
                     Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                    return functions.tbox_as_hexwkb(r, (byte) 0, sizeOut);
+                    return GeneratedFunctions.tbox_as_hexwkb(r, (byte) 0, sizeOut);
                 } finally { MeosMemory.free(r); }
             } finally { MeosMemory.free(iv); }
         };
@@ -823,9 +823,9 @@ public final class TileUDFs {
         geoMeasure = (tpointHex, measureHex, segmentize) -> {
             if (tpointHex == null || measureHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tp = functions.temporal_from_hexwkb(tpointHex);
+            Pointer tp = GeneratedFunctions.temporal_from_hexwkb(tpointHex);
             if (tp == null) return null;
-            Pointer m  = functions.temporal_from_hexwkb(measureHex);
+            Pointer m  = GeneratedFunctions.temporal_from_hexwkb(measureHex);
             if (m == null) { MeosMemory.free(tp); return null; }
             try {
                 Pointer outBuf = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
@@ -834,7 +834,7 @@ public final class TileUDFs {
                 if (!ok) return null;
                 Pointer geo = outBuf.getPointer(0);
                 if (geo == null) return null;
-                try { return functions.geo_as_hexewkb(geo, "NDR"); }
+                try { return GeneratedFunctions.geo_as_hexewkb(geo, "NDR"); }
                 finally { MeosMemory.free(geo); }
             } finally { MeosMemory.free(tp, m); }
         };
@@ -845,9 +845,9 @@ public final class TileUDFs {
         asMVTGeom = (tpointHex, boundsHex, extent, buffer, clipGeom) -> {
             if (tpointHex == null || boundsHex == null) return null;
             MeosThread.ensureReady();
-            Pointer tp = functions.temporal_from_hexwkb(tpointHex);
+            Pointer tp = GeneratedFunctions.temporal_from_hexwkb(tpointHex);
             if (tp == null) return null;
-            Pointer b = functions.stbox_from_hexwkb(boundsHex);
+            Pointer b = GeneratedFunctions.stbox_from_hexwkb(boundsHex);
             if (b == null) { MeosMemory.free(tp); return null; }
             try {
                 jnr.ffi.Runtime rt = Runtime.getSystemRuntime();
@@ -867,7 +867,7 @@ public final class TileUDFs {
                     for (int i = 0; i < n; i++) {
                         Pointer gs = gsArr.getPointer(i * 8L);
                         if (gs == null) continue;
-                        out[i] = functions.geo_as_text(gs, 6);
+                        out[i] = GeneratedFunctions.geo_as_text(gs, 6);
                         // GSERIALIZED ownership: gsArr is allocated by MEOS, each
                         // entry is owned by the array; do not free entries individually.
                     }

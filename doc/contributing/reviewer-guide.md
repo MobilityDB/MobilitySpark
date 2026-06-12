@@ -98,7 +98,7 @@ These PRs exist on the fork and are awaiting upstream review after the Tier 2 ch
 
 | Repo | PR | Branch | Description | CI | Notes |
 |------|----|--------|-------------|----|-------|
-| MobilitySpark fork (`estebanzimanyi/MobilitySpark`) | #1 | `feat/udf-parity-phase2` | Expand UDF surface: 141 new UDFs in 7 classes + JMEOS-1.5 sub-interface fix; 203/203 tests | ✅ | Depends on JMEOS #11 being merged upstream |
+| MobilitySpark fork (`estebanzimanyi/MobilitySpark`) | #1 | `feat/udf-parity-phase2` | Expand UDF surface: 141 new UDFs in 7 classes + JMEOS-1.4 sub-interface fix; 203/203 tests | ✅ | Depends on JMEOS #11 being merged upstream |
 
 ### UDF breakdown for fork PR #1
 

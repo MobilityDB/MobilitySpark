@@ -38,24 +38,35 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y \
             cmake ninja-build \
-            libjson-c-dev libgeos-dev libproj-dev libgsl-dev
+            libjson-c-dev libgeos-dev libproj-dev libgsl-dev libh3-dev
 
       - name: Checkout MobilityDB source (for MEOS build)
         uses: actions/checkout@v4
         with:
-          repository: MobilityDB/MobilityDB
-          ref: v1.3.0
+          # Ecosystem pin: the MobilityDB commit the bundled JMEOS jar is
+          # regenerated against. Published as an immutable tag on the integrator
+          # fork (not yet upstream).
+          repository: estebanzimanyi/MobilityDB
+          ref: ecosystem-pin-2026-06-11p
           path: MobilityDB-src
 
       - name: Build and install libmeos.so
         run: |
-          cmake -S MobilityDB-src -B meos-build \
+          # The build dir MUST live inside MobilityDB-src: pgtypes/postgres.h
+          # includes "../../meos/include/meos_error.h", which the compiler
+          # resolves via the generated -isystem <build>/pgtypes path
+          # (<build>/pgtypes/../../meos/include). That only reaches the source
+          # tree's meos/include when <build> is inside the source tree.
+          cmake -S MobilityDB-src -B MobilityDB-src/meos-build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DMEOS=ON \
-            -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF
-          cmake --build meos-build -j
-          sudo cmake --install meos-build
+            -DCBUFFER=ON -DNPOINT=ON -DPOSE=ON -DRGEO=ON \
+            -DH3=ON \
+            -DH3_LIBRARY=/usr/lib/x86_64-linux-gnu/libh3.so \
+            -DH3_INCLUDE_DIR=/usr/include/h3
+          cmake --build MobilityDB-src/meos-build -j
+          sudo cmake --install MobilityDB-src/meos-build
           echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
       - name: License header check
@@ -80,6 +91,10 @@ jobs:
   macos:
     name: Build and test — macOS (Java 21 / Spark 3.5)
     runs-on: macos-latest
+    # Non-blocking best-effort: Linux is the authoritative green. macOS builds
+    # libmeos from the same ecosystem pin (with H3 via Homebrew); kept
+    # non-blocking so a platform-specific toolchain hiccup never gates the PR.
+    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
@@ -93,28 +108,34 @@ jobs:
 
       - name: Install MEOS dependencies (Homebrew)
         run: |
-          brew install json-c geos proj gsl cmake ninja
+          brew install json-c geos proj gsl cmake ninja h3
 
       - name: Checkout MobilityDB source (for MEOS build)
         uses: actions/checkout@v4
         with:
-          repository: MobilityDB/MobilityDB
-          ref: v1.3.0
+          # Ecosystem pin: the MobilityDB commit the bundled JMEOS jar is
+          # regenerated against. Published as an immutable tag on the integrator
+          # fork (not yet upstream).
+          repository: estebanzimanyi/MobilityDB
+          ref: ecosystem-pin-2026-06-11p
           path: MobilityDB-src
 
       - name: Build and install libmeos.dylib
         run: |
           # Homebrew on macOS-ARM installs to /opt/homebrew; on Intel to /usr/local.
           BREW_PREFIX="$(brew --prefix)"
-          cmake -S MobilityDB-src -B meos-build \
+          cmake -S MobilityDB-src -B MobilityDB-src/meos-build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="$BREW_PREFIX" \
             -DCMAKE_INSTALL_RPATH="$BREW_PREFIX/lib" \
             -DMEOS=ON \
-            -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF
-          cmake --build meos-build -j
-          sudo cmake --install meos-build
+            -DCBUFFER=ON -DNPOINT=ON -DPOSE=ON -DRGEO=ON \
+            -DH3=ON \
+            -DH3_LIBRARY="$BREW_PREFIX/lib/libh3.dylib" \
+            -DH3_INCLUDE_DIR="$BREW_PREFIX/include/h3"
+          cmake --build MobilityDB-src/meos-build -j
+          sudo cmake --install MobilityDB-src/meos-build
           # Ad-hoc codesign so that the JVM's hardened-runtime library validation
           # accepts the unsigned CMake-built dylib.
           sudo codesign --force --sign - /usr/local/lib/libmeos.dylib
@@ -138,6 +159,13 @@ jobs:
   windows:
     name: Build and test — Windows (Java 21 / Spark 3.5)
     runs-on: windows-latest
+    # Non-blocking best-effort. Windows now builds MEOS from the same ecosystem
+    # pin as Linux/macOS (the pin carries the MEOS_TZDATA_DIR cmake option), but
+    # is kept non-blocking until a green Windows run confirms the MSYS2 toolchain
+    # path end-to-end. (th3index/H3 is off here pending an MSYS2 h3 package; the
+    # th3index UDFs are bound lazily by JNR-FFI so the rest of the suite is
+    # unaffected.) Drop this flag once Windows is observed green in CI.
+    continue-on-error: true
     defaults:
       run:
         shell: msys2 {0}
@@ -168,13 +196,13 @@ jobs:
           cache: maven
 
       - name: Checkout MobilityDB source (for MEOS build)
-        # meos-windows-bootstrap = v1.3.0 + minimal -DMEOS_TZDATA_DIR cmake
-        # patch (MobilityDB issue #513).  Switch to ref: v1.3.0 once the
-        # tzdata cmake option merges into MobilityDB upstream.
         uses: actions/checkout@v4
         with:
+          # Same ecosystem pin as Linux/macOS — the pin now carries the
+          # MEOS_TZDATA_DIR cmake option, so Windows no longer needs the
+          # divergent meos-windows-bootstrap branch.
           repository: estebanzimanyi/MobilityDB
-          ref: meos-windows-bootstrap
+          ref: ecosystem-pin-2026-06-11p
           path: MobilityDB-src
 
       - name: Resolve native timezone data path
@@ -187,14 +215,14 @@ jobs:
 
       - name: Build and install libmeos.dll
         run: |
-          cmake -S MobilityDB-src -B meos-build \
+          cmake -S MobilityDB-src -B MobilityDB-src/meos-build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DMEOS=ON \
-            -DCBUFFER=ON -DNPOINT=ON -DPOSE=OFF -DRGEO=OFF \
+            -DCBUFFER=ON -DNPOINT=ON -DPOSE=ON -DRGEO=ON \
             -DMEOS_TZDATA_DIR="$MEOS_TZDATA_WIN"
-          cmake --build meos-build -j
-          cmake --install meos-build --prefix "$PWD/meos-install"
+          cmake --build MobilityDB-src/meos-build -j
+          cmake --install MobilityDB-src/meos-build --prefix "$PWD/meos-install"
           # Save the DLL directory as a separate env var rather than stomping
           # PATH: the MSYS2 PATH is POSIX-style and would overwrite the Windows
           # PATH (losing Maven) in subsequent PowerShell steps.

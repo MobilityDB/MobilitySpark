@@ -27,7 +27,7 @@ package org.mobilitydb.spark.temporal;
 
 import org.junit.jupiter.api.*;
 
-import static functions.functions.*;
+import static functions.GeneratedFunctions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -58,7 +58,10 @@ class TTextUDFsTest {
         // Decode back and check the start value
         String sv = AccessorUDFs.ttextStartValue.call(upper);
         assertNotNull(sv);
-        assertEquals("\"HELLO\"", sv);
+        // text_out() is PostgreSQL textout() (pg_text_to_cstring): the raw,
+        // unquoted text value. (Pre-pin libmeos quoted it — an input/output
+        // asymmetry the centralised escape fix corrected.)
+        assertEquals("HELLO", sv);
     }
 
     @Test @Order(2)
@@ -67,7 +70,7 @@ class TTextUDFsTest {
         assertNotNull(lower);
         String sv = AccessorUDFs.ttextStartValue.call(lower);
         assertNotNull(sv);
-        assertEquals("\"world\"", sv);
+        assertEquals("world", sv);
     }
 
     @Test @Order(3)
@@ -76,7 +79,7 @@ class TTextUDFsTest {
         assertNotNull(init);
         String sv = AccessorUDFs.ttextStartValue.call(init);
         assertNotNull(sv);
-        assertEquals("\"Hello\"", sv);
+        assertEquals("Hello", sv);
     }
 
     @Test @Order(4)

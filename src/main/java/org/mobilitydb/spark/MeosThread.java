@@ -25,7 +25,7 @@
 
 package org.mobilitydb.spark;
 
-import functions.functions;
+import functions.GeneratedFunctions;
 import functions.error_handler_fn;
 import org.apache.spark.sql.api.java.*;
 
@@ -64,9 +64,9 @@ public final class MeosThread {
         (errorLevel, errorCode, errorMessage) -> { /* do not exit the JVM */ };
 
     private static final ThreadLocal<Boolean> MEOS_READY = ThreadLocal.withInitial(() -> {
-        functions.meos_initialize();
-        functions.meos_initialize_timezone("UTC");
-        functions.meos_initialize_error_handler(NOEXIT_ERROR_HANDLER);
+        GeneratedFunctions.meos_initialize();
+        GeneratedFunctions.meos_initialize_timezone("UTC");
+        GeneratedFunctions.meos_initialize_error_handler(NOEXIT_ERROR_HANDLER);
         return Boolean.TRUE;
     });
 
