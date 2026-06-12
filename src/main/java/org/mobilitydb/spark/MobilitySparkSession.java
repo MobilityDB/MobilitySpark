@@ -136,6 +136,7 @@ public final class MobilitySparkSession implements AutoCloseable {
         RestrictionUDFs.registerAll(spark);
         TransformUDFs.registerAll(spark);
         AggregateUDAFs.registerAll(spark);
+        org.mobilitydb.spark.h3.Th3IndexUDFs.registerAll(spark);
         return new MobilitySparkSession();
     }
 
