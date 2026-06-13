@@ -2,9 +2,9 @@
 """
 BerlinMOD cross-platform benchmark report generator.
 
-Reads JSON result files produced by bench_mbdb.sh, bench_mduck.sh, and
-bench_mspark.sh, collects machine specifications, and writes a self-contained
-markdown table.
+Reads per-tool JSON result files (mbdb.json / mduck.json / mspark.json — any
+subset, each emitted by its own repo's bench runner), collects machine
+specifications, and writes a self-contained markdown comparison table.
 
 Usage:
   report.py --results DIR [--output FILE]
@@ -270,7 +270,7 @@ def main():
     platforms = load_results(results_dir)
     if not platforms:
         print(f"No result files found in {results_dir}/", file=sys.stderr)
-        print("Run bench.sh (or individual bench_*.sh scripts) first.", file=sys.stderr)
+        print("Collect each tool's bench JSON (mbdb/mduck/mspark.json) here first.", file=sys.stderr)
         sys.exit(1)
 
     machine = collect_machine_spec()

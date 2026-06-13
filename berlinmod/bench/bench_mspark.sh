@@ -25,13 +25,15 @@
 #   ../README.md "Three-tier index framework" for context.  No --tier
 #   flag is exposed on this runner.
 #
-# NxN mitigations for the Trips × Trips queries (Q5, Q6, Q10, Q16):
-#   The four queries use Spark-optimised UNNEST + equi-join variants
-#   (`q05_spark.sql`, etc.) that BerlinMODBench auto-prefers over the
-#   portable form when present.  PG / DuckDB always run the portable
-#   `<query>.sql` (they have spatial indexes; the portable form is
-#   already optimal there).  See ../README.md "NxN mitigations on
-#   Spark" for the rewrite strategy.
+# Spatial-join queries (Q10/Q11/Q12/Q14):
+#   Every engine runs the identical canonical `<query>.sql` from the
+#   berlinmod/suite submodule — one source, no Spark-specific variant.
+#   PG / DuckDB accelerate the bounding-box `&&` pre-filter with a native
+#   spatial index; Spark has none, so these index-less spatial joins
+#   evaluate as a Cartesian product with a per-pair MEOS UDF and can
+#   exceed a per-query time budget.  Bound them with the caller's own
+#   `timeout`, or load the th3index columnar prefilter so the overlap
+#   becomes an equi-join on H3 cells (the only acceleration Spark shares).
 #
 # Requirements:
 #   spark-submit on PATH (or --spark-submit); Java 11/17/21; Maven for building.
