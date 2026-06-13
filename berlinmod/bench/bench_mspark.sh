@@ -117,7 +117,7 @@ echo "=== Running BerlinMODBench (${RUNS} runs/query, queries=${QUERIES_MSG}) on
   --class org.mobilitydb.spark.demo.BerlinMODBench \
   --master "local[2]" \
   --driver-memory 6g \
-  --conf "spark.driver.extraJavaOptions=-Djava.library.path=${LIBMEOS_DIR} -Dlog4j.logger.org.apache=WARN" \
+  --conf "spark.driver.extraJavaOptions=-Djava.library.path=${LIBMEOS_DIR} -Dberlinmod.sql.dir=${BERLINMOD_DIR}/suite -Dlog4j.logger.org.apache=WARN" \
   --conf "spark.sql.autoBroadcastJoinThreshold=200m" \
   --conf "spark.sql.adaptive.enabled=true" \
   --conf "spark.sql.adaptive.skewJoin.enabled=true" \

@@ -60,10 +60,12 @@ import java.util.stream.Stream;
  *   output     — path to write the timing JSON file
  *   runs       — number of timed runs per query (default: 3)
  *
- * The SQL files are read from the same directory that contains this JAR's
- * class path.  If running from the repository root, pass
- * {@code berlinmod/} as the SQL directory via the system property
- * {@code berlinmod.sql.dir} (default: {@code berlinmod/}).
+ * The SQL files come from the canonical {@code berlinmod-portability}
+ * suite, vendored as the {@code berlinmod/suite/} git submodule (the single
+ * source shared by MobilityDB, MobilityDuck, and MobilitySpark).  Override
+ * the location with the system property {@code berlinmod.sql.dir}; the
+ * runner {@code bench/bench_mspark.sh} sets it to {@code berlinmod/suite}.
+ * When unset it falls back to the parent of the data directory.
  */
 public final class BerlinMODBench {
 
