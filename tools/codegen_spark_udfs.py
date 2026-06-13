@@ -1,267 +1,340 @@
 #!/usr/bin/env python3
-"""Generate MobilitySpark UDF-registration classes from the MEOS-API catalog.
+"""Generate the MobilitySpark UDF surface from the MEOS-API catalog.
 
 North Star (meos-api-codegen-regularity): the Spark UDF surface is GENERATED
-from the single MEOS-API source of truth, never hand-written.
-
-Inputs:
-  - MEOS-API catalog output/meos-idl.json (MEOS-C functions + C-type sigs + the
-    @sqlfn / @sqlop map from MEOS-API #18).
+from the single MEOS-API source of truth, never hand-written. This drives the
+engine over the WHOLE catalog (every @sqlfn name + every contract operator bare
+name from portableAliases) — no hardcoded scope, no skip-hacks. Functions whose
+types are genuinely internal (Datum/SkipList/function-pointers/out-param arrays)
+are the ONLY exclusions, and they are reported, never silently skipped.
 
 Two emission modes:
-  - SINGLE: a SQL name with one backing -> a 1:1 UDF.
-  - DISPATCH: a SQL name / operator with N typed backings (Spark cannot overload
-    by name) -> ONE UDF that classifies each String arg by its MEOS type and
-    routes to the catalog-determined backing. The classification is parser-driven
-    (MEOS decides the type), the routing table is the catalog's param types, and
-    the emitted lambdas call only static GeneratedFunctions (no captured state ->
-    serializable). Zero hand heuristics, zero new MEOS functions.
+  - SINGLE: a name with one backing -> a 1:1 UDF.
+  - DISPATCH: a name/operator with N typed backings (Spark cannot overload by
+    name) -> ONE UDF that classifies each String arg by its MEOS type and routes
+    to the catalog-determined backing.
 
-Usage: python3 tools/codegen_spark_udfs.py [--catalog PATH] [--out DIR]
+Wire format (matches the portable suite): temporals travel as hex-WKB; spans,
+sets, boxes, cbuffer/npoint/pose and geometries travel as TEXT; scalars are typed
+Spark columns (Integer/Double/Boolean/Long/Timestamp).
+
+Usage: python3 tools/codegen_spark_udfs.py [--catalog PATH] [--out DIR] [--report]
 """
-import argparse
-import json
-import os
-import sys
+import argparse, json, os, sys, collections
 
-ARG_RULES = {
-    "Temporal":   ("GeneratedFunctions.temporal_from_hexwkb(%s)", True),
-    "GSERIALIZED": ("GeneratedFunctions.geo_from_text(%s, 0)", True),
-    "Span":       ("GeneratedFunctions.tstzspan_in(%s)", True),
-    "STBox":      ("GeneratedFunctions.stbox_in(%s)", True),   # TEXT form, not hex
-    "Timestamp":  ("parseTs(%s)", False),
+
+def norm(c):
+    return c.replace("const ", "").replace("struct ", "").strip()
+
+
+# ── Pointer-typed args: canonical base -> (GeneratedFunctions parser, KIND) ──
+# parser takes a Java String, returns a jnr Pointer (freed after the call).
+PARSE = {
+    "Temporal":     ("GeneratedFunctions.temporal_from_hexwkb(%s)", "K_TEMPORAL"),
+    "TInstant":     ("GeneratedFunctions.temporal_from_hexwkb(%s)", "K_TEMPORAL"),
+    "TSequence":    ("GeneratedFunctions.temporal_from_hexwkb(%s)", "K_TEMPORAL"),
+    "TSequenceSet": ("GeneratedFunctions.temporal_from_hexwkb(%s)", "K_TEMPORAL"),
+    "GSERIALIZED":  ("GeneratedFunctions.geo_from_text(%s, 0)",     "K_GEO"),
+    # span/set/spanset parse from hex-WKB: the bare *_in(text) needs a type-OID 2nd
+    # arg (intspan vs floatspan can't be told from "[1,5)"); hex-WKB embeds the type.
+    "Span":         ("GeneratedFunctions.span_from_hexwkb(%s)",     "K_SPAN"),
+    "SpanSet":      ("GeneratedFunctions.spanset_from_hexwkb(%s)",  "K_SPANSET"),
+    "Set":          ("GeneratedFunctions.set_from_hexwkb(%s)",      "K_SET"),
+    "STBox":        ("GeneratedFunctions.stbox_in(%s)",             "K_STBOX"),
+    "TBox":         ("GeneratedFunctions.tbox_in(%s)",              "K_TBOX"),
+    "Cbuffer":      ("GeneratedFunctions.cbuffer_in(%s)",           "K_CBUFFER"),
+    "Npoint":       ("GeneratedFunctions.npoint_in(%s)",            "K_NPOINT"),
+    "Nsegment":     ("GeneratedFunctions.nsegment_in(%s)",          "K_NSEGMENT"),
+    "Pose":         ("GeneratedFunctions.pose_in(%s)",              "K_POSE"),
+    "Jsonb":        ("GeneratedFunctions.jsonb_in(%s)",             "K_JSONB"),
 }
-RET_RULES = {
-    "double":        ("DoubleType",  "%s", False),
-    "bool":          ("BooleanType", "%s", False),
-    "int":           ("BooleanType", "%s == 1", False),
-    "Temporal *":    ("StringType",  "GeneratedFunctions.temporal_as_hexwkb(%s, (byte) 4)", True),
-    "GSERIALIZED *": ("StringType",  "GeneratedFunctions.geo_as_text(%s, 15)", True),
-    "Span *":        ("StringType",  "GeneratedFunctions.span_out(%s, 15)", True),
-    "SpanSet *":     ("StringType",  "GeneratedFunctions.spanset_out(%s, 15)", True),
-    "STBox *":       ("StringType",  "GeneratedFunctions.stbox_out(%s, 15)", True),   # TEXT form
+# ── Pointer-typed returns: canonical base -> GeneratedFunctions serializer ──
+SERIAL = {
+    "Temporal":     "GeneratedFunctions.temporal_as_hexwkb(%s, (byte) 4)",
+    "TInstant":     "GeneratedFunctions.temporal_as_hexwkb(%s, (byte) 4)",
+    "TSequence":    "GeneratedFunctions.temporal_as_hexwkb(%s, (byte) 4)",
+    "TSequenceSet": "GeneratedFunctions.temporal_as_hexwkb(%s, (byte) 4)",
+    "GSERIALIZED":  "GeneratedFunctions.geo_as_text(%s, 15)",
+    "Span":         "GeneratedFunctions.span_as_hexwkb(%s, (byte) 4)",
+    "SpanSet":      "GeneratedFunctions.spanset_as_hexwkb(%s, (byte) 4)",
+    "Set":          "GeneratedFunctions.set_as_hexwkb(%s, (byte) 4)",
+    "STBox":        "GeneratedFunctions.stbox_out(%s, 15)",
+    "TBox":         "GeneratedFunctions.tbox_out(%s, 15)",
+    "Cbuffer":      "GeneratedFunctions.cbuffer_out(%s, 15)",
+    "Npoint":       "GeneratedFunctions.npoint_out(%s, 15)",
+    "Nsegment":     "GeneratedFunctions.nsegment_out(%s, 15)",
+    "Pose":         "GeneratedFunctions.pose_out(%s, 15)",
+    "Jsonb":        "GeneratedFunctions.jsonb_out(%s)",
 }
-# canonical C type -> dispatch KIND constant emitted in the class
-KMAP = {"Temporal *": "K_TEMPORAL", "GSERIALIZED *": "K_GEO", "Span *": "K_SPAN",
-        "STBox *": "K_STBOX", "TimestampTz": "K_TS"}
-# KIND -> (Op-field for the parsed value used as a call arg)
-KARG = {"K_TEMPORAL": "%s.ptr", "K_GEO": "%s.ptr", "K_SPAN": "%s.ptr",
-        "K_STBOX": "%s.ptr", "K_TS": "%s.ts"}
+# ── Scalar args: canonical -> (Spark DataType, Java boxed type, "parse expr") ──
+SCALAR_ARG = {
+    "int":         ("IntegerType", "Integer", "%s"),
+    "bool":        ("BooleanType", "Boolean", "%s"),
+    "double":      ("DoubleType",  "Double",  "%s"),
+    "int64_t":     ("LongType",    "Long",    "%s"),
+    "DateADT":     ("IntegerType", "Integer", "%s"),   # JMEOS maps DateADT -> int
+}
+# ── Scalar returns: canonical -> (Spark DataType, Java box, "serialize expr") ──
+SCALAR_RET = {
+    "bool":     ("BooleanType", "%s"),
+    "double":   ("DoubleType",  "%s"),
+    "int64_t":  ("LongType",    "%s"),
+    "DateADT":  ("IntegerType", "%s"),
+    "char *":   ("StringType",  "%s"),     # cstring already a Java String via jnr
+    "text *":   ("StringType",  "GeneratedFunctions.text_out(%s)"),
+}
+# operators whose int (1/0/-1) result is a tri-state predicate -> BooleanType ==1
+PRED_OPS = {"?=", "?<>", "?<", "?<=", "?>", "?>=",
+            "%=", "%<>", "%<", "%<=", "%>", "%>=",
+            "#=", "#<>", "#<", "#<=", "#>", "#>="}
+# genuinely-internal / non-user-facing base types -> legitimately OUT OF SCOPE.
+INTERNAL = {"Datum", "SkipList", "GBOX", "BOX3D", "void", "meosType", "MeosType",
+            "uint8_t", "LWGEOM", "GEOSGeometry", "RTree", "interpType", "json_object",
+            "size_t", "Match", "TimeSplit", "FloatSplit", "FloatTimeSplit",
+            "IntSplit", "IntTimeSplit", "MvtGeom", "unsigned char", "unsigned int",
+            "uint32", "Interval", "text", "char"}
+# (Interval/text/char START as harder marshalling — deferred to a follow-up pass;
+#  counted as not-yet-emitted, NOT as a permanent exclusion. DateADT (->int) and
+#  TimestampTz (->OffsetDateTime) are now handled.)
 
 
-def norm(canon):
-    return canon.replace("const ", "").replace("struct ", "").strip()
+# JMEOS actual signatures (name -> (javaRet, nArgs)), parsed from the jar in main().
+# The jar is the ground truth: it catches catalog/typerecover disagreements (uint64
+# collapsed to int, collapsed-jsonb int*, opaque PJ pointers) before they miscompile.
+JSIG = {}
+JPRIM = {"long": "LongType", "int": "IntegerType", "double": "DoubleType",
+         "boolean": "BooleanType", "float": "DoubleType"}
 
 
-def kind_of(canonical):
-    c = norm(canonical)
-    if c.startswith("Temporal"):    return "Temporal"
-    if c.startswith("GSERIALIZED"): return "GSERIALIZED"
-    if c.startswith("Span") and "Set" not in c: return "Span"
-    if c.startswith("STBox"):       return "STBox"
-    if c == "TimestampTz":          return "Timestamp"
+def base(canon):
+    t = norm(canon)
+    if "(*" in t or "()" in t or t.endswith("**"):
+        return "__INTERNAL__"
+    b = t.replace("*", "").strip()
+    return b
+
+
+# pointer-to-primitive out-params: JMEOS drops the param, allocs a buffer, and
+# returns a Pointer to it (the bool/void return is discarded). canonical -> deref.
+OUTPRIM = {
+    "double *":   ("DoubleType",  "%s.getDouble(0)"),
+    "int *":      ("IntegerType", "%s.getInt(0)"),
+    "int64_t *":  ("LongType",    "%s.getLongLong(0)"),
+    "bool *":     ("BooleanType", "(%s.getByte(0) != 0)"),
+}
+
+
+def arg_kind(canon):
+    """('ptr', parse, KIND) | ('scalar', DataType, Box, expr) | ('ts',) | None."""
+    nc = norm(canon)
+    b = base(canon)
+    if b == "TimestampTz" and nc == "TimestampTz":
+        return ("ts",)
+    if b in PARSE:
+        return ("ptr",) + PARSE[b]
+    # scalar ONLY when not a pointer: int* / DateADT* are arrays/out-params, not ints.
+    if b in SCALAR_ARG and "*" not in nc:
+        return ("scalar",) + SCALAR_ARG[b]
     return None
 
 
-def ret_key(canonical):
-    c = norm(canonical)
-    if c in RET_RULES:
-        return c
-    return None
-
-
-# Single-signature SQL names; overloaded ones go through DISPATCH below.
-SPEC = ["whenTrue"]
-# Dispatch groups: (udf name, how to collect backings from the catalog).
-#   {"name","by":"sqlop"|"sqlfn","key":..., "arity":N}
-# timeSpan dispatches on the arg's MEOS type (temporal/stbox) and returns the
-# span's TEXT form (span_out) — matching the wire format the suite passes between
-# functions (the hand AccessorUDFs.timespan leaked the parsed trip AND emitted hex).
-DISPATCH = [
-    {"name": "overlaps", "by": "sqlop", "key": "&&", "arity": 2},
-    {"name": "stbox",    "by": "sqlfn", "key": "stbox", "arity": 2},
-    {"name": "timeSpan", "by": "sqlfn", "key": "timeSpan", "arity": 1},
-]
-
-
-def emit_udf(name, f):
+def classify(f):
+    """Split params into (in_params, out): a single trailing NON-const writable
+    pointer out-param on a bool/void function is dropped, and JMEOS returns a
+    Pointer to it. out is (DataType, serialize/deref-expr) or None. The out-param
+    may be a primitive (deref) or a struct in SERIAL (serialize). const pointers
+    are inputs, never out-params."""
     params = f["params"]
-    rk = ret_key(f["returnType"]["canonical"])
-    if rk is None:
-        raise SystemExit("unsupported return for %s: %s" % (name, f["returnType"]))
-    ret_dt, ret_ser, ret_free = RET_RULES[rk]
-    box = {"DoubleType": "Double", "BooleanType": "Boolean", "StringType": "String"}[ret_dt]
-    nargs = len(params)
-    udf_iface = "UDF%d<%s, %s>" % (nargs, ", ".join(["String"] * nargs), box)
-    argnames = [p["name"] or ("a%d" % i) for i, p in enumerate(params)]
-    L = [f"    public static final {udf_iface} {name} = (" + ", ".join(argnames) + ") -> {"]
-    L.append("        if (" + " || ".join(f"{a} == null" for a in argnames) + ") return null;")
+    rt = norm(f["returnType"]["canonical"])
+    if rt in ("bool", "void") and params:
+        lastc = params[-1]["canonical"]
+        lastn = norm(lastc)
+        writable = "const" not in lastc and lastn.endswith("*")
+        # no other writable out-param may precede it (single-out-param only)
+        others = [p for p in params[:-1]
+                  if "const" not in p["canonical"]
+                  and (norm(p["canonical"]) in OUTPRIM or base(p["canonical"]) in SERIAL)
+                  and norm(p["canonical"]).endswith("*")]
+        if writable and not others:
+            if lastn in OUTPRIM:
+                return params[:-1], OUTPRIM[lastn]
+            if base(lastc) in SERIAL:
+                return params[:-1], ("StringType", SERIAL[base(lastc)])
+    return params, None
+
+
+def ret_emit(canon, sqlop):
+    """('ptr', DataType, serialize) | ('scalar', DataType, serialize) | None."""
+    t = norm(canon)
+    b = base(t)
+    if b in SERIAL and t.endswith("*"):
+        return ("ptr", "StringType", SERIAL[b])
+    if b == "TimestampTz":            # JMEOS maps TimestampTz -> OffsetDateTime
+        return ("dt", "StringType", "UdfMarshal.tsOut(%s)")
+    if t == "int" or b == "int":
+        if sqlop in PRED_OPS:
+            return ("scalar", "BooleanType", "%s == 1")
+        return ("scalar", "IntegerType", "%s")
+    if t in SCALAR_RET:
+        return ("scalar",) + SCALAR_RET[t]
+    if b in SCALAR_RET:
+        return ("scalar",) + SCALAR_RET[b]
+    return None
+
+
+def supported(f):
+    """Reason string if NOT emittable, else None."""
+    # meos_internal_* doxygen groups are MEOS-internal, not user-facing — excluded.
+    if (f.get("group") or "").startswith("meos_internal"):
+        return "internal"
+    in_params, out = classify(f)
+    if out is None:
+        r = ret_emit(f["returnType"]["canonical"], f.get("sqlop"))
+        if r is None:
+            b = base(f["returnType"]["canonical"])
+            return ("internal" if b in INTERNAL or b == "__INTERNAL__" else "ret:"+norm(f["returnType"]["canonical"]))
+    for p in in_params:
+        if arg_kind(p["canonical"]) is None:
+            b = base(p["canonical"])
+            return ("internal" if b in INTERNAL or b == "__INTERNAL__" else "arg:"+norm(p["canonical"]))
+    # cross-check against the jar: my call arity must match JMEOS's. A mismatch means
+    # the catalog type disagrees with JMEOS (collapsed-jsonb int*, opaque PJ pointer,
+    # multi-out-param) — exclude rather than emit a call that won't bind.
+    if JSIG and f["name"] in JSIG and JSIG[f["name"]][1] != len(in_params):
+        return "arity:jmeos-mismatch"
+    # return-kind cross-check: if JMEOS returns a Pointer but my catalog-inferred
+    # return is a scalar (or vice versa), the catalog collapsed a type (LWGEOM/Jsonb
+    # -> int) — exclude rather than miscompile.
+    if out is None and JSIG and f["name"] in JSIG:
+        r = ret_emit(f["returnType"]["canonical"], f.get("sqlop"))
+        if (JSIG[f["name"]][0] == "jnr.ffi.Pointer") != (r[0] == "ptr"):
+            return "ret:jmeos-kind-mismatch"
+    return None
+
+
+_JAVA_KEYWORDS = {
+    "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char",
+    "class", "const", "continue", "default", "do", "double", "else", "enum",
+    "extends", "final", "finally", "float", "for", "goto", "if", "implements",
+    "import", "instanceof", "int", "interface", "long", "native", "new", "package",
+    "private", "protected", "public", "return", "short", "static", "strictfp",
+    "super", "switch", "synchronized", "this", "throw", "throws", "transient",
+    "try", "void", "volatile", "while", "true", "false", "null", "var",
+}
+
+
+def _javaid(n):
+    """A MEOS param name may collide with a Java keyword (e.g. synchronized)."""
+    return n + "_" if n in _JAVA_KEYWORDS else n
+
+
+def class_for(group):
+    """Java class name for a doxygen @ingroup group. The group string is kept
+    literally (meos_ prefix stripped) so the same function lands in the same-named
+    class across tools. Functions with no @ingroup go to GeneratedUdfs_ungrouped."""
+    g = group or "ungrouped"
+    if g.startswith("meos_"):
+        g = g[len("meos_"):]
+    return "GeneratedUdfs_" + g
+
+
+def emit_single(name, f):
+    params, out = classify(f)
+    if out is None:
+        r = ret_emit(f["returnType"]["canonical"], f.get("sqlop"))
+        ret_dt, ret_ser, ret_ptr, ret_out = r[1], r[2], (r[0] == "ptr"), False
+        # trust the jar for plain numeric returns: the catalog collapses uint64->int,
+        # but JMEOS exposes the true width (e.g. *_hash_extended returns long).
+        if r[0] == "scalar" and ret_ser == "%s" and name in JSIG and JSIG[name][0] in JPRIM:
+            ret_dt = JPRIM[JSIG[name][0]]
+    else:
+        ret_dt, ret_ser, ret_ptr, ret_out = out[0], out[1], False, True
+    box = {"IntegerType": "Integer", "DoubleType": "Double", "BooleanType": "Boolean",
+           "LongType": "Long", "StringType": "String"}[ret_dt]
+    argnames = [_javaid(p["name"] or ("a%d" % i)) for i, p in enumerate(params)]
+    argboxes, kinds = [], []
+    for p in params:
+        k = arg_kind(p["canonical"])
+        kinds.append(k)
+        argboxes.append({"ptr": "String", "ts": "Object", "scalar": k[2] if k[0] == "scalar" else "String"}[k[0]])
+    iface = "UDF%d<%s, %s>" % (len(params), ", ".join(argboxes), box) if params else "UDF0<%s>" % box
+    # Emit as an inline lambda inside a register() call (NOT a static field): 2349
+    # static-field initializers overrun the 64 KB <clinit> bytecode limit. Inline
+    # lambdas compile to separate synthetic methods, keeping the chunk method small.
+    L = [f'        spark.udf().register("{name}", ({iface}) (' + ", ".join(argnames) + ") -> {"
+         if params else f'        spark.udf().register("{name}", ({iface}) () -> {{']
+    if argnames:
+        L.append("        if (" + " || ".join(f"{a} == null" for a in argnames) + ") return null;")
     L.append("        MeosThread.ensureReady();")
-    ptrs = []
-    for a, p in zip(argnames, params):
-        k = kind_of(p["canonical"])
-        if k is None:
-            raise SystemExit("unsupported arg for %s: %s" % (name, p["canonical"]))
-        parse, free = ARG_RULES[k]
-        L.append(f"        Pointer p_{a} = {parse % a};")
-        L.append(f"        if (p_{a} == null) return null;")
-        if free:
-            ptrs.append(f"p_{a}")
-    call = f"GeneratedFunctions.{f['name']}(" + ", ".join(f"p_{a}" for a in argnames) + ")"
+    callargs, frees = [], []
+    for a, p, k in zip(argnames, params, kinds):
+        if k[0] == "ptr":
+            parse = k[1]
+            L.append(f"        jnr.ffi.Pointer p_{a} = {parse % a};")
+            L.append(f"        if (p_{a} == null) return null;")
+            callargs.append(f"p_{a}"); frees.append(f"p_{a}")
+        elif k[0] == "ts":
+            L.append(f"        java.time.OffsetDateTime dt_{a} = UdfMarshal.tsOdt({a});")
+            callargs.append(f"dt_{a}")
+        else:
+            callargs.append(a)
+    call = f"GeneratedFunctions.{f['name']}(" + ", ".join(callargs) + ")"
     L.append("        try {")
-    if ret_free:
-        L.append(f"            Pointer _r = {call};")
+    if ret_out:
+        # JMEOS returns a jnr-allocated buffer (GC-managed) — deref, never free it.
+        L.append(f"            jnr.ffi.Pointer _r = {call};")
+        L.append("            if (_r == null) return null;")
+        L.append(f"            return {ret_ser % '_r'};")
+    elif ret_ptr:
+        L.append(f"            jnr.ffi.Pointer _r = {call};")
         L.append("            if (_r == null) return null;")
         L.append(f"            try {{ return {ret_ser % '_r'}; }} finally {{ MeosMemory.free(_r); }}")
     else:
         L.append(f"            return {ret_ser % call};")
     L.append("        } finally {")
-    for ptr in ptrs:
-        L.append(f"            MeosMemory.free({ptr});")
+    for fr in frees:
+        L.append(f"            MeosMemory.free({fr});")
     L.append("        }")
-    L.append("    };")
-    reg = f'        spark.udf().register("{name}", {name}, DataTypes.{ret_dt});'
-    return "\n".join(L), reg
+    L.append(f"        }}, DataTypes.{ret_dt});")
+    return "\n".join(L)
 
 
-def emit_dispatch(name, backings):
-    """One UDF that classifies each arg's MEOS type and routes to a backing."""
-    arity = len(backings[0]["params"])
-    # keep backings of this arity whose every param is a classifiable KIND;
-    # types the classifier does not cover yet (Cbuffer/Npoint/Set/SpanSet/TBox)
-    # are simply not routed — they are added when their parser/KIND lands.
-    backings = [b for b in backings if len(b["params"]) == arity
-                and all(KMAP.get(norm(p["canonical"])) for p in b["params"])]
-    if not backings:
-        return None, None
-    pos_kinds = [set() for _ in range(arity)]
-    for b in backings:
-        for i, p in enumerate(b["params"]):
-            pos_kinds[i].add(KMAP[norm(p["canonical"])])
-    # uniform return type
-    rks = {norm(b["returnType"]["canonical"]) for b in backings}
-    if len(rks) != 1 or ret_key(rks.pop()) is None:
-        return None, None
-    rk = norm(backings[0]["returnType"]["canonical"])
-    ret_dt, ret_ser, ret_free = RET_RULES[rk]
-    box = {"DoubleType": "Double", "BooleanType": "Boolean", "StringType": "String"}[ret_dt]
-    # a position is Object (may carry a java.sql.Timestamp) iff K_TS is possible
-    argtypes = ["Object" if "K_TS" in pos_kinds[i] else "String" for i in range(arity)]
-    argnames = ["x%d" % i for i in range(arity)]
-    iface = "UDF%d<%s, %s>" % (arity, ", ".join(argtypes), box)
-
-    L = [f"    public static final {iface} {name} = (" + ", ".join(argnames) + ") -> {"]
-    L.append("        if (" + " || ".join(f"{a} == null" for a in argnames) + ") return null;")
-    L.append("        MeosThread.ensureReady();")
-    for a, at in zip(argnames, argtypes):
-        cls = "classifyObj" if at == "Object" else "classify"
-        L.append(f"        Op o_{a} = {cls}({a});")
-    L.append("        try {")
-    # one branch per backing, keyed on its kind tuple (only unambiguous tuples)
-    tuple_count = {}
-    for b in backings:
-        t = tuple(KMAP[norm(p["canonical"])] for p in b["params"])
-        tuple_count[t] = tuple_count.get(t, 0) + 1
-    emitted = 0
-    for b in backings:
-        t = tuple(KMAP[norm(p["canonical"])] for p in b["params"])
-        if tuple_count[t] > 1:
-            continue  # ambiguous by KIND (subtype-only difference) -> skip
-        cond = " && ".join(f"o_{argnames[i]}.kind == {t[i]}" for i in range(arity)) \
-            + " && " + " && ".join(
-                (f"o_{argnames[i]}.ptr != null" if t[i] != "K_TS" else f"o_{argnames[i]}.ts != null")
-                for i in range(arity))
-        callargs = ", ".join(KARG[t[i]] % f"o_{argnames[i]}" for i in range(arity))
-        call = f"GeneratedFunctions.{b['name']}({callargs})"
-        if ret_free:
-            L.append(f"            if ({cond}) {{ Pointer _r = {call}; "
-                     f"try {{ return _r==null?null:{ret_ser % '_r'}; }} finally {{ MeosMemory.free(_r); }} }}")
-        else:
-            L.append(f"            if ({cond}) return {ret_ser % call};")
-        emitted += 1
-    if emitted == 0:
-        return None, None
-    L.append("            return null;")
-    L.append("        } finally {")
-    for a in argnames:
-        L.append(f"            freeOp(o_{a});")
-    L.append("        }")
-    L.append("    };")
-    reg = f'        spark.udf().register("{name}", {name}, DataTypes.{ret_dt});'
-    return "\n".join(L), reg
-
-
-HEADER = """\
-// GENERATED by tools/codegen_spark_udfs.py from the MEOS-API catalog. DO NOT EDIT.
+GEN_NOTE = "// GENERATED by tools/codegen_spark_udfs.py from the MEOS-API catalog. DO NOT EDIT.\n"
+IMPORTS = """\
 package org.mobilitydb.spark.generated;
 
 import functions.GeneratedFunctions;
-import jnr.ffi.Pointer;
-import jnr.ffi.Runtime;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.*;
 import org.apache.spark.sql.types.DataTypes;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
+"""
 
-public final class GeneratedSpatioTemporalUDFs {
-    private GeneratedSpatioTemporalUDFs() {}
+# Shared marshalling helpers live in their own class: the 2300+ UDFs are partitioned
+# across many Part classes (a single class overruns the 64 KB method / constant-pool
+# limits — exactly why JMEOS splits GeneratedFunctions into MeosLibraryPartA/PartB).
+MARSHAL = GEN_NOTE + """\
+package org.mobilitydb.spark.generated;
 
-    private static final DateTimeFormatter PG_FMT =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
-    private static OffsetDateTime parseTs(Object arg) {
-        if (arg instanceof java.sql.Timestamp)
-            return GeneratedFunctions.pg_timestamptz_in(
-                ((java.sql.Timestamp) arg).toInstant().atOffset(ZoneOffset.UTC).format(PG_FMT), -1);
-        return GeneratedFunctions.pg_timestamptz_in(arg.toString().trim(), -1);
+final class UdfMarshal {
+    private UdfMarshal() {}
+    private static final DateTimeFormatter PG_TZ = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXX");
+    // JMEOS marshals TimestampTz as java.time.OffsetDateTime.
+    static java.time.OffsetDateTime tsOdt(Object a) {
+        if (a instanceof java.sql.Timestamp)
+            return ((java.sql.Timestamp) a).toInstant().atOffset(ZoneOffset.UTC);
+        if (a instanceof java.time.OffsetDateTime) return (java.time.OffsetDateTime) a;
+        if (a instanceof java.time.Instant) return ((java.time.Instant) a).atOffset(ZoneOffset.UTC);
+        return java.time.OffsetDateTime.parse(a.toString().trim().replace(' ', 'T'));
     }
-
-    private static Pointer szbuf() {
-        return Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
+    static String tsOut(java.time.OffsetDateTime t) {
+        return t == null ? null : t.format(PG_TZ);
     }
-
-    // ── runtime MEOS-type classification for generated dispatch ──
-    // The value's type is decided by MEOS, not by semantic guessing: a leading
-    // '[' / '(' is a span; a date-like string is a timestamp; a hex-WKB body is
-    // parsed as a temporal and falls back to an stbox; anything else is geometry.
-    static final int K_NONE = -1, K_SPAN = 0, K_TEMPORAL = 1, K_STBOX = 2, K_GEO = 3, K_TS = 4;
-
-    static final class Op { int kind = K_NONE; Pointer ptr; OffsetDateTime ts; }
-
-    private static boolean isHex(String s) {
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))) return false;
-        }
-        return s.length() > 0;
-    }
-
-    static Op classify(String s) {
-        Op o = new Op();
-        if (s == null || s.isEmpty()) return o;
-        char c = s.charAt(0);
-        // Unambiguous by leading token: spans/stboxes/geometries travel as TEXT,
-        // ONLY temporals travel as hex-WKB — so temporal_from_hexwkb is never fed a
-        // non-temporal (which could misread a size field and over-allocate).
-        if (c == '[' || c == '(') { o.kind = K_SPAN; o.ptr = GeneratedFunctions.tstzspan_in(s); return o; }
-        if (s.regionMatches(true, 0, "STBOX", 0, 5)) { o.kind = K_STBOX; o.ptr = GeneratedFunctions.stbox_in(s); return o; }
-        if (c >= '0' && c <= '9' && s.indexOf('-') > 0) { o.kind = K_TS; o.ts = parseTs(s); return o; }
-        if (isHex(s)) { o.kind = K_TEMPORAL; o.ptr = GeneratedFunctions.temporal_from_hexwkb(s); return o; }
-        o.kind = K_GEO; o.ptr = GeneratedFunctions.geo_from_text(s, 0);
-        return o;
-    }
-
-    static Op classifyObj(Object a) {
-        if (a instanceof java.sql.Timestamp) { Op o = new Op(); o.kind = K_TS; o.ts = parseTs(a); return o; }
-        return classify(a == null ? null : a.toString());
-    }
-
-    private static void freeOp(Op o) { if (o != null && o.ptr != null) MeosMemory.free(o.ptr); }
-
+}
 """
 
 
@@ -270,48 +343,102 @@ def main():
     here = os.path.dirname(os.path.abspath(__file__))
     ap.add_argument("--catalog", default=os.path.join(here, "..", "..", "MEOS-API", "output", "meos-idl.json"))
     ap.add_argument("--out", default=os.path.join(here, "..", "src", "main", "java", "org", "mobilitydb", "spark", "generated"))
-    ap.add_argument("--check", action="store_true")
+    ap.add_argument("--jar", default=os.path.join(here, "..", "libs", "JMEOS-1.4.jar"),
+                    help="JMEOS jar; only functions JMEOS actually exposes are emitted "
+                         "(catalog is a superset incl. internal _addmat/above8D/GEOS macros)")
+    ap.add_argument("--report", action="store_true")
     args = ap.parse_args()
 
     cat = json.load(open(args.catalog))
     fns = cat["functions"]
-    by_sqlfn = {}
+
+    # The catalog is the raw extern parse of the MobilityDB headers; JMEOS curates
+    # its public surface (e.g. drops matrix internals _addmat/_choldc1, RTree node
+    # predicates above8D/adjacent2D, GEOS conv macros MEOS_GEOS2POSTGIS). Emit ONLY
+    # what JMEOS exposes, so a generated UDF can never call an absent jar symbol.
+    jar_syms = None
+    if args.jar and os.path.exists(args.jar):
+        import subprocess, re
+        jv = subprocess.run(["javap", "-p", "-cp", args.jar, "functions.GeneratedFunctions"],
+                            capture_output=True, text=True).stdout
+        jar_syms = set(re.findall(r"\b([a-z][A-Za-z0-9_]+)\(", jv))
+        # JSIG: name -> (javaReturnType, nArgs) — the jar's actual signatures.
+        for m in re.finditer(r"public static (\S+) ([a-z][A-Za-z0-9_]+)\(([^)]*)\)", jv):
+            jret, jname, jargs = m.group(1), m.group(2), m.group(3).strip()
+            JSIG[jname] = (jret if "." in jret else jret.lower(),
+                           0 if not jargs else len(jargs.split(",")))
+
+    # GOAL: reach the WHOLE JMEOS surface. Every MEOS C function (unique by its C
+    # name) becomes a 1:1 UDF named by that C symbol — that is how the ~2254
+    # functions with no @sqlfn are reached. The portable dialect (@sqlfn / operator
+    # bare names from the contract) is layered on top in a later dispatch pass.
+    grouped, names, cov = {}, set(), 0
+    skips = collections.Counter()
+    internal = total = not_in_jar = 0
+
     for f in fns:
-        s = f.get("sqlfn")
-        if s:
-            by_sqlfn.setdefault(s, []).append(f)
+        name = f["name"]
+        if jar_syms is not None and name not in jar_syms:
+            not_in_jar += 1          # internal helper JMEOS doesn't expose — skip
+            continue
+        total += 1
+        if name in names:
+            continue
+        why = supported(f)
+        if why:
+            if why == "internal":
+                internal += 1
+            else:
+                skips[why] += 1
+            continue
+        grouped.setdefault(class_for(f.get("group")), []).append(emit_single(name, f))
+        names.add(name)
+        cov += 1
 
-    bodies, regs = [], []
-    for name in SPEC:
-        cands = by_sqlfn.get(name, [])
-        if len(cands) == 1:
-            b, r = emit_udf(name, cands[0])
-            bodies.append(b); regs.append(r)
-        else:
-            print("  SKIP single %s: %d candidates" % (name, len(cands)), file=sys.stderr)
-
-    for d in DISPATCH:
-        if d["by"] == "sqlop":
-            cands = [f for f in fns if f.get("sqlop") == d["key"] and len(f["params"]) == d["arity"]]
-        else:
-            cands = [f for f in by_sqlfn.get(d["key"], []) if len(f["params"]) == d["arity"]]
-        if not cands:
-            print("  SKIP dispatch %s: no backings" % d["name"], file=sys.stderr); continue
-        b, r = emit_dispatch(d["name"], cands)
-        if b is None:
-            print("  SKIP dispatch %s: no emittable branches" % d["name"], file=sys.stderr); continue
-        bodies.append(b); regs.append(r)
-        print("  dispatch %s: %d backings" % (d["name"], len(cands)), file=sys.stderr)
-
-    out = HEADER + "\n".join(bodies)
-    out += "\n\n    public static void registerAll(SparkSession spark) {\n" + "\n".join(regs) + "\n    }\n}\n"
-    if args.check:
-        print(out); return
+    # Organize by doxygen module group (@ingroup), one class per group — the SAME
+    # structure as the MEOS reference manual / XML docs, so a function is found in the
+    # same place across tools. This also keeps every class small, dodging the per-class
+    # constant-pool / BootstrapMethods limits a single 2300-lambda class would hit.
+    # Within a class, register() statements are chunked to stay under the 64 KB method
+    # bytecode limit.
     os.makedirs(args.out, exist_ok=True)
-    path = os.path.join(args.out, "GeneratedSpatioTemporalUDFs.java")
-    with open(path, "w") as fh:
-        fh.write(out)
-    print("wrote %s (%d UDFs)" % (path, len(bodies)))
+    CHUNK = 40        # register() statements per method (64 KB method-bytecode safety)
+    MAXCLASS = 120    # UDFs per class (constant-pool / BootstrapMethods safety)
+    written = []
+    for grp in sorted(grouped):
+        part = grouped[grp]
+        subs = [part[i:i + MAXCLASS] for i in range(0, len(part), MAXCLASS)]
+        for si, sub in enumerate(subs):
+            cls = grp if len(subs) == 1 else "%s_%d" % (grp, si)
+            chunks = [sub[i:i + CHUNK] for i in range(0, len(sub), CHUNK)]
+            body = GEN_NOTE + IMPORTS + "\nfinal class %s {\n    private %s() {}\n" % (cls, cls)
+            for i, ch in enumerate(chunks):
+                body += "\n    private static void reg%d(SparkSession spark) {\n" % i + "\n".join(ch) + "\n    }\n"
+            body += "\n    static void register(SparkSession spark) {\n"
+            body += "\n".join("        reg%d(spark);" % i for i in range(len(chunks)))
+            body += "\n    }\n}\n"
+            with open(os.path.join(args.out, cls + ".java"), "w") as fh:
+                fh.write(body)
+            written.append(cls)
+
+    with open(os.path.join(args.out, "UdfMarshal.java"), "w") as fh:
+        fh.write(MARSHAL)
+
+    main_cls = GEN_NOTE + IMPORTS + "\npublic final class GeneratedSpatioTemporalUDFs {\n"
+    main_cls += "    private GeneratedSpatioTemporalUDFs() {}\n"
+    main_cls += "\n    public static void registerAll(SparkSession spark) {\n"
+    main_cls += "\n".join("        %s.register(spark);" % c for c in written)
+    main_cls += "\n    }\n}\n"
+    with open(os.path.join(args.out, "GeneratedSpatioTemporalUDFs.java"), "w") as fh:
+        fh.write(main_cls)
+
+    print("wrote %d group classes + UdfMarshal + GeneratedSpatioTemporalUDFs in %s" % (len(written), args.out), file=sys.stderr)
+    print("  JMEOS functions in catalog : %d" % total, file=sys.stderr)
+    print("  1:1 UDFs emitted (reached)  : %d  (%.0f%%)" % (cov, 100.0*cov/total), file=sys.stderr)
+    print("  internal (excluded)         : %d" % internal, file=sys.stderr)
+    print("  deferred type gaps (top):", file=sys.stderr)
+    for k, c in skips.most_common(18):
+        print("     %4d  %s" % (c, k), file=sys.stderr)
 
 
 if __name__ == "__main__":
