@@ -395,6 +395,30 @@ def main():
         names.add(name)
         cov += 1
 
+    # ── DISPATCH PASS: portable bare names from the contract families ──
+    # Spark cannot overload by name, but MEOS exposes SUPERCLASS entrypoints that
+    # dispatch every concrete temporal type internally from the type-erased hex-WKB
+    # string. So a portable bare name (everEq, tempLt, alwaysGe — RFC #920 / contract
+    # #19) is emitted ONCE, wrapping its superclass C symbol. No Java type-inspection.
+    by_name = {f["name"]: f for f in fns}
+    fams = (cat.get("portableAliases") or {}).get("families", {})
+    SUF = {"Eq": "eq", "Ne": "ne", "Lt": "lt", "Le": "le", "Gt": "gt", "Ge": "ge"}
+    DISPATCH = [("everComparison", "ever_%s_temporal_temporal"),
+                ("alwaysComparison", "always_%s_temporal_temporal"),
+                ("temporalComparison", "temporal_%s")]
+    ndisp = 0
+    for fam, pat in DISPATCH:
+        for e in fams.get(fam, []):
+            bare = e["bareName"]
+            suf = next((v for k, v in SUF.items() if bare.endswith(k)), None)
+            backing = by_name.get(pat % suf) if suf else None
+            if backing and supported(backing) is None:
+                grouped.setdefault("GeneratedUdfs_portable_comparison", []).append(
+                    emit_single(bare, backing))
+                ndisp += 1
+                cov += 1
+    print("  dispatch bare names (comparison)  : %d" % ndisp, file=sys.stderr)
+
     # Organize by doxygen module group (@ingroup), one class per group — the SAME
     # structure as the MEOS reference manual / XML docs, so a function is found in the
     # same place across tools. This also keeps every class small, dodging the per-class
