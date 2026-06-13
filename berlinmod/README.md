@@ -77,11 +77,16 @@ regenerated). The CSVs are produced by
 ```sql
 -- In a PostgreSQL database with generated BerlinMOD data:
 \i BerlinMOD/berlinmod_export.sql
-SELECT berlinmod_portability_export('/path/to/output/');
+-- args: path, H3 resolution, output SRID (3812 = ETRS89/Belgian Lambert 2008,
+-- Brussels — true metres; the export reprojects + SRID-tags everything here so
+-- no consumer ever reprojects)
+SELECT berlinmod_portability_export('/path/to/output/', 7, 3812);
 ```
 
-This writes `vehicles.csv`, `trips.csv`, `query_*.csv` in the schema defined by
-`suite/schema.sql`. Drop them into `data/` and re-run the benchmark.
+This single call writes the complete dataset (`vehicles.csv`, `trips.csv` with
+hex-EWKB trips, `query_licences/instants/points/periods/regions.csv`) in the
+schema defined by `suite/schema.sql`. Drop them into `data/` and re-run — there
+is no per-tool post-processing.
 
 ---
 

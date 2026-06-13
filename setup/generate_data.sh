@@ -126,21 +126,12 @@ mkdir -p "$OUTPUT"
 echo ""
 echo "=== Exporting to CSV: ${OUTPUT} ==="
 _psql -f "${BM_SQL}/berlinmod_export.sql"
-_psql -c "SELECT berlinmod_portability_export('${OUTPUT}/');"
-
-# berlinmod_portability_export exports trips as WKT text (asText) and omits
-# Periods/Regions.  Override trips.csv with EWKB hex (required by MobilityDuck /
-# MobilitySpark loaders) and add the two missing query fixtures.  Also append
-# the trip_h3 column (th3index hex-WKB at H3 resolution 7) so all three
-# benchmarked platforms can read it directly without recomputing — the
-# loaders fall back to recomputing if it's absent (legacy 3-column CSV).
-_psql -c "COPY (SELECT TripId AS tripId, VehicleId AS vehId,
-                       ashexewkb(Trip) AS trip,
-                       asHexWKB(tgeompoint_to_th3index(Trip, 7)) AS trip_h3
-                FROM Trips ORDER BY TripId)
-          TO '${OUTPUT}/trips.csv' DELIMITER ',' CSV HEADER;"
-_psql -c "COPY (SELECT PeriodId AS periodId, period::text AS period FROM Periods ORDER BY PeriodId) TO '${OUTPUT}/query_periods.csv' DELIMITER ',' CSV HEADER;"
-_psql -c "COPY (SELECT RegionId AS regionId, ST_AsText(ST_Transform(geom, 4326)) AS geom FROM Regions ORDER BY RegionId) TO '${OUTPUT}/query_regions.csv' DELIMITER ',' CSV HEADER;"
+# The canonical generator (MobilityDB-BerlinMOD berlinmod_portability_export)
+# writes every CSV directly — vehicles, trips (hex-EWKB) + trip_h3, licences,
+# instants, points, periods, regions — with all geometries reprojected to SRID
+# 3812 (ETRS89 / Belgian Lambert 2008, Brussels; true metres) and SRID-tagged.
+# No per-tool post-processing or reprojection.
+_psql -c "SELECT berlinmod_portability_export('${OUTPUT}/', 7, 3812);"
 
 # ── stats ─────────────────────────────────────────────────────────────────────
 echo ""
