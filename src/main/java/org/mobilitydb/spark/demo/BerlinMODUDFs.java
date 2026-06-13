@@ -149,14 +149,20 @@ public final class BerlinMODUDFs {
         MeosThread.ensureReady();
         Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(trip);
         if (tptr == null) return null;
-        OffsetDateTime odt = parseTs(tsArg);
-        if (odt == null) return null;
-        // The generator folds the (Datum *result, bool found) out-parameter
-        // form into a single return: the value Datum pointer, or null if the
-        // instant is absent.  For a tgeompoint the Datum is the GSERIALIZED.
-        Pointer geomPtr = GeneratedFunctions.temporal_value_at_timestamptz(tptr, odt, true);
-        if (geomPtr == null) return null;
-        return GeneratedFunctions.geo_as_text(geomPtr, 15);
+        try {
+            OffsetDateTime odt = parseTs(tsArg);
+            if (odt == null) return null;
+            // The generator folds the (Datum *result, bool found) out-parameter
+            // form into a single return: the value Datum pointer, or null if the
+            // instant is absent.  For a tgeompoint the Datum is the GSERIALIZED.
+            // It points INTO tptr (tinstant_value, no copy), so read it before
+            // freeing tptr and do NOT free it separately.
+            Pointer geomPtr = GeneratedFunctions.temporal_value_at_timestamptz(tptr, odt, true);
+            if (geomPtr == null) return null;
+            return GeneratedFunctions.geo_as_text(geomPtr, 15);
+        } finally {
+            MeosMemory.free(tptr);
+        }
     };
 
     // ------------------------------------------------------------------
@@ -225,8 +231,9 @@ public final class BerlinMODUDFs {
                 Pointer expanded = GeneratedFunctions.stbox_expand_space(bbox, dist.doubleValue());
                 if (expanded == null) return null;
                 try {
-                    Pointer sizeOut = Runtime.getSystemRuntime().getMemoryManager().allocateDirect(8);
-                    return GeneratedFunctions.stbox_as_hexwkb(expanded, WKB_EXTENDED, sizeOut);
+                    // STBox as TEXT (STBOX ...) so the generated overlaps classifier
+                    // never feeds it to temporal_from_hexwkb (only temporals are hex).
+                    return GeneratedFunctions.stbox_out(expanded, 15);
                 } finally {
                     MeosMemory.free(expanded);
                 }

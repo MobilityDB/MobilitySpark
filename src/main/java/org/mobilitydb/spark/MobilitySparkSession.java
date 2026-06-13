@@ -145,6 +145,10 @@ public final class MobilitySparkSession implements AutoCloseable {
         // Portable bare-name operator dialect (RFC #920) — registered last
         // so the 29 canonical bare names are the authoritative spelling.
         org.mobilitydb.spark.portable.PortableOperatorAliasUDFs.registerAll(spark);
+        // Catalog-generated UDFs (codegen_spark_udfs.py) - registered LAST so the
+        // generated runtime-dispatch overlaps / stbox(geom,time) / timeSpan are
+        // authoritative over the single-type hand registrations.
+        org.mobilitydb.spark.generated.GeneratedSpatioTemporalUDFs.registerAll(spark);
         return new MobilitySparkSession();
     }
 
