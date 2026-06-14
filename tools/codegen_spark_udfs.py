@@ -20,7 +20,7 @@ Spark columns (Integer/Double/Boolean/Long/Timestamp).
 
 Usage: python3 tools/codegen_spark_udfs.py [--catalog PATH] [--out DIR] [--report]
 """
-import argparse, json, os, sys, collections, glob
+import argparse, json, os, sys, collections, glob, re
 
 
 def norm(c):
@@ -312,6 +312,130 @@ def emit_single(name, f):
     return "\n".join(L)
 
 
+_RETBOX = {"IntegerType": "Integer", "DoubleType": "Double", "BooleanType": "Boolean",
+           "LongType": "Long", "StringType": "String", "ByteType": "Byte"}
+
+
+def _sig(f):
+    """The Spark-marshalled SIGNATURE of an emittable function: (arg-slot tuple,
+    return-shape). Two functions with the SAME _sig present an identical Java UDF
+    interface, so several C overloads of one @sqlfn name that share a _sig can be
+    dispatched by ONE Spark UDF. Slot = the Java box for a scalar arg, "P" for any
+    pointer arg (always a String), "T" for a timestamp. Returns None if unemittable."""
+    params, out = classify(f)
+    slots = []
+    for p in params:
+        k = arg_kind(p["canonical"])
+        if k is None:
+            return None
+        slots.append("P" if k[0] == "ptr" else ("T" if k[0] == "ts" else k[2]))
+    if out is not None:
+        ret = ("out", out[0], out[1])
+    else:
+        r = ret_emit(f["returnType"]["canonical"], f.get("sqlop"))
+        if r is None:
+            return None
+        ret = (("ptr" if r[0] == "ptr" else "scalar"), r[1], r[2])
+    return (tuple(slots), ret)
+
+
+def _safe_dispatch(f):
+    """A function is safely arg-kind-dispatchable only if every pointer arg parses via a
+    hex-WKB or WKT parser — those are mutually discriminating and reject foreign input by
+    returning null. The text *_in parsers (stbox_in / tbox_in / cbuffer_in / npoint_in /
+    pose_in / jsonb_in) are NOT: fed a hex-WKB or WKT string they may mis-parse, so an
+    overload using one cannot be told apart at runtime and must not enter a dispatcher."""
+    for p in classify(f)[0]:
+        k = arg_kind(p["canonical"])
+        if k and k[0] == "ptr" and "from_hexwkb" not in k[1] and "geo_from_text" not in k[1]:
+            return False
+    return True
+
+
+def _parsetuple(f):
+    """The arg KINDS that a runtime parse can actually DISTINGUISH: K_TEMPORAL / K_GEO /
+    K_SPAN ... for pointer args, a constant marker for scalars/timestamps. Two overloads
+    with the SAME _parsetuple differ only by temporal SUBTYPE (tdistance_tgeo_tgeo vs
+    tdistance_tnpoint_tnpoint — both (Temporal,Temporal)) and so CANNOT be told apart by
+    parsing the hex-WKB; only one of them may go into a parse-based dispatcher."""
+    out = []
+    for p in classify(f)[0]:
+        k = arg_kind(p["canonical"])
+        out.append(k[2] if k[0] == "ptr" else ("TS" if k[0] == "ts" else "S"))
+    return tuple(out)
+
+
+# Among parse-indistinguishable overloads, prefer the geometry family the canonical
+# BerlinMOD suite (and most users) call: tgeo / geo. Lower rank = more preferred.
+_FAMTOK = ["_tgeo_", "tgeo_", "_geo_", "_geo", "geo_", "temporal_", "_tspatial_", "tpoint", "tnumber"]
+def _famrank(f):
+    n = f["name"]
+    return next((i for i, t in enumerate(_FAMTOK) if t in n), len(_FAMTOK))
+
+
+def emit_dispatch(name, cands):
+    """Emit ONE Spark UDF for an @sqlfn name backed by SEVERAL C overloads that share
+    a _sig (e.g. eIntersects <- eintersects_tgeo_tgeo / _tgeo_geo / _geo_tgeo). Spark
+    cannot overload a UDF name, so the single lambda parses each pointer arg with each
+    candidate's parsers in turn: the FIRST candidate whose every pointer arg parses is
+    the matching overload (the hex-WKB / WKT / span parsers are mutually discriminating,
+    so exactly one matches). Parse-all-then-check keeps it leak-free on every path."""
+    rep = cands[0]
+    slots, ret = _sig(rep)
+    n = len(slots)
+    argnames = ["a%d" % i for i in range(n)]
+    argboxes = [("String" if s == "P" else ("Object" if s == "T" else s)) for s in slots]
+    ret_kind, ret_dt, ret_ser = ret
+    box = _RETBOX[ret_dt]
+    iface = "UDF%d<%s, %s>" % (n, ", ".join(argboxes), box) if n else "UDF0<%s>" % box
+    L = ['        spark.udf().register("%s", (%s) (%s) -> {' % (name, iface, ", ".join(argnames))]
+    if argnames:
+        L.append("        if (" + " || ".join("%s == null" % a for a in argnames) + ") return null;")
+    L.append("        MeosThread.ensureReady();")
+    # order GEO/WKT-parsing candidates LAST so the strict hex parsers get first refusal
+    def geocount(f):
+        return sum(1 for p in classify(f)[0] if base(p["canonical"]) == "GSERIALIZED")
+    for f in sorted(cands, key=geocount):
+        cps = classify(f)[0]
+        ks = [arg_kind(p["canonical"]) for p in cps]
+        callargs, ptrs = [], []
+        L.append("        {")
+        for a, k in zip(argnames, ks):
+            if k[0] == "ptr":
+                pv = "P_%s" % a
+                parse = k[1] % a
+                # a hex-WKB parser CRASHES on non-hex input — gate it on isHex so a WKT
+                # geometry literal falls through to the geo_from_text candidate instead.
+                if "from_hexwkb" in k[1]:
+                    parse = "UdfMarshal.isHex(%s) ? %s : null" % (a, parse)
+                L.append("          jnr.ffi.Pointer %s = %s;" % (pv, parse))
+                ptrs.append(pv); callargs.append(pv)
+            elif k[0] == "ts":
+                L.append("          java.time.OffsetDateTime D_%s = UdfMarshal.tsOdt(%s);" % (a, a))
+                callargs.append("D_%s" % a)
+            else:
+                callargs.append(a)
+        cond = " && ".join("%s != null" % p for p in ptrs) if ptrs else "true"
+        free = " ".join("MeosMemory.free(%s);" % p for p in ptrs)
+        call = "GeneratedFunctions.%s(%s)" % (f["name"], ", ".join(callargs))
+        L.append("          if (%s) {" % cond)
+        if ret_kind == "out":
+            L.append("            jnr.ffi.Pointer _r = %s;" % call)
+            L.append("            try { return _r == null ? null : %s; } finally { %s }" % (ret_ser % "_r", free))
+        elif ret_kind == "ptr":
+            L.append("            jnr.ffi.Pointer _r = %s;" % call)
+            L.append("            try { return _r == null ? null : %s; } finally { MeosMemory.free(_r); %s }" % (ret_ser % "_r", free))
+        else:
+            L.append("            try { return %s; } finally { %s }" % (ret_ser % call, free))
+        L.append("          }")
+        for p in ptrs:
+            L.append("          if (%s != null) MeosMemory.free(%s);" % (p, p))
+        L.append("        }")
+    L.append("        return null;")
+    L.append("        }, DataTypes.%s);" % ret_dt)
+    return "\n".join(L)
+
+
 GEN_NOTE = "// GENERATED by tools/codegen_spark_udfs.py from the MEOS-API catalog. DO NOT EDIT.\n"
 IMPORTS = """\
 package org.mobilitydb.spark.generated;
@@ -351,6 +475,20 @@ final class UdfMarshal {
     }
     static String tsOut(java.time.OffsetDateTime t) {
         return t == null ? null : t.format(PG_TZ);
+    }
+
+    // A hex-WKB string is an even-length run of hex digits. The overload dispatchers
+    // must check this BEFORE handing a String to a *_from_hexwkb parser: MEOS's hex
+    // decoder crashes (not returns null) on non-hex bytes, so trying a temporal parser
+    // on a WKT geometry literal would segfault. WKT fails isHex (it has letters like
+    // 'L','I','N','(' that are not hex digits), so the dispatch falls through to the
+    // geo_from_text branch instead.
+    static boolean isHex(String s) {
+        int n = s.length();
+        if (n == 0 || (n & 1) != 0) return false;
+        for (int i = 0; i < n; i++)
+            if (Character.digit(s.charAt(i), 16) < 0) return false;
+        return true;
     }
 
     // True iff a hex-WKB temporal pointer is a tnumber (tint/tfloat): only those have
@@ -495,20 +633,10 @@ def main():
                 cov += 1
     print("  dispatch bare names (operator)    : %d" % nbare, file=sys.stderr)
 
-    # ── distance (<->, |=|): explicit bareName -> MEOS superclass symbol ──
-    # tdistance returns a temporal (hex-WKB); nearestApproachDistance is trip-vs-geo.
-    DIST = {"tdistance": "tdistance_tgeo_tgeo",
-            "nearestApproachDistance": "nad_tgeo_geo"}
-    ndist = 0
-    for e in fams.get("distance", []):
-        bare = e["bareName"]
-        backing = by_name.get(DIST.get(bare, ""))
-        if backing and supported(backing) is None:
-            grouped.setdefault("GeneratedUdfs_portable_operator", []).append(
-                emit_single(bare, backing))
-            ndist += 1
-            cov += 1
-    print("  dispatch bare names (distance)    : %d" % ndist, file=sys.stderr)
+    # (distance — tdistance / nearestApproachDistance — is NOT registered here: those
+    # carry @sqlfn tags (tDistance / nearestApproachDistance) with several typed C
+    # overloads, so the @sqlfn pass below emits them with full arg-kind dispatch — a
+    # single tgeo_geo backing here would wrongly null a trip-vs-trip call.)
 
     # ── space X (<<, >>, &<, &>): the ONE axis-ambiguous family ──
     # left/right/overleft/overright resolve to DIFFERENT C symbols by argument class
@@ -529,6 +657,78 @@ def main():
             naxis += 1
             cov += 1
     print("  dispatch bare names (space-axis)  : %d" % naxis, file=sys.stderr)
+
+    # ── @sqlfn CANONICAL-NAME pass: emit the MobilityDB SQL surface ──
+    # Every catalog function carries the canonical MobilityDB SQL spelling in its
+    # @sqlfn tag (numInstants, eIntersects, atTime, asHexWKB ...). That is the name a
+    # user — and the portable BerlinMOD suite — actually calls, so emit each UDF under
+    # its @sqlfn name with the C symbol as backing. One @sqlfn often maps SEVERAL C
+    # overloads differing only by argument KIND (eIntersects <- eintersects_tgeo_tgeo /
+    # _tgeo_geo / _geo_tgeo); since Spark cannot overload a UDF name, those that share a
+    # marshalled _sig() are emitted as ONE arg-kind-dispatching UDF (emit_dispatch).
+    # Registered AFTER the contract bare names (class name sorts later) so an @sqlfn
+    # with full overload dispatch supersedes a single-backing portable registration.
+    # skip @sqlfn names already owned by the contract bare-name passes (operator
+    # superclass registrations). EXCLUDE the distance family: its names (tDistance /
+    # nearestApproachDistance) are better served by the @sqlfn arg-kind dispatch.
+    portable_names = {e["bareName"] for fn, fam in fams.items() if fn != "distance" for e in fam}
+    sqlgroups = {}
+    for f in fns:
+        s = f.get("sqlfn")
+        if not s or s in names or s in portable_names or supported(f) is not None:
+            continue
+        sqlgroups.setdefault(s, []).append(f)
+    nsql = nsqldisp = ndropped = nskip = 0
+    sqlfn_emitted = set()
+    for sname in sorted(sqlgroups):
+        # subgroup the overloads by marshalled signature; emit the largest consistent
+        # group (a name whose overloads disagree on arity/scalar-shape can't be one
+        # Spark UDF — take the dominant shape, the rest stay reachable via their C name).
+        bysig = {}
+        for f in sqlgroups[sname]:
+            sig = _sig(f)
+            if sig is not None:
+                bysig.setdefault(sig, []).append(f)
+        if not bysig:
+            continue
+        group = max(bysig.values(), key=len)
+        # A multi-overload @sqlfn needs a runtime parse dispatcher, which is only sound
+        # when every overload discriminates via hex-WKB / WKT — drop the text-*_in ones
+        # (stbox/tbox/cbuffer/npoint/pose), so e.g. nearestApproachDistance keeps just its
+        # tgeo_tgeo / tgeo_geo overloads. A name left with no safe overload is skipped
+        # (still reachable under its C names), never emitted as a fragile guess.
+        if len(group) > 1:
+            group = [f for f in group if _safe_dispatch(f)]
+        if not group:
+            nskip += 1
+            continue
+        # Keep only parse-DISTINGUISHABLE overloads: one per _parsetuple, preferring the
+        # tgeo/geo family. Overloads differing only by temporal subtype can't be routed
+        # by parsing, so they're left to their C name (not silently mis-dispatched).
+        best = {}
+        for f in group:
+            t = _parsetuple(f)
+            if t not in best or _famrank(f) < _famrank(best[t]):
+                best[t] = f
+        disp = sorted(best.values(), key=lambda f: f["name"])
+        ndropped += len(group) - len(disp)
+        # ever/always boolean predicates (eIntersects, aDisjoint, eDwithin ...) follow
+        # the MobilityDB @sqlfn convention <e|a><Verb> and return int in C (1/0, -1 on
+        # error) but boolean in SQL. Tag them with a predicate sqlop so ret_emit yields
+        # BooleanType (== 1). Guarded on an int C-return, so atTime/asHexWKB (also a*) —
+        # which return a temporal / string — are untouched.
+        if re.match(r"[ea][A-Z]", sname):
+            disp = [dict(f, sqlop="?=") if norm(f["returnType"]["canonical"]) == "int" else f
+                    for f in disp]
+        code = emit_single(sname, disp[0]) if len(disp) == 1 else emit_dispatch(sname, disp)
+        if len(disp) > 1:
+            nsqldisp += 1
+        grouped.setdefault("GeneratedUdfs_sqlfn", []).append(code)
+        sqlfn_emitted.add(sname)
+        nsql += 1
+        cov += 1
+    print("  @sqlfn canonical names      : %d  (%d arg-kind-dispatched, %d subtype-siblings + %d unsafe-overload names to C-name)" %
+          (nsql, nsqldisp, ndropped, nskip), file=sys.stderr)
 
     # Organize by doxygen module group (@ingroup), one class per group — the SAME
     # structure as the MEOS reference manual / XML docs, so a function is found in the

@@ -143,6 +143,37 @@ class GeneratedSurfaceTest {
     }
 
     @Test
+    void sqlfn_canonical_names_with_argkind_dispatch() {
+        // The @sqlfn pass emits the canonical MobilityDB SQL names. Several map to
+        // multiple C overloads dispatched by arg KIND at runtime — verify the dispatch
+        // routes correctly on the tgeompoint trip ([Point(1 1)@.., Point(2 2)@..]).
+        // eIntersects(tgeo, tgeo): trip ever-intersects itself -> true. int(1/0/-1) C
+        // return is marshalled to Boolean by the <e|a><Verb> predicate convention.
+        assertEquals(Boolean.TRUE, scalar(
+            "SELECT eIntersects('" + TGEOMPOINT_HEX + "', '" + TGEOMPOINT_HEX + "')"));
+        // eDwithin(tgeo, tgeo, dist): 3-arg overload (P,P,Double), within 10 of itself -> true
+        assertEquals(Boolean.TRUE, scalar(
+            "SELECT eDwithin('" + TGEOMPOINT_HEX + "', '" + TGEOMPOINT_HEX + "', CAST(10.0 AS DOUBLE))"));
+        // isHex guard + arg-kind dispatch on a MIXED (tgeo, geo-WKT) call: the WKT literal
+        // must NOT crash the hex parser (isHex(false) -> skip the tgeo_tgeo candidate),
+        // and the (tgeo, geo) overload then runs and returns a valid boolean (not null,
+        // not a segfault). The exact truth value depends on the trip interpolation.
+        assertNotNull(scalar(
+            "SELECT eIntersects('" + TGEOMPOINT_HEX + "', 'LINESTRING(1.5 0, 1.5 5)')"));
+        // nearestApproachDistance(tgeo, tgeo): coincident -> 0.0 (tgeo_tgeo, NOT tgeo_geo)
+        assertEquals(0.0, ((Number) scalar(
+            "SELECT nearestApproachDistance('" + TGEOMPOINT_HEX + "', '" + TGEOMPOINT_HEX + "')")).doubleValue(), 1e-9);
+        // (atTime over a text period is a span text-vs-hex input concern handled in the
+        //  bench-rebuild phase; the arg-kind dispatch mechanism is proven above.)
+        // trajectory: the C symbol tpoint_trajectory(Temporal, bool) carries a flag arg
+        // the generated (C-faithful) surface exposes, so it is a 2-arg UDF.
+        assertNotNull(scalar("SELECT trajectory('" + TGEOMPOINT_HEX + "', true)"));
+        // numInstants: a single-overload @sqlfn accessor under its canonical SQL name
+        assertEquals(3, ((Number) scalar(
+            "SELECT numInstants('" + TINT_HEX + "')")).intValue());
+    }
+
+    @Test
     void as_hexwkb_family_with_swallowed_size_out_param() {
         // temporal_as_hexwkb returns char* with a trailing size_t* size_out out-param
         // that JMEOS swallows, plus an `unsigned char variant` -> ByteType. Generated
