@@ -115,13 +115,11 @@ public final class BerlinMODBench {
 
             // Load and cache all tables — loading time is NOT in the query timings
             System.out.println("=== Loading data from: " + dataDir + " ===");
-            loadFromCsv(spark, dataDir);
+            loadFromCsv(spark, dataDir, sqlDir);
 
-            // The trip_h3 column (temporal H3 cell sequence used by the portable
-            // BerlinMOD SQL as a spatial prefilter for the Trips×Trips queries) is
-            // part of the canonical data produced once by
-            // berlinmod_portability_export(); it is loaded from the CSV, not
-            // recomputed here, so every engine consumes the identical column.
+            // trip_h3 / geom_h3 (the H3 cell-set prefilter for the Trips×Trips queries)
+            // are built by the canonical load.sql above via th3index / geoToH3IndexSet —
+            // the same shared source every engine runs, so the prefilter is identical.
 
             spark.catalog().cacheTable("Vehicles");
             spark.catalog().cacheTable("Trips");
@@ -348,41 +346,51 @@ public final class BerlinMODBench {
     }
 
     /**
-     * Load the canonical BerlinMOD CSV corpus (produced by the single shared
-     * generator {@code setup/generate_data.sh} -> MobilityDB-BerlinMOD) into the
-     * temp views the canonical {@code berlinmod/suite} queries reference. Trips are
-     * hex-WKB strings the generated UDFs parse via temporal_from_hexwkb.
+     * Load the canonical BerlinMOD CSV corpus (produced by the single shared generator
+     * {@code setup/generate_data.sh} -> MobilityDB-BerlinMOD) into the {@code *Input}
+     * views, then build the H3 prefilter columns (trip_h3 / geom_h3) by running the
+     * CANONICAL {@code berlinmod/suite/load.sql} — the single shared source of the H3
+     * build (th3index(trip,7) / geoToH3IndexSet(geom,7)), with NO Spark-local H3 logic.
+     *
+     * <p>The only engine adaptation is the DDL form (Spark {@code CREATE OR REPLACE TEMP
+     * VIEW} for PG {@code CREATE TABLE AS}); the H3 SELECT is untouched. trip is the
+     * hex-WKB String the UDFs parse via temporal_from_hexwkb; instant/period are kept as
+     * RAW Strings (exact +HH zone preserved) and parsed by the atTime UDF through MEOS
+     * (pg_timestamptz_in / tstzspan_in). geom is WKT parsed via geo_from_text.
+     *
+     * <p>Requires the catalog to expose {@code th3index} / {@code geoToH3IndexSet} (the
+     * MEOS-C {@code @csqlfn} tags on tgeompoint_to_th3index / geo_to_h3index_set) and the
+     * data to be EPSG:4326 (H3 raises on a non-latlong SRID).
      */
-    static void loadFromCsv(SparkSession spark, String dataDir) {
+    static void loadFromCsv(SparkSession spark, String dataDir, String sqlDir) {
         String dir = dataDir.endsWith("/") ? dataDir : dataDir + "/";
-
-        spark.read().option("header", "true").option("inferSchema", "true")
-             .csv(dir + "vehicles.csv").createOrReplaceTempView("Vehicles");
-        spark.read().option("header", "true").option("inferSchema", "true")
-             .csv(dir + "trips.csv").createOrReplaceTempView("Trips");
-        spark.read().option("header", "true").option("inferSchema", "true")
-             .csv(dir + "query_licences.csv").createOrReplaceTempView("QueryLicences");
-
-        spark.read().option("header", "true")
-             .csv(dir + "query_instants.csv").createOrReplaceTempView("QueryInstantsRaw");
+        // integer-keyed inputs: inferSchema (trip hex / geom WKT stay String).
+        String[][] inferred = {
+            {"vehicles.csv", "Vehicles"}, {"query_licences.csv", "QueryLicences"},
+            {"trips.csv", "TripsInput"}, {"query_points.csv", "QueryPointsInput"},
+            {"query_regions.csv", "QueryRegionsInput"},
+        };
+        for (String[] io : inferred)
+            spark.read().option("header", "true").option("inferSchema", "true")
+                 .csv(dir + io[0]).createOrReplaceTempView(io[1]);
+        // instant / period: keep the RAW text exactly (no inferSchema — preserve the +HH
+        // zone the atTime UDF parses via MEOS), only the id is cast.
+        spark.read().option("header", "true").csv(dir + "query_instants.csv")
+             .createOrReplaceTempView("QueryInstantsRaw");
         spark.sql("CREATE OR REPLACE TEMP VIEW QueryInstants AS "
-                + "SELECT CAST(instantid AS INT) AS instantId, "
-                + "CAST(instant AS TIMESTAMP) AS instant FROM QueryInstantsRaw").count();
-
-        spark.read().option("header", "true")
-             .csv(dir + "query_points.csv").createOrReplaceTempView("QueryPointsRaw");
-        spark.sql("CREATE OR REPLACE TEMP VIEW QueryPoints AS "
-                + "SELECT CAST(pointid AS INT) AS pointId, geom, geom AS geomWKT "
-                + "FROM QueryPointsRaw").count();
-
-        spark.read().option("header", "true")
-             .csv(dir + "query_regions.csv").createOrReplaceTempView("QueryRegionsRaw");
-        spark.sql("CREATE OR REPLACE TEMP VIEW QueryRegions AS "
-                + "SELECT CAST(regionid AS INT) AS regionId, geom FROM QueryRegionsRaw").count();
-
-        spark.read().option("header", "true")
-             .csv(dir + "query_periods.csv").createOrReplaceTempView("QueryPeriodsRaw");
+                + "SELECT CAST(instantid AS INT) AS instantId, instant FROM QueryInstantsRaw");
+        spark.read().option("header", "true").csv(dir + "query_periods.csv")
+             .createOrReplaceTempView("QueryPeriodsRaw");
         spark.sql("CREATE OR REPLACE TEMP VIEW QueryPeriods AS "
-                + "SELECT CAST(periodid AS INT) AS periodId, period FROM QueryPeriodsRaw").count();
+                + "SELECT CAST(periodid AS INT) AS periodId, period FROM QueryPeriodsRaw");
+        // Build the H3 columns via the canonical load.sql (single source).
+        try {
+            for (String stmt : stripComments(Files.readString(Paths.get(sqlDir, "load.sql"))).split(";")) {
+                String s = stmt.replaceAll("(?i)CREATE\\s+TABLE", "CREATE OR REPLACE TEMP VIEW").trim();
+                if (!s.isEmpty()) spark.sql(s);
+            }
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("could not read canonical load.sql at " + sqlDir, e);
+        }
     }
 }
