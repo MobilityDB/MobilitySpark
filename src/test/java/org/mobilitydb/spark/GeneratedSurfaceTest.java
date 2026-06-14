@@ -165,6 +165,13 @@ class GeneratedSurfaceTest {
             "SELECT nearestApproachDistance('" + TGEOMPOINT_HEX + "', '" + TGEOMPOINT_HEX + "')")).doubleValue(), 1e-9);
         // (atTime over a text period is a span text-vs-hex input concern handled in the
         //  bench-rebuild phase; the arg-kind dispatch mechanism is proven above.)
+        // atTime time-restrict polymorphism via a runtime-classified String arg: a
+        // period "[..]" routes to temporal_at_tstzspan, a bare timestamp to
+        // temporal_at_timestamptz (Spark can't overload, so both go through one UDF).
+        assertEquals(2, ((Number) scalar("SELECT numInstants(atTime('" + TGEOMPOINT_HEX
+            + "', '[2001-01-01, 2001-01-03]'))")).intValue());
+        assertEquals(1, ((Number) scalar("SELECT numInstants(atTime('" + TGEOMPOINT_HEX
+            + "', '2001-01-01 00:00:00+00'))")).intValue());
         // trajectory: SQL-faithful 1-arg (the C tpoint_trajectory(Temporal, bool) flag is
         // SQL-optional/defaulted, consumed from sqlArity).
         assertNotNull(scalar("SELECT trajectory('" + TGEOMPOINT_HEX + "')"));
