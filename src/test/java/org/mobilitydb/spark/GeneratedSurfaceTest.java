@@ -143,6 +143,19 @@ class GeneratedSurfaceTest {
     }
 
     @Test
+    void as_hexwkb_family_with_swallowed_size_out_param() {
+        // temporal_as_hexwkb returns char* with a trailing size_t* size_out out-param
+        // that JMEOS swallows, plus an `unsigned char variant` -> ByteType. Generated
+        // now that the size_out is dropped and unsigned char maps to byte. Round-trips:
+        // parse the hex, re-serialize (variant 4 = canonical hex), re-parse -> 3 instants.
+        Object hex = scalar(
+            "SELECT temporal_as_hexwkb(tint_in('[1@2001-01-01, 2@2001-01-02, 1@2001-01-03]'), CAST(4 AS BYTE))");
+        assertNotNull(hex);
+        assertEquals(3, ((Number) scalar(
+            "SELECT temporal_num_instants(temporal_from_hexwkb('" + hex + "'))")).intValue());
+    }
+
+    @Test
     void parser_round_trip_entirely_on_the_generated_surface() {
         // tint_in is the newly-generated cstring (WKT) parser: a full parse->operate
         // round-trip driven only by generated UDFs, no externally-computed hex.

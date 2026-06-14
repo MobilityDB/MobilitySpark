@@ -74,6 +74,7 @@ SCALAR_ARG = {
     "int64_t":     ("LongType",    "Long",    "%s"),
     "uint64_t":    ("LongType",    "Long",    "%s"),   # 64-bit (H3Index/hash) <-> jnr long
     "DateADT":     ("IntegerType", "Integer", "%s"),   # JMEOS maps DateADT -> int
+    "unsigned char": ("ByteType",  "Byte",    "%s"),   # the WKB `variant` flag <-> jnr byte
 }
 # ── Scalar returns: canonical -> (Spark DataType, Java box, "serialize expr") ──
 SCALAR_RET = {
@@ -93,7 +94,7 @@ PRED_OPS = {"?=", "?<>", "?<", "?<=", "?>", "?>=",
 INTERNAL = {"Datum", "SkipList", "GBOX", "BOX3D", "void", "meosType", "MeosType",
             "uint8_t", "LWGEOM", "GEOSGeometry", "RTree", "interpType", "json_object",
             "size_t", "Match", "TimeSplit", "FloatSplit", "FloatTimeSplit",
-            "IntSplit", "IntTimeSplit", "MvtGeom", "unsigned char", "unsigned int",
+            "IntSplit", "IntTimeSplit", "MvtGeom", "unsigned int",
             "uint32", "Interval", "text", "char"}
 # (Interval/text/char START as harder marshalling — deferred to a follow-up pass;
 #  counted as not-yet-emitted, NOT as a permanent exclusion. DateADT (->int) and
@@ -152,6 +153,11 @@ def classify(f):
     may be a primitive (deref) or a struct in SERIAL (serialize). const pointers
     are inputs, never out-params."""
     params = f["params"]
+    # A trailing non-const `size_t *` is the canonical buffer-length out-param of the
+    # *_as_wkb / *_as_hexwkb / *_as_ewkb family: JMEOS swallows it and returns the
+    # buffer (char* / byte[]) directly, so it is never a Java-visible parameter.
+    if params and "const" not in params[-1]["canonical"] and norm(params[-1]["canonical"]) == "size_t *":
+        params = params[:-1]
     rt = norm(f["returnType"]["canonical"])
     if rt in ("bool", "void") and params:
         lastc = params[-1]["canonical"]
