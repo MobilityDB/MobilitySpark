@@ -72,6 +72,7 @@ SCALAR_ARG = {
     "bool":        ("BooleanType", "Boolean", "%s"),
     "double":      ("DoubleType",  "Double",  "%s"),
     "int64_t":     ("LongType",    "Long",    "%s"),
+    "uint64_t":    ("LongType",    "Long",    "%s"),   # 64-bit (H3Index/hash) <-> jnr long
     "DateADT":     ("IntegerType", "Integer", "%s"),   # JMEOS maps DateADT -> int
 }
 # ── Scalar returns: canonical -> (Spark DataType, Java box, "serialize expr") ──
@@ -79,6 +80,7 @@ SCALAR_RET = {
     "bool":     ("BooleanType", "%s"),
     "double":   ("DoubleType",  "%s"),
     "int64_t":  ("LongType",    "%s"),
+    "uint64_t": ("LongType",    "%s"),
     "DateADT":  ("IntegerType", "%s"),
     "char *":   ("StringType",  "%s"),     # cstring already a Java String via jnr
     "text *":   ("StringType",  "GeneratedFunctions.text_out(%s)"),
@@ -347,7 +349,11 @@ def main():
     ap = argparse.ArgumentParser()
     here = os.path.dirname(os.path.abspath(__file__))
     ap.add_argument("--catalog", default=os.path.join(here, "..", "..", "MEOS-API", "output", "meos-idl.json"))
-    ap.add_argument("--out", default=os.path.join(here, "..", "src", "main", "java", "org", "mobilitydb", "spark", "generated"))
+    # Default into the maven build dir (NOT a source root): build-time generation
+    # owns target/; a bare run must never pollute src/ (which would double-compile).
+    ap.add_argument("--out", default=os.path.join(
+        here, "..", "target", "generated-sources", "spark",
+        "org", "mobilitydb", "spark", "generated"))
     ap.add_argument("--jar", default=os.path.join(here, "..", "libs", "JMEOS-1.4.jar"),
                     help="JMEOS jar; only functions JMEOS actually exposes are emitted "
                          "(catalog is a superset incl. internal _addmat/above8D/GEOS macros)")
