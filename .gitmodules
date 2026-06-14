@@ -1,0 +1,3 @@
+[submodule "berlinmod/suite"]
+	path = berlinmod/suite
+	url = https://github.com/estebanzimanyi/berlinmod-portability.git

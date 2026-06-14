@@ -16,6 +16,14 @@ The MobilityDB project is developed by the Computer & Decision Engineering Depar
 
 More information about MobilityDB, including publications, presentations, etc., can be found in the MobilityDB [website](https://mobilitydb.com).
 
+### For contributors and reviewers
+
+- Reviewing a pull request?  See the
+  [PR Reviewer Guide](doc/contributing/reviewer-guide.md) — tier ranking,
+  dependency chains and the standards checklist.  Reviewers landing in
+  any of the three platform repos (MobilityDB / MobilityDuck /
+  MobilitySpark) find the same canonical structure at the same path.
+
 
 ## Table of Contents
 
@@ -40,7 +48,7 @@ More information about MobilityDB, including publications, presentations, etc., 
 
 - 🚀 MobilityDB installed with MEOS
 - 🔧 JMEOS working version
-- ⚡ Spark 3.4.0
+- ⚡ Apache Spark 3.5.x (LTS); see [`doc/spark-version.md`](doc/spark-version.md) for the Spark-version target and the rationale for not yet supporting Spark 4
 - 📝 Maven 4
 - ☕ Java 17 (recommended)
 
