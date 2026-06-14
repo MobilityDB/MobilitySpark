@@ -20,7 +20,7 @@ Spark columns (Integer/Double/Boolean/Long/Timestamp).
 
 Usage: python3 tools/codegen_spark_udfs.py [--catalog PATH] [--out DIR] [--report]
 """
-import argparse, json, os, sys, collections
+import argparse, json, os, sys, collections, glob
 
 
 def norm(c):
@@ -426,6 +426,11 @@ def main():
     # Within a class, register() statements are chunked to stay under the 64 KB method
     # bytecode limit.
     os.makedirs(args.out, exist_ok=True)
+    # Clean stale generated files first: this tool fully OWNS args.out, so a prior
+    # run's classes (a function later excluded by the jar arity/kind cross-check, or a
+    # now-empty/renamed group) must not linger — they would silently break the build.
+    for _old in glob.glob(os.path.join(args.out, "*.java")):
+        os.remove(_old)
     CHUNK = 40        # register() statements per method (64 KB method-bytecode safety)
     MAXCLASS = 120    # UDFs per class (constant-pool / BootstrapMethods safety)
     written = []
