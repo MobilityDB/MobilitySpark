@@ -127,11 +127,12 @@ echo ""
 echo "=== Exporting to CSV: ${OUTPUT} ==="
 _psql -f "${BM_SQL}/berlinmod_export.sql"
 # The canonical generator (MobilityDB-BerlinMOD berlinmod_portability_export)
-# writes every CSV directly — vehicles, trips (hex-EWKB) + trip_h3, licences,
-# instants, points, periods, regions — with all geometries reprojected to SRID
-# 3812 (ETRS89 / Belgian Lambert 2008, Brussels; true metres) and SRID-tagged.
-# No per-tool post-processing or reprojection.
-_psql -c "SELECT berlinmod_portability_export('${OUTPUT}/', 7, 3812);"
+# writes every CSV directly — vehicles, trips (hex-EWKB), licences, instants,
+# points, periods, regions — as RAW lat/lon in SRID 4326 (the canonical default).
+# load.sql then builds the H3 prefilter columns (th3index / geoToH3IndexSet), which
+# require EPSG:4326; nearestApproachDistance on the 4326 geodetic trips returns true
+# metres. No per-tool post-processing, reprojection, or committed corpus copy.
+_psql -c "SELECT berlinmod_portability_export('${OUTPUT}/', 7, 4326);"
 
 # ── stats ─────────────────────────────────────────────────────────────────────
 echo ""

@@ -1,0 +1,4 @@
+# The BerlinMOD corpus is produced by the single canonical generator
+# (setup/generate_data.sh -> MobilityDB-BerlinMOD berlinmod_portability_export).
+# It is NEVER committed — a per-tool committed copy drifts (e.g. wrong SRID).
+*.csv
