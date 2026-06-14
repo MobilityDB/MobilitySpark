@@ -36,6 +36,7 @@ import org.mobilitydb.spark.geo.DistanceUDFs;
 import org.mobilitydb.spark.temporal.PosOpsUDFs;
 import org.mobilitydb.spark.temporal.TemporalBoxOpsUDFs;
 import org.mobilitydb.spark.temporal.TemporalCompUDFs;
+import org.mobilitydb.spark.temporal.PredicateUDFs;
 
 /**
  * Portable bare-name operator aliases — the cross-engine SQL dialect.
@@ -152,12 +153,30 @@ public final class PortableOperatorAliasUDFs {
 
         // ── temporal comparison (#=, #<>, #<, #<=, #>, #>=) ──
         // superclass t*_temporal_temporal → temporal tbool (hex-WKB) ──
-        spark.udf().register("teq",        TemporalCompUDFs.teqTemporal, DataTypes.StringType);
-        spark.udf().register("tne",        TemporalCompUDFs.tneTemporal, DataTypes.StringType);
-        spark.udf().register("tlt",        TemporalCompUDFs.tltTemporal, DataTypes.StringType);
-        spark.udf().register("tle",        TemporalCompUDFs.tleTemporal, DataTypes.StringType);
-        spark.udf().register("tgt",        TemporalCompUDFs.tgtTemporal, DataTypes.StringType);
-        spark.udf().register("tge",        TemporalCompUDFs.tgeTemporal, DataTypes.StringType);
+        spark.udf().register("tempEq",     TemporalCompUDFs.teqTemporal, DataTypes.StringType);
+        spark.udf().register("tempNe",     TemporalCompUDFs.tneTemporal, DataTypes.StringType);
+        spark.udf().register("tempLt",     TemporalCompUDFs.tltTemporal, DataTypes.StringType);
+        spark.udf().register("tempLe",     TemporalCompUDFs.tleTemporal, DataTypes.StringType);
+        spark.udf().register("tempGt",     TemporalCompUDFs.tgtTemporal, DataTypes.StringType);
+        spark.udf().register("tempGe",     TemporalCompUDFs.tgeTemporal, DataTypes.StringType);
+
+        // ── ever comparison (?=, ?<>, ?<, ?<=, ?>, ?>=) ──
+        // ever_*_temporal_temporal → scalar boolean ──
+        spark.udf().register("everEq",     PredicateUDFs.everEqTemporal, DataTypes.BooleanType);
+        spark.udf().register("everNe",     PredicateUDFs.everNeTemporal, DataTypes.BooleanType);
+        spark.udf().register("everLt",     PredicateUDFs.everLtTemporal, DataTypes.BooleanType);
+        spark.udf().register("everLe",     PredicateUDFs.everLeTemporal, DataTypes.BooleanType);
+        spark.udf().register("everGt",     PredicateUDFs.everGtTemporal, DataTypes.BooleanType);
+        spark.udf().register("everGe",     PredicateUDFs.everGeTemporal, DataTypes.BooleanType);
+
+        // ── always comparison (%=, %<>, %<, %<=, %>, %>=) ──
+        // always_*_temporal_temporal → scalar boolean ──
+        spark.udf().register("alwaysEq",   PredicateUDFs.alwaysEqTemporal, DataTypes.BooleanType);
+        spark.udf().register("alwaysNe",   PredicateUDFs.alwaysNeTemporal, DataTypes.BooleanType);
+        spark.udf().register("alwaysLt",   PredicateUDFs.alwaysLtTemporal, DataTypes.BooleanType);
+        spark.udf().register("alwaysLe",   PredicateUDFs.alwaysLeTemporal, DataTypes.BooleanType);
+        spark.udf().register("alwaysGt",   PredicateUDFs.alwaysGtTemporal, DataTypes.BooleanType);
+        spark.udf().register("alwaysGe",   PredicateUDFs.alwaysGeTemporal, DataTypes.BooleanType);
 
         // ── distance (<->, |=|) ───────────────────────────────────────
         spark.udf().register("tdistance",               DistanceUDFs.tdistanceTgeoTgeo, DataTypes.StringType);
