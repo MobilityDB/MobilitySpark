@@ -112,6 +112,37 @@ class GeneratedSurfaceTest {
     }
 
     @Test
+    void portable_bare_name_dispatch_surface() {
+        // The portable bare-name operator dialect (contract families), now emitted by
+        // the generator's DISPATCH pass — NOT hand-registered. One assertion per family
+        // proves the superclass entrypoint dispatches the concrete subtype from hex-WKB.
+        // topology (&&): two identical tints overlap in time → true
+        assertEquals(Boolean.TRUE, scalar(
+            "SELECT overlaps('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // same (~=): a value equals itself
+        assertEquals(Boolean.TRUE, scalar(
+            "SELECT same('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // time position (&<#, overbefore): a value does not strictly precede itself in
+        // time, but its period overbefore-overlaps itself → true
+        assertEquals(Boolean.TRUE, scalar(
+            "SELECT overbefore('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // temporal comparison (#=): tempEq of a value with itself is a temporal bool
+        // (hex-WKB string), non-null
+        assertNotNull(scalar("SELECT tempEq('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // ever comparison (?=): everEq same value → true
+        assertEquals(Boolean.TRUE, scalar(
+            "SELECT everEq('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // space-X axis classifier (&<): a tnumber routes to left_tnumber_tnumber; a
+        // value is overleft-of itself on its value axis → true (exercises axisBool)
+        assertEquals(Boolean.TRUE, scalar(
+            "SELECT overleft('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // distance (<->): tdistance between two coincident tgeompoints → a temporal
+        // (hex-WKB) of all-zero distance, non-null
+        assertNotNull(scalar(
+            "SELECT tdistance('" + TGEOMPOINT_HEX + "', '" + TGEOMPOINT_HEX + "')"));
+    }
+
+    @Test
     void parser_round_trip_entirely_on_the_generated_surface() {
         // tint_in is the newly-generated cstring (WKT) parser: a full parse->operate
         // round-trip driven only by generated UDFs, no externally-computed hex.

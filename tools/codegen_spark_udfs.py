@@ -326,6 +326,11 @@ package org.mobilitydb.spark.generated;
 
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.function.BiFunction;
+import jnr.ffi.Pointer;
+import functions.GeneratedFunctions;
+import org.mobilitydb.spark.MeosMemory;
+import org.mobilitydb.spark.MeosThread;
 
 final class UdfMarshal {
     private UdfMarshal() {}
@@ -340,6 +345,37 @@ final class UdfMarshal {
     }
     static String tsOut(java.time.OffsetDateTime t) {
         return t == null ? null : t.format(PG_TZ);
+    }
+
+    // True iff a hex-WKB temporal pointer is a tnumber (tint/tfloat): only those have
+    // a TBox value extent. Used SOLELY to select which existing backing to delegate to
+    // for the axis-ambiguous space-X operators — never to compute a result.
+    private static boolean isTnumber(Pointer p) {
+        Pointer box = GeneratedFunctions.tnumber_to_tbox(p);
+        if (box == null) return false;
+        MeosMemory.free(box);
+        return true;
+    }
+
+    // Space-X (<<, >>, &<, &>): the value-axis (tnumber) and the X-axis (tspatial) are
+    // distinct C operators. Parse both args once, then dispatch to the tnumber backing
+    // for a tnumber left arg, else the tspatial backing. Both delegates are the
+    // operator's own existing MEOS symbols — no operator logic here.
+    static Boolean axisBool(String s1, String s2,
+            BiFunction<Pointer, Pointer, Boolean> tnumber,
+            BiFunction<Pointer, Pointer, Boolean> tspatial) {
+        if (s1 == null || s2 == null) return null;
+        MeosThread.ensureReady();
+        Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
+        if (p1 == null) return null;
+        Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
+        if (p2 == null) { MeosMemory.free(p1); return null; }
+        try {
+            return isTnumber(p1) ? tnumber.apply(p1, p2) : tspatial.apply(p1, p2);
+        } finally {
+            MeosMemory.free(p1);
+            MeosMemory.free(p2);
+        }
     }
 }
 """
@@ -429,6 +465,64 @@ def main():
                 ndisp += 1
                 cov += 1
     print("  dispatch bare names (comparison)  : %d" % ndisp, file=sys.stderr)
+
+    # ── bare-name-IS-prefix families: topology / same / time / space Y,Z ──
+    # Each contract bareName IS the MEOS C operator prefix, and the superclass
+    # entrypoint *_temporal_temporal (time/topology) or *_tspatial_tspatial (spatial
+    # position) dispatches every concrete subtype internally from the type-erased
+    # hex-WKB — so one emit covers all six type families. Same emit machinery as the
+    # comparison dispatch; only the backing-name pattern differs.
+    PREFIX = [("topology",     "%s_temporal_temporal"),
+              ("same",         "%s_temporal_temporal"),
+              ("timePosition", "%s_temporal_temporal"),
+              ("spaceY",       "%s_tspatial_tspatial"),
+              ("spaceZ",       "%s_tspatial_tspatial")]
+    nbare = 0
+    for fam, pat in PREFIX:
+        for e in fams.get(fam, []):
+            bare = e["bareName"]
+            backing = by_name.get(pat % bare)
+            if backing and supported(backing) is None:
+                grouped.setdefault("GeneratedUdfs_portable_operator", []).append(
+                    emit_single(bare, backing))
+                nbare += 1
+                cov += 1
+    print("  dispatch bare names (operator)    : %d" % nbare, file=sys.stderr)
+
+    # ── distance (<->, |=|): explicit bareName -> MEOS superclass symbol ──
+    # tdistance returns a temporal (hex-WKB); nearestApproachDistance is trip-vs-geo.
+    DIST = {"tdistance": "tdistance_tgeo_tgeo",
+            "nearestApproachDistance": "nad_tgeo_geo"}
+    ndist = 0
+    for e in fams.get("distance", []):
+        bare = e["bareName"]
+        backing = by_name.get(DIST.get(bare, ""))
+        if backing and supported(backing) is None:
+            grouped.setdefault("GeneratedUdfs_portable_operator", []).append(
+                emit_single(bare, backing))
+            ndist += 1
+            cov += 1
+    print("  dispatch bare names (distance)    : %d" % ndist, file=sys.stderr)
+
+    # ── space X (<<, >>, &<, &>): the ONE axis-ambiguous family ──
+    # left/right/overleft/overright resolve to DIFFERENT C symbols by argument class
+    # — the tnumber value-axis (left_tnumber_tnumber) vs. the tspatial X-axis
+    # (left_tspatial_tspatial). A thin runtime classifier (UdfMarshal.axisBool, which
+    # inspects whether arg1 is a tnumber) SELECTS between the two existing backings;
+    # it contains no operator logic, so equivalence-by-construction holds. This is the
+    # only family that needs a per-arg type inspection, exactly as the contract notes.
+    naxis = 0
+    for e in fams.get("spaceX", []):
+        bare = e["bareName"]
+        tnum, tspat = by_name.get("%s_tnumber_tnumber" % bare), by_name.get("%s_tspatial_tspatial" % bare)
+        if tnum and tspat and supported(tnum) is None and supported(tspat) is None:
+            grouped.setdefault("GeneratedUdfs_portable_operator", []).append(
+                '        spark.udf().register("%s", (UDF2<String, String, Boolean>) (s1, s2) ->\n'
+                '            UdfMarshal.axisBool(s1, s2, GeneratedFunctions::%s, GeneratedFunctions::%s),\n'
+                '            DataTypes.BooleanType);' % (bare, tnum["name"], tspat["name"]))
+            naxis += 1
+            cov += 1
+    print("  dispatch bare names (space-axis)  : %d" % naxis, file=sys.stderr)
 
     # Organize by doxygen module group (@ingroup), one class per group — the SAME
     # structure as the MEOS reference manual / XML docs, so a function is found in the
