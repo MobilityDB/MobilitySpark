@@ -16,3 +16,4 @@ log/
 target/
 tools/__pycache__/
 /target/
+src/main/java/org/mobilitydb/spark/generated/

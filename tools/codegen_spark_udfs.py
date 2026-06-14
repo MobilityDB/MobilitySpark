@@ -135,6 +135,11 @@ def arg_kind(canon):
     # scalar ONLY when not a pointer: int* / DateADT* are arrays/out-params, not ints.
     if b in SCALAR_ARG and "*" not in nc:
         return ("scalar",) + SCALAR_ARG[b]
+    # C string: a single `const char *` is a Java String (jnr marshals it), passed
+    # straight to JMEOS — this is how the *_in(text) parsers take their WKT literal.
+    # (char** / multi-pointer stay unmapped; the jar arity cross-check guards mismatches.)
+    if b == "char" and nc.count("*") == 1:
+        return ("scalar", "StringType", "String", "%s")
     return None
 
 

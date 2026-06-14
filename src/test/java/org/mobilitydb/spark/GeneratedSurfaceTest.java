@@ -90,4 +90,17 @@ class GeneratedSurfaceTest {
         assertEquals(2, ((Number) scalar(
             "SELECT temporal_num_timestamps('" + TGEOMPOINT_HEX + "')")).intValue());
     }
+
+    @Test
+    void parser_round_trip_entirely_on_the_generated_surface() {
+        // tint_in is the newly-generated cstring (WKT) parser: a full parse->operate
+        // round-trip driven only by generated UDFs, no externally-computed hex.
+        String wkt = "[1@2001-01-01, 2@2001-01-02, 1@2001-01-03]";
+        assertEquals(3, ((Number) scalar(
+            "SELECT temporal_num_instants(tint_in('" + wkt + "'))")).intValue());
+        Object out = scalar("SELECT tint_out(tint_in('" + wkt + "'))");
+        assertNotNull(out);
+        assertTrue(out.toString().contains("1@") && out.toString().contains("2@"),
+                   "round-trip should render the values, got: " + out);
+    }
 }
