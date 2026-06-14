@@ -15554,6 +15554,10 @@
           "canonical": "const Set *"
         }
       ],
+      "mdbC": "Set_extent_transfn",
+      "sqlfn": "extent",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_setspan_agg"
     },
     {
@@ -15570,6 +15574,10 @@
           "canonical": "Set *"
         }
       ],
+      "mdbC": "Set_union_finalfn",
+      "sqlfn": "union",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_setspan_agg"
     },
     {
@@ -15591,6 +15599,10 @@
           "canonical": "Set *"
         }
       ],
+      "mdbC": "Set_union_transfn",
+      "sqlfn": "union",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_setspan_agg"
     },
     {
@@ -15612,6 +15624,10 @@
           "canonical": "const struct Span *"
         }
       ],
+      "mdbC": "Span_extent_transfn",
+      "sqlfn": "extent",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_setspan_agg"
     },
     {
@@ -15654,6 +15670,10 @@
           "canonical": "const struct SpanSet *"
         }
       ],
+      "mdbC": "Spanset_extent_transfn",
+      "sqlfn": "extent",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_setspan_agg"
     },
     {
@@ -15691,6 +15711,10 @@
           "canonical": "const struct SpanSet *"
         }
       ],
+      "mdbC": "Spanset_union_transfn",
+      "sqlfn": "union",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_setspan_agg"
     },
     {
@@ -32654,6 +32678,10 @@
           "canonical": "int *"
         }
       ],
+      "mdbC": "Temporal_time_bins",
+      "sqlfn": "timeSpans",
+      "sqlArity": 2,
+      "sqlArityMax": 3,
       "group": "meos_temporal_analytics_tile"
     },
     {
@@ -34202,6 +34230,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Geo_round",
+      "sqlfn": "round",
+      "sqlArity": 1,
+      "sqlArityMax": 2,
       "group": "meos_geo_base_transf"
     },
     {
@@ -35933,6 +35965,10 @@
           "canonical": "const char *"
         }
       ],
+      "mdbC": "Stbox_in",
+      "sqlfn": "stbox_in",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_geo_box_inout"
     },
     {
@@ -35954,6 +35990,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Stbox_out",
+      "sqlfn": "stbox_out",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_geo_box_inout"
     },
     {
@@ -36343,6 +36383,10 @@
           "canonical": "const struct STBox *"
         }
       ],
+      "mdbC": "Stbox_hash",
+      "sqlfn": "stbox_hash",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_geo_box_accessor"
     },
     {
@@ -36968,7 +37012,7 @@
       "mdbC": "Stbox_srid",
       "sqlfn": "SRID",
       "sqlArity": 1,
-      "sqlArityMax": 1,
+      "sqlArityMax": 2,
       "group": "meos_geo_box_srid"
     },
     {
@@ -36990,6 +37034,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Stbox_transform",
+      "sqlfn": "transform",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_geo_box_srid"
     },
     {
@@ -37021,6 +37069,10 @@
           "canonical": "bool"
         }
       ],
+      "mdbC": "Stbox_transform_pipeline",
+      "sqlfn": "transformPipeline",
+      "sqlArity": 2,
+      "sqlArityMax": 4,
       "group": "meos_geo_box_srid"
     },
     {
@@ -38324,6 +38376,11 @@
           "canonical": "const BOX3D *"
         }
       ],
+      "mdbC": "Box3d_to_stbox",
+      "sqlfn": "stbox",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
+      "sqlop": "::",
       "group": "meos_geo_box_conversion"
     },
     {
@@ -40102,6 +40159,10 @@
           "canonical": "int *"
         }
       ],
+      "mdbC": "Tgeo_space_boxes",
+      "sqlfn": "spaceBoxes",
+      "sqlArity": 4,
+      "sqlArityMax": 7,
       "group": "meos_geo_tile"
     },
     {
@@ -41958,12 +42019,7 @@
           "cType": "const Temporal *",
           "canonical": "const Temporal *"
         }
-      ],
-      "mdbC": "Acovers_geo_tgeo",
-      "sqlfn": "aCovers",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "group": "meos_geo_rel_ever"
+      ]
     },
     {
       "name": "acovers_tgeo_geo",
@@ -41983,12 +42039,7 @@
           "cType": "const GSERIALIZED *",
           "canonical": "const GSERIALIZED *"
         }
-      ],
-      "mdbC": "Acovers_tgeo_geo",
-      "sqlfn": "aCovers",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "group": "meos_geo_rel_ever"
+      ]
     },
     {
       "name": "acovers_tgeo_tgeo",
@@ -42008,12 +42059,7 @@
           "cType": "const Temporal *",
           "canonical": "const Temporal *"
         }
-      ],
-      "mdbC": "Acovers_tgeo_tgeo",
-      "sqlfn": "eCovers",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "group": "meos_geo_rel_ever"
+      ]
     },
     {
       "name": "adisjoint_tgeo_geo",
@@ -42529,8 +42575,8 @@
           "canonical": "const GSERIALIZED *"
         }
       ],
-      "mdbC": "Eintersects_tgeo_geo",
-      "sqlfn": "eIntersects",
+      "mdbC": "Aintersects_tgeo_geo",
+      "sqlfn": "aIntersects",
       "sqlArity": 2,
       "sqlArityMax": 2,
       "group": "meos_geo_rel_ever"
@@ -42629,8 +42675,8 @@
           "canonical": "const GSERIALIZED *"
         }
       ],
-      "mdbC": "Etouches_tpoint_geo",
-      "sqlfn": "eTouches",
+      "mdbC": "Atouches_tpoint_geo",
+      "sqlfn": "aTouches",
       "sqlArity": 2,
       "sqlArityMax": 2,
       "group": "meos_temporal_spatial_rel_ever"
@@ -42704,6 +42750,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Tcontains_tgeo_tgeo",
+      "sqlfn": "tContains",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_geo_rel_temp"
     },
     {
@@ -42775,6 +42825,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Tcovers_tgeo_tgeo",
+      "sqlfn": "tCovers",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_geo_rel_temp"
     },
     {
@@ -43947,6 +44001,10 @@
           "canonical": "bool"
         }
       ],
+      "mdbC": "Tgeo_space_split",
+      "sqlfn": "spaceSplit",
+      "sqlArity": 4,
+      "sqlArityMax": 7,
       "group": "meos_geo_tile"
     },
     {
@@ -44003,6 +44061,10 @@
           "canonical": "bool"
         }
       ],
+      "mdbC": "Tgeo_space_time_split",
+      "sqlfn": "spaceTimeSplit",
+      "sqlArity": 5,
+      "sqlArityMax": 9,
       "group": "meos_geo_tile"
     },
     {
@@ -44168,10 +44230,6 @@
           "canonical": "GSERIALIZED ***"
         }
       ],
-      "mdbC": "Geo_wlof",
-      "sqlfn": "wlocalOutlierFunction",
-      "sqlArity": 2,
-      "sqlArityMax": 3,
       "group": "meos_temporal_analytics_outlier"
     },
     {
@@ -55877,6 +55935,10 @@
           "canonical": "const struct TInstant *"
         }
       ],
+      "mdbC": "Tinstant_value",
+      "sqlfn": "getValue",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_internal_temporal_accessor"
     },
     {
@@ -62297,61 +62359,6 @@
     },
     {
       "name": "tcbuffersegm_dwithin_turnpt",
-      "file": "tcbuffer.h",
-      "returnType": {
-        "c": "int",
-        "canonical": "int"
-      },
-      "params": [
-        {
-          "name": "start1",
-          "cType": "Datum",
-          "canonical": "int ((int *))()"
-        },
-        {
-          "name": "end1",
-          "cType": "Datum",
-          "canonical": "int ((int *))()"
-        },
-        {
-          "name": "start2",
-          "cType": "Datum",
-          "canonical": "int ((int *))()"
-        },
-        {
-          "name": "end2",
-          "cType": "Datum",
-          "canonical": "int ((int *))()"
-        },
-        {
-          "name": "dist",
-          "cType": "Datum",
-          "canonical": "int ((int *))()"
-        },
-        {
-          "name": "lower",
-          "cType": "TimestampTz",
-          "canonical": "TimestampTz"
-        },
-        {
-          "name": "upper",
-          "cType": "TimestampTz",
-          "canonical": "TimestampTz"
-        },
-        {
-          "name": "t1",
-          "cType": "TimestampTz *",
-          "canonical": "TimestampTz *"
-        },
-        {
-          "name": "t2",
-          "cType": "TimestampTz *",
-          "canonical": "TimestampTz *"
-        }
-      ]
-    },
-    {
-      "name": "tcbuffersegm_tdwithin_turnpt",
       "file": "tcbuffer.h",
       "returnType": {
         "c": "int",
@@ -69486,6 +69493,10 @@
           "canonical": "const char *"
         }
       ],
+      "mdbC": "H3index_in",
+      "sqlfn": "h3index_in",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_base_inout"
     },
     {
@@ -69502,6 +69513,10 @@
           "canonical": "uint64_t"
         }
       ],
+      "mdbC": "H3index_out",
+      "sqlfn": "h3index_out",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_base_inout"
     },
     {
@@ -76666,6 +76681,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Temporal_start_value",
+      "sqlfn": "startValue",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_accessor"
     },
     {
@@ -76682,6 +76701,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Temporal_end_value",
+      "sqlfn": "endValue",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_accessor"
     },
     {
@@ -76708,6 +76731,10 @@
           "canonical": "uint64_t *"
         }
       ],
+      "mdbC": "Temporal_value_n",
+      "sqlfn": "valueN",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_accessor"
     },
     {
@@ -76729,6 +76756,10 @@
           "canonical": "int *"
         }
       ],
+      "mdbC": "Temporal_valueset",
+      "sqlfn": "getValues",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_accessor"
     },
     {
@@ -76760,6 +76791,10 @@
           "canonical": "uint64_t *"
         }
       ],
+      "mdbC": "Temporal_value_at_timestamptz",
+      "sqlfn": "valueAtTimestamp",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_accessor"
     },
     {
@@ -76776,6 +76811,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Tbigint_to_th3index",
+      "sqlfn": "th3index",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
+      "sqlop": "::",
       "group": "meos_h3_conversion"
     },
     {
@@ -76792,6 +76832,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_to_tbigint",
+      "sqlfn": "tbigint",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
+      "sqlop": "::",
       "group": "meos_h3_conversion"
     },
     {
@@ -76813,6 +76858,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Ever_eq_h3index_th3index",
+      "sqlfn": "ever_eq",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "?=",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -76834,6 +76884,11 @@
           "canonical": "uint64_t"
         }
       ],
+      "mdbC": "Ever_eq_th3index_h3index",
+      "sqlfn": "ever_eq",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "?=",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -76855,6 +76910,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Ever_ne_h3index_th3index",
+      "sqlfn": "ever_ne",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "?<>",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -76876,6 +76936,11 @@
           "canonical": "uint64_t"
         }
       ],
+      "mdbC": "Ever_ne_th3index_h3index",
+      "sqlfn": "ever_ne",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "?<>",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -76897,6 +76962,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Always_eq_h3index_th3index",
+      "sqlfn": "always_eq",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "%=",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -76918,6 +76988,11 @@
           "canonical": "uint64_t"
         }
       ],
+      "mdbC": "Always_eq_th3index_h3index",
+      "sqlfn": "always_eq",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "%=",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -76939,6 +77014,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Always_ne_h3index_th3index",
+      "sqlfn": "always_ne",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "%<>",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -76960,6 +77040,11 @@
           "canonical": "uint64_t"
         }
       ],
+      "mdbC": "Always_ne_th3index_h3index",
+      "sqlfn": "always_ne",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "%<>",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -76981,6 +77066,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Ever_eq_th3index_th3index",
+      "sqlfn": "ever_eq",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "?=",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -77002,6 +77092,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Ever_ne_th3index_th3index",
+      "sqlfn": "ever_ne",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "?<>",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -77023,6 +77118,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Always_eq_th3index_th3index",
+      "sqlfn": "always_eq",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "%=",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -77044,6 +77144,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Always_ne_th3index_th3index",
+      "sqlfn": "always_ne",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "%<>",
       "group": "meos_h3_comp_ever"
     },
     {
@@ -77065,6 +77170,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Teq_h3index_th3index",
+      "sqlfn": "temporal_teq",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "#=",
       "group": "meos_h3_comp_temp"
     },
     {
@@ -77086,6 +77196,11 @@
           "canonical": "uint64_t"
         }
       ],
+      "mdbC": "Teq_th3index_h3index",
+      "sqlfn": "temporal_teq",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "#=",
       "group": "meos_h3_comp_temp"
     },
     {
@@ -77107,6 +77222,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Teq_th3index_th3index",
+      "sqlfn": "temporal_teq",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "#=",
       "group": "meos_h3_comp_temp"
     },
     {
@@ -77128,6 +77248,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Tne_h3index_th3index",
+      "sqlfn": "temporal_tne",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "#<>",
       "group": "meos_h3_comp_temp"
     },
     {
@@ -77149,6 +77274,11 @@
           "canonical": "uint64_t"
         }
       ],
+      "mdbC": "Tne_th3index_h3index",
+      "sqlfn": "temporal_tne",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "#<>",
       "group": "meos_h3_comp_temp"
     },
     {
@@ -77170,6 +77300,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Tne_th3index_th3index",
+      "sqlfn": "temporal_tne",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "#<>",
       "group": "meos_h3_comp_temp"
     },
     {
@@ -77186,6 +77321,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_get_resolution",
+      "sqlfn": "h3_get_resolution",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_inspection"
     },
     {
@@ -77202,6 +77341,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_get_base_cell_number",
+      "sqlfn": "h3_get_base_cell_number",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_inspection"
     },
     {
@@ -77218,6 +77361,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_is_valid_cell",
+      "sqlfn": "h3_is_valid_cell",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_inspection"
     },
     {
@@ -77234,6 +77381,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_is_res_class_iii",
+      "sqlfn": "h3_is_res_class_iii",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_inspection"
     },
     {
@@ -77250,6 +77401,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_is_pentagon",
+      "sqlfn": "h3_is_pentagon",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_inspection"
     },
     {
@@ -77271,6 +77426,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Th3index_cell_to_parent",
+      "sqlfn": "h3_cell_to_parent",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_hierarchy"
     },
     {
@@ -77287,6 +77446,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_cell_to_parent_next",
+      "sqlfn": "h3_cell_to_parent",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_hierarchy"
     },
     {
@@ -77308,6 +77471,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Th3index_cell_to_center_child",
+      "sqlfn": "h3_cell_to_center_child",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_hierarchy"
     },
     {
@@ -77324,6 +77491,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_cell_to_center_child_next",
+      "sqlfn": "h3_cell_to_center_child",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_hierarchy"
     },
     {
@@ -77345,6 +77516,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Th3index_cell_to_child_pos",
+      "sqlfn": "h3_cell_to_child_pos",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_hierarchy"
     },
     {
@@ -77371,6 +77546,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Th3index_child_pos_to_cell",
+      "sqlfn": "h3_child_pos_to_cell",
+      "sqlArity": 3,
+      "sqlArityMax": 3,
       "group": "meos_h3_hierarchy"
     },
     {
@@ -77392,6 +77571,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Tgeogpoint_to_th3index",
+      "sqlfn": "th3index",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_latlng"
     },
     {
@@ -77413,6 +77596,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Tgeompoint_to_th3index",
+      "sqlfn": "th3index",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_latlng"
     },
     {
@@ -77429,6 +77616,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_cell_to_tgeogpoint",
+      "sqlfn": "h3_cell_to_latlng",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_latlng"
     },
     {
@@ -77445,6 +77636,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_cell_to_tgeompoint",
+      "sqlfn": "h3_cell_to_latlng_tgeompoint",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_latlng"
     },
     {
@@ -77461,6 +77656,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_cell_to_boundary",
+      "sqlfn": "h3_cell_to_boundary",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_latlng"
     },
     {
@@ -77524,6 +77723,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_are_neighbor_cells",
+      "sqlfn": "h3_are_neighbor_cells",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_edges"
     },
     {
@@ -77545,6 +77748,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_cells_to_directed_edge",
+      "sqlfn": "h3_cells_to_directed_edge",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_edges"
     },
     {
@@ -77561,6 +77768,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_is_valid_directed_edge",
+      "sqlfn": "h3_is_valid_directed_edge",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_edges"
     },
     {
@@ -77577,6 +77788,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_get_directed_edge_origin",
+      "sqlfn": "h3_get_directed_edge_origin",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_edges"
     },
     {
@@ -77593,6 +77808,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_get_directed_edge_destination",
+      "sqlfn": "h3_get_directed_edge_destination",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_edges"
     },
     {
@@ -77609,6 +77828,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_directed_edge_to_boundary",
+      "sqlfn": "h3_directed_edge_to_boundary",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_edges"
     },
     {
@@ -77630,6 +77853,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Th3index_cell_to_vertex",
+      "sqlfn": "h3_cell_to_vertex",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_vertex"
     },
     {
@@ -77646,6 +77873,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_vertex_to_latlng",
+      "sqlfn": "h3_vertex_to_latlng",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_vertex"
     },
     {
@@ -77662,6 +77893,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_is_valid_vertex",
+      "sqlfn": "h3_is_valid_vertex",
+      "sqlArity": 1,
+      "sqlArityMax": 1,
       "group": "meos_h3_vertex"
     },
     {
@@ -77683,6 +77918,11 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_grid_distance",
+      "sqlfn": "h3_grid_distance",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "sqlop": "\\<->",
       "group": "meos_h3_traversal"
     },
     {
@@ -77704,6 +77944,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_cell_to_local_ij",
+      "sqlfn": "h3_cell_to_local_ij",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_traversal"
     },
     {
@@ -77725,6 +77969,10 @@
           "canonical": "const Temporal *"
         }
       ],
+      "mdbC": "Th3index_local_ij_to_cell",
+      "sqlfn": "h3_local_ij_to_cell",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_traversal"
     },
     {
@@ -77746,6 +77994,10 @@
           "canonical": "const char *"
         }
       ],
+      "mdbC": "Th3index_cell_area",
+      "sqlfn": "h3_cell_area",
+      "sqlArity": 1,
+      "sqlArityMax": 2,
       "group": "meos_h3_metrics"
     },
     {
@@ -77767,6 +78019,10 @@
           "canonical": "const char *"
         }
       ],
+      "mdbC": "Th3index_edge_length",
+      "sqlfn": "h3_edge_length",
+      "sqlArity": 1,
+      "sqlArityMax": 2,
       "group": "meos_h3_metrics"
     },
     {
@@ -77793,6 +78049,10 @@
           "canonical": "const char *"
         }
       ],
+      "mdbC": "Tgeogpoint_great_circle_distance",
+      "sqlfn": "h3_great_circle_distance",
+      "sqlArity": 2,
+      "sqlArityMax": 3,
       "group": "meos_h3_metrics"
     },
     {
@@ -80332,6 +80592,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Npoint_round",
+      "sqlfn": "round",
+      "sqlArity": 1,
+      "sqlArityMax": 2,
       "group": "meos_npoint_base_transf"
     },
     {
@@ -80353,6 +80617,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Nsegment_round",
+      "sqlfn": "round",
+      "sqlArity": 1,
+      "sqlArityMax": 2,
       "group": "meos_npoint_base_transf"
     },
     {
@@ -80655,6 +80923,10 @@
           "canonical": "const struct Npoint *"
         }
       ],
+      "mdbC": "Npoint_same",
+      "sqlfn": "same",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_npoint_base_comp"
     },
     {
@@ -81286,6 +81558,10 @@
           "canonical": "const char *"
         }
       ],
+      "mdbC": "Tnpoint_in",
+      "sqlfn": "tnpoint_in",
+      "sqlArity": 3,
+      "sqlArityMax": 3,
       "group": "meos_npoint_inout"
     },
     {
@@ -88513,6 +88789,902 @@
       "group": "meos_pose_comp_temp"
     },
     {
+      "name": "quadbin_is_valid_index",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "index",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_is_valid_cell",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_tile_to_cell",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin",
+        "canonical": "unsigned long"
+      },
+      "params": [
+        {
+          "name": "x",
+          "cType": "uint32_t",
+          "canonical": "unsigned int"
+        },
+        {
+          "name": "y",
+          "cType": "uint32_t",
+          "canonical": "unsigned int"
+        },
+        {
+          "name": "z",
+          "cType": "uint32_t",
+          "canonical": "unsigned int"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_cell_to_tile",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "void",
+        "canonical": "void"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "x",
+          "cType": "uint32_t *",
+          "canonical": "unsigned int *"
+        },
+        {
+          "name": "y",
+          "cType": "uint32_t *",
+          "canonical": "unsigned int *"
+        },
+        {
+          "name": "z",
+          "cType": "uint32_t *",
+          "canonical": "unsigned int *"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_get_resolution",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "uint32_t",
+        "canonical": "unsigned int"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_cell_to_parent",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin",
+        "canonical": "unsigned long"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "parent_resolution",
+          "cType": "uint32_t",
+          "canonical": "unsigned int"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_cell_to_children",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin *",
+        "canonical": "unsigned long *"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "children_resolution",
+          "cType": "uint32_t",
+          "canonical": "unsigned int"
+        },
+        {
+          "name": "count",
+          "cType": "int *",
+          "canonical": "int *"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_cell_sibling",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin",
+        "canonical": "unsigned long"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "direction",
+          "cType": "const char *",
+          "canonical": "const char *"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_k_ring",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin *",
+        "canonical": "unsigned long *"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "k",
+          "cType": "int",
+          "canonical": "int"
+        },
+        {
+          "name": "count",
+          "cType": "int *",
+          "canonical": "int *"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_point_to_cell",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin",
+        "canonical": "unsigned long"
+      },
+      "params": [
+        {
+          "name": "longitude",
+          "cType": "double",
+          "canonical": "double"
+        },
+        {
+          "name": "latitude",
+          "cType": "double",
+          "canonical": "double"
+        },
+        {
+          "name": "resolution",
+          "cType": "uint32_t",
+          "canonical": "unsigned int"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_cell_to_point",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "void",
+        "canonical": "void"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "longitude",
+          "cType": "double *",
+          "canonical": "double *"
+        },
+        {
+          "name": "latitude",
+          "cType": "double *",
+          "canonical": "double *"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_cell_to_bounding_box",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "void",
+        "canonical": "void"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "xmin",
+          "cType": "double *",
+          "canonical": "double *"
+        },
+        {
+          "name": "ymin",
+          "cType": "double *",
+          "canonical": "double *"
+        },
+        {
+          "name": "xmax",
+          "cType": "double *",
+          "canonical": "double *"
+        },
+        {
+          "name": "ymax",
+          "cType": "double *",
+          "canonical": "double *"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_cell_area",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "double",
+        "canonical": "double"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_index_to_string",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "char *",
+        "canonical": "char *"
+      },
+      "params": [
+        {
+          "name": "index",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_string_to_index",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin",
+        "canonical": "unsigned long"
+      },
+      "params": [
+        {
+          "name": "str",
+          "cType": "const char *",
+          "canonical": "const char *"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_cell_to_quadkey",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "char *",
+        "canonical": "char *"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin"
+    },
+    {
+      "name": "quadbin_parse",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin",
+        "canonical": "unsigned long"
+      },
+      "params": [
+        {
+          "name": "str",
+          "cType": "const char *",
+          "canonical": "const char *"
+        }
+      ],
+      "group": "meos_quadbin_base_inout"
+    },
+    {
+      "name": "quadbin_eq",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "a",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "b",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin_base_comp"
+    },
+    {
+      "name": "quadbin_ne",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "a",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "b",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin_base_comp"
+    },
+    {
+      "name": "quadbin_lt",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "a",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "b",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin_base_comp"
+    },
+    {
+      "name": "quadbin_le",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "a",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "b",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin_base_comp"
+    },
+    {
+      "name": "quadbin_gt",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "a",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "b",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin_base_comp"
+    },
+    {
+      "name": "quadbin_ge",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "a",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "b",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin_base_comp"
+    },
+    {
+      "name": "quadbin_cmp",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "int",
+        "canonical": "int"
+      },
+      "params": [
+        {
+          "name": "a",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "b",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin_base_comp"
+    },
+    {
+      "name": "quadbin_hash",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "uint32_t",
+        "canonical": "unsigned int"
+      },
+      "params": [
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ],
+      "group": "meos_quadbin_base_accessor"
+    },
+    {
+      "name": "quadbin_grid_disk",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Set *",
+        "canonical": "Set *"
+      },
+      "params": [
+        {
+          "name": "origin",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "k",
+          "cType": "int",
+          "canonical": "int"
+        }
+      ]
+    },
+    {
+      "name": "quadbin_cell_to_children_set",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Set *",
+        "canonical": "Set *"
+      },
+      "params": [
+        {
+          "name": "origin",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "children_resolution",
+          "cType": "int",
+          "canonical": "int"
+        }
+      ]
+    },
+    {
+      "name": "tquadbin_in",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "str",
+          "cType": "const char *",
+          "canonical": "const char *"
+        }
+      ],
+      "group": "meos_quadbin_inout"
+    },
+    {
+      "name": "tquadbininst_in",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "TInstant *",
+        "canonical": "struct TInstant *"
+      },
+      "params": [
+        {
+          "name": "str",
+          "cType": "const char *",
+          "canonical": "const char *"
+        }
+      ],
+      "group": "meos_quadbin_inout"
+    },
+    {
+      "name": "tquadbinseq_in",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "TSequence *",
+        "canonical": "struct TSequence *"
+      },
+      "params": [
+        {
+          "name": "str",
+          "cType": "const char *",
+          "canonical": "const char *"
+        },
+        {
+          "name": "interp",
+          "cType": "interpType",
+          "canonical": "interpType"
+        }
+      ],
+      "group": "meos_quadbin_inout"
+    },
+    {
+      "name": "tquadbinseqset_in",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "TSequenceSet *",
+        "canonical": "struct TSequenceSet *"
+      },
+      "params": [
+        {
+          "name": "str",
+          "cType": "const char *",
+          "canonical": "const char *"
+        }
+      ],
+      "group": "meos_quadbin_inout"
+    },
+    {
+      "name": "tquadbin_make",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "value",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "t",
+          "cType": "TimestampTz",
+          "canonical": "TimestampTz"
+        }
+      ],
+      "group": "meos_quadbin_constructor"
+    },
+    {
+      "name": "tquadbininst_make",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "TInstant *",
+        "canonical": "struct TInstant *"
+      },
+      "params": [
+        {
+          "name": "value",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        },
+        {
+          "name": "t",
+          "cType": "TimestampTz",
+          "canonical": "TimestampTz"
+        }
+      ],
+      "group": "meos_quadbin_constructor"
+    },
+    {
+      "name": "tquadbinseq_make",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "TSequence *",
+        "canonical": "struct TSequence *"
+      },
+      "params": [
+        {
+          "name": "values",
+          "cType": "const Quadbin *",
+          "canonical": "const unsigned long *"
+        },
+        {
+          "name": "times",
+          "cType": "const TimestampTz *",
+          "canonical": "const TimestampTz *"
+        },
+        {
+          "name": "count",
+          "cType": "int",
+          "canonical": "int"
+        },
+        {
+          "name": "lower_inc",
+          "cType": "bool",
+          "canonical": "bool"
+        },
+        {
+          "name": "upper_inc",
+          "cType": "bool",
+          "canonical": "bool"
+        }
+      ],
+      "group": "meos_quadbin_constructor"
+    },
+    {
+      "name": "tquadbinseqset_make",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "TSequenceSet *",
+        "canonical": "struct TSequenceSet *"
+      },
+      "params": [
+        {
+          "name": "sequences",
+          "cType": "const TSequence **",
+          "canonical": "const struct TSequence **"
+        },
+        {
+          "name": "count",
+          "cType": "int",
+          "canonical": "int"
+        }
+      ],
+      "group": "meos_quadbin_constructor"
+    },
+    {
+      "name": "tquadbin_start_value",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin",
+        "canonical": "unsigned long"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ],
+      "group": "meos_quadbin_accessor"
+    },
+    {
+      "name": "tquadbin_end_value",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin",
+        "canonical": "unsigned long"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ],
+      "group": "meos_quadbin_accessor"
+    },
+    {
+      "name": "tquadbin_value_n",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        },
+        {
+          "name": "n",
+          "cType": "int",
+          "canonical": "int"
+        },
+        {
+          "name": "result",
+          "cType": "Quadbin *",
+          "canonical": "unsigned long *"
+        }
+      ],
+      "group": "meos_quadbin_accessor"
+    },
+    {
+      "name": "tquadbin_values",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Quadbin *",
+        "canonical": "unsigned long *"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        },
+        {
+          "name": "count",
+          "cType": "int *",
+          "canonical": "int *"
+        }
+      ],
+      "group": "meos_quadbin_accessor"
+    },
+    {
+      "name": "tquadbin_value_at_timestamptz",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        },
+        {
+          "name": "t",
+          "cType": "TimestampTz",
+          "canonical": "TimestampTz"
+        },
+        {
+          "name": "strict",
+          "cType": "bool",
+          "canonical": "bool"
+        },
+        {
+          "name": "result",
+          "cType": "Quadbin *",
+          "canonical": "unsigned long *"
+        }
+      ],
+      "group": "meos_quadbin_accessor"
+    },
+    {
+      "name": "tbigint_to_tquadbin",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ],
+      "group": "meos_quadbin_conversion"
+    },
+    {
+      "name": "tquadbin_to_tbigint",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ],
+      "group": "meos_quadbin_conversion"
+    },
+    {
+      "name": "tquadbin_cell_to_quadkey",
+      "file": "meos_quadbin.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ],
+      "group": "meos_cellindex"
+    },
+    {
       "name": "trgeometry_out",
       "file": "meos_rgeo.h",
       "returnType": {
@@ -94856,6 +96028,181 @@
       ]
     },
     {
+      "name": "ensure_valid_tquadbin_tquadbin",
+      "file": "tquadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "temp1",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        },
+        {
+          "name": "temp2",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ]
+    },
+    {
+      "name": "ensure_valid_tquadbin_quadbin",
+      "file": "tquadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        },
+        {
+          "name": "cell",
+          "cType": "Quadbin",
+          "canonical": "unsigned long"
+        }
+      ]
+    },
+    {
+      "name": "ensure_valid_tquadbin_tgeompoint",
+      "file": "tquadbin.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "temp1",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        },
+        {
+          "name": "temp2",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ]
+    },
+    {
+      "name": "datum2_quadbin_eq",
+      "file": "tquadbin.h",
+      "returnType": {
+        "c": "Datum",
+        "canonical": "Datum"
+      },
+      "params": [
+        {
+          "name": "d1",
+          "cType": "Datum",
+          "canonical": "int ((int *))()"
+        },
+        {
+          "name": "d2",
+          "cType": "Datum",
+          "canonical": "int ((int *))()"
+        },
+        {
+          "name": "type",
+          "cType": "MeosType",
+          "canonical": "MeosType"
+        }
+      ]
+    },
+    {
+      "name": "datum2_quadbin_ne",
+      "file": "tquadbin.h",
+      "returnType": {
+        "c": "Datum",
+        "canonical": "Datum"
+      },
+      "params": [
+        {
+          "name": "d1",
+          "cType": "Datum",
+          "canonical": "int ((int *))()"
+        },
+        {
+          "name": "d2",
+          "cType": "Datum",
+          "canonical": "int ((int *))()"
+        },
+        {
+          "name": "type",
+          "cType": "MeosType",
+          "canonical": "MeosType"
+        }
+      ]
+    },
+    {
+      "name": "tquadbininst_set_stbox",
+      "file": "tquadbin_boxops.h",
+      "returnType": {
+        "c": "void",
+        "canonical": "void"
+      },
+      "params": [
+        {
+          "name": "inst",
+          "cType": "const TInstant *",
+          "canonical": "const struct TInstant *"
+        },
+        {
+          "name": "box",
+          "cType": "STBox *",
+          "canonical": "struct STBox *"
+        }
+      ]
+    },
+    {
+      "name": "tquadbininstarr_set_stbox",
+      "file": "tquadbin_boxops.h",
+      "returnType": {
+        "c": "void",
+        "canonical": "void"
+      },
+      "params": [
+        {
+          "name": "instants",
+          "cType": "TInstant **",
+          "canonical": "struct TInstant **"
+        },
+        {
+          "name": "count",
+          "cType": "int",
+          "canonical": "int"
+        },
+        {
+          "name": "box",
+          "cType": "STBox *",
+          "canonical": "struct STBox *"
+        }
+      ]
+    },
+    {
+      "name": "tquadbinseq_expand_stbox",
+      "file": "tquadbin_boxops.h",
+      "returnType": {
+        "c": "void",
+        "canonical": "void"
+      },
+      "params": [
+        {
+          "name": "seq",
+          "cType": "const TSequence *",
+          "canonical": "const struct TSequence *"
+        },
+        {
+          "name": "inst",
+          "cType": "const TInstant *",
+          "canonical": "const struct TInstant *"
+        }
+      ]
+    },
+    {
       "name": "ensure_has_geom",
       "file": "trgeo.h",
       "returnType": {
@@ -96435,7 +97782,7 @@
         }
       ],
       "mdbC": "Trgeometry_to_tsequenceset",
-      "sqlfn": "trgeoSeqSet",
+      "sqlfn": "trgeometrySeqSet",
       "sqlArity": 1,
       "sqlArityMax": 2,
       "group": "meos_rgeo_transf"
@@ -99515,6 +100862,137 @@
           "canonical": "int"
         }
       ]
+    },
+    {
+      "name": "tcellindex_type",
+      "file": "tcellindex.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "type",
+          "cType": "MeosType",
+          "canonical": "MeosType"
+        }
+      ]
+    },
+    {
+      "name": "dggs_cellops",
+      "file": "tcellindex.h",
+      "returnType": {
+        "c": "const DggsCellOps *",
+        "canonical": "const struct DggsCellOps *"
+      },
+      "params": [
+        {
+          "name": "temptype",
+          "cType": "MeosType",
+          "canonical": "MeosType"
+        }
+      ]
+    },
+    {
+      "name": "tcellindex_get_resolution",
+      "file": "tcellindex.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ],
+      "group": "meos_cellindex"
+    },
+    {
+      "name": "tcellindex_is_valid_cell",
+      "file": "tcellindex.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ],
+      "group": "meos_cellindex"
+    },
+    {
+      "name": "tcellindex_cell_to_parent",
+      "file": "tcellindex.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        },
+        {
+          "name": "resolution",
+          "cType": "int32",
+          "canonical": "int"
+        }
+      ],
+      "group": "meos_cellindex"
+    },
+    {
+      "name": "tcellindex_cell_to_point",
+      "file": "tcellindex.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ],
+      "group": "meos_cellindex"
+    },
+    {
+      "name": "tcellindex_cell_to_boundary",
+      "file": "tcellindex.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ],
+      "group": "meos_cellindex"
+    },
+    {
+      "name": "tcellindex_cell_area",
+      "file": "tcellindex.h",
+      "returnType": {
+        "c": "Temporal *",
+        "canonical": "Temporal *"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        }
+      ],
+      "group": "meos_cellindex"
     },
     {
       "name": "datum_min_int32",
@@ -108504,6 +109982,77 @@
       ]
     },
     {
+      "name": "DggsCellOps",
+      "file": "tcellindex.h",
+      "fields": [
+        {
+          "name": "celltype",
+          "cType": "MeosType",
+          "offset_bits": -1
+        },
+        {
+          "name": "settype",
+          "cType": "MeosType",
+          "offset_bits": -1
+        },
+        {
+          "name": "temptype",
+          "cType": "MeosType",
+          "offset_bits": -1
+        },
+        {
+          "name": "min_resolution",
+          "cType": "int32",
+          "offset_bits": -1
+        },
+        {
+          "name": "max_resolution",
+          "cType": "int32",
+          "offset_bits": -1
+        },
+        {
+          "name": "point_temptype",
+          "cType": "MeosType",
+          "offset_bits": -1
+        },
+        {
+          "name": "point_srid",
+          "cType": "int32",
+          "offset_bits": -1
+        },
+        {
+          "name": "get_resolution",
+          "cType": "int (*)(Datum *)",
+          "offset_bits": -1
+        },
+        {
+          "name": "is_valid_cell",
+          "cType": "int (*)(Datum *)",
+          "offset_bits": -1
+        },
+        {
+          "name": "cell_to_parent",
+          "cType": "int (*)(Datum *, Datum *)",
+          "offset_bits": -1
+        },
+        {
+          "name": "cell_to_point",
+          "cType": "int (*)(Datum *)",
+          "offset_bits": -1
+        },
+        {
+          "name": "cell_to_boundary",
+          "cType": "int (*)(Datum *)",
+          "offset_bits": -1
+        },
+        {
+          "name": "cell_area",
+          "cType": "int (*)(Datum *)",
+          "offset_bits": -1
+        }
+      ]
+    },
+    {
       "name": "SimilarityPathState",
       "file": "temporal_analytics.h",
       "fields": [
@@ -109184,8 +110733,20 @@
           "value": 73
         },
         {
+          "name": "T_QUADBIN",
+          "value": 78
+        },
+        {
+          "name": "T_QUADBINSET",
+          "value": 79
+        },
+        {
+          "name": "T_TQUADBIN",
+          "value": 80
+        },
+        {
           "name": "NUM_MEOS_TYPES",
-          "value": 74
+          "value": 81
         }
       ]
     },
