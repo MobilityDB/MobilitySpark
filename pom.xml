@@ -38,4 +38,54 @@
             <version>2.2.11</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Generate the whole UDF surface from the vendored MEOS-API catalog at
+                 build time (North Star: bindings are GENERATED from MEOS, never hand
+                 written). The generator reads the org.jmeos:meos jar's actual symbols
+                 so it never emits a call to an absent/mismatched JMEOS method. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-udfs</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>python3</executable>
+                            <arguments>
+                                <argument>${project.basedir}/tools/codegen_spark_udfs.py</argument>
+                                <argument>--catalog</argument>
+                                <argument>${project.basedir}/tools/meos-idl.json</argument>
+                                <argument>--jar</argument>
+                                <argument>${settings.localRepository}/org/jmeos/meos/1.0/meos-1.0.jar</argument>
+                                <argument>--out</argument>
+                                <argument>${project.build.directory}/generated-sources/spark/org/mobilitydb/spark/generated</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>add-generated-source</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>add-source</goal></goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/spark</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
