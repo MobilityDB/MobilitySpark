@@ -91,6 +91,26 @@ class GeneratedSurfaceTest {
             "SELECT temporal_num_timestamps('" + TGEOMPOINT_HEX + "')")).intValue());
     }
 
+    // [Cbuffer(Point(1 1),0.5)@2001-01-01, Cbuffer(Point(2 2),1.5)@2001-01-02]
+    private static final String TCBUFFER_HEX =
+        "013B000E0200000003000000000000F03F000000000000F03F000000000000E03F009C57D3C11C0000"
+        + "00000000000000400000000000000040000000000000F83F00FC2EF1D51C0000";
+    // [Npoint(1,0.2)@2001-01-01, Npoint(1,0.8)@2001-01-02]
+    private static final String TNPOINT_HEX =
+        "0133000E02000000030101000000000000009A9999999999C93F009C57D3C11C0000010100000000000000"
+        + "9A9999999999E93F00FC2EF1D51C0000";
+
+    @Test
+    void extended_families_cbuffer_and_npoint() {
+        // tcbuffer (2 instants) + a cbuffer-family op (radius -> a tfloat, non-null)
+        assertEquals(2, ((Number) scalar(
+            "SELECT temporal_num_instants('" + TCBUFFER_HEX + "')")).intValue());
+        assertNotNull(scalar("SELECT tcbuffer_radius('" + TCBUFFER_HEX + "')"));
+        // tnpoint (2 instants) — exercises the network-point family marshalling
+        assertEquals(2, ((Number) scalar(
+            "SELECT temporal_num_instants('" + TNPOINT_HEX + "')")).intValue());
+    }
+
     @Test
     void parser_round_trip_entirely_on_the_generated_surface() {
         // tint_in is the newly-generated cstring (WKT) parser: a full parse->operate
