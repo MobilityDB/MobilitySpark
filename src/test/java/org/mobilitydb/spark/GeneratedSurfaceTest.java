@@ -165,9 +165,12 @@ class GeneratedSurfaceTest {
             "SELECT nearestApproachDistance('" + TGEOMPOINT_HEX + "', '" + TGEOMPOINT_HEX + "')")).doubleValue(), 1e-9);
         // (atTime over a text period is a span text-vs-hex input concern handled in the
         //  bench-rebuild phase; the arg-kind dispatch mechanism is proven above.)
-        // trajectory: the C symbol tpoint_trajectory(Temporal, bool) carries a flag arg
-        // the generated (C-faithful) surface exposes, so it is a 2-arg UDF.
-        assertNotNull(scalar("SELECT trajectory('" + TGEOMPOINT_HEX + "', true)"));
+        // trajectory: SQL-faithful 1-arg (the C tpoint_trajectory(Temporal, bool) flag is
+        // SQL-optional/defaulted, consumed from sqlArity).
+        assertNotNull(scalar("SELECT trajectory('" + TGEOMPOINT_HEX + "')"));
+        // asHexWKB: SQL-faithful 1-arg (the WKB variant defaulted), round-trips.
+        assertEquals(3, ((Number) scalar(
+            "SELECT numInstants(temporal_from_hexwkb(asHexWKB('" + TINT_HEX + "')))")).intValue());
         // numInstants: a single-overload @sqlfn accessor under its canonical SQL name
         assertEquals(3, ((Number) scalar(
             "SELECT numInstants('" + TINT_HEX + "')")).intValue());

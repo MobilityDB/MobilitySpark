@@ -30,16 +30,19 @@ def norm(c):
 # ── Pointer-typed args: canonical base -> (GeneratedFunctions parser, KIND) ──
 # parser takes a Java String, returns a jnr Pointer (freed after the call).
 PARSE = {
-    "Temporal":     ("GeneratedFunctions.temporal_from_hexwkb(%s)", "K_TEMPORAL"),
-    "TInstant":     ("GeneratedFunctions.temporal_from_hexwkb(%s)", "K_TEMPORAL"),
-    "TSequence":    ("GeneratedFunctions.temporal_from_hexwkb(%s)", "K_TEMPORAL"),
-    "TSequenceSet": ("GeneratedFunctions.temporal_from_hexwkb(%s)", "K_TEMPORAL"),
+    # Type-SAFE hex-WKB wrappers: a *_from_hexwkb parser CRASHES (SIGSEGV) on a valid-hex
+    # but wrong-TYPE buffer (a span hex fed to temporal_from_hexwkb). UdfMarshal.*FromHex
+    # reads the WKB type byte (byte1 = MeosType) and only calls the C parser when the type
+    # matches, else returns null — so a foreign hex is rejected, never crashes, and the
+    # arg-kind dispatch can safely try every candidate.
+    "Temporal":     ("UdfMarshal.tFromHex(%s)",       "K_TEMPORAL"),
+    "TInstant":     ("UdfMarshal.tFromHex(%s)",       "K_TEMPORAL"),
+    "TSequence":    ("UdfMarshal.tFromHex(%s)",       "K_TEMPORAL"),
+    "TSequenceSet": ("UdfMarshal.tFromHex(%s)",       "K_TEMPORAL"),
     "GSERIALIZED":  ("GeneratedFunctions.geo_from_text(%s, 0)",     "K_GEO"),
-    # span/set/spanset parse from hex-WKB: the bare *_in(text) needs a type-OID 2nd
-    # arg (intspan vs floatspan can't be told from "[1,5)"); hex-WKB embeds the type.
-    "Span":         ("GeneratedFunctions.span_from_hexwkb(%s)",     "K_SPAN"),
-    "SpanSet":      ("GeneratedFunctions.spanset_from_hexwkb(%s)",  "K_SPANSET"),
-    "Set":          ("GeneratedFunctions.set_from_hexwkb(%s)",      "K_SET"),
+    "Span":         ("UdfMarshal.spanFromHex(%s)",    "K_SPAN"),
+    "SpanSet":      ("UdfMarshal.spansetFromHex(%s)", "K_SPANSET"),
+    "Set":          ("UdfMarshal.setFromHex(%s)",     "K_SET"),
     "STBox":        ("GeneratedFunctions.stbox_in(%s)",             "K_STBOX"),
     "TBox":         ("GeneratedFunctions.tbox_in(%s)",              "K_TBOX"),
     "Cbuffer":      ("GeneratedFunctions.cbuffer_in(%s)",           "K_CBUFFER"),
@@ -251,8 +254,26 @@ def class_for(group):
     return "GeneratedUdfs_" + g
 
 
-def emit_single(name, f):
+# Default literals for SQL-OPTIONAL trailing args (params in [sqlArity, sqlArityMax))
+# that a generated UDF supplies so it can expose the SQL-required arity instead of the
+# wider C one — e.g. asHexWKB(temporal) calls temporal_as_hexwkb(p, (byte) 4),
+# trajectory(temporal) calls tpoint_trajectory(p, false). Only scalar flags are
+# defaultable; if a hidden arg isn't here the UDF keeps the full C arity.
+HIDE_DEFAULT = {"bool": "false", "unsigned char": "(byte) 4", "int": "0",
+                "double": "0.0", "int64_t": "0L", "uint64_t": "0L"}
+
+
+def emit_single(name, f, vis_arity=None):
     params, out = classify(f)
+    # SQL-faithful arity: expose only the first vis_arity params, supplying HIDE_DEFAULT
+    # literals for the optional trailing flags. Fall back to the full C arity if any
+    # hidden arg has no known default.
+    hidden = []
+    if vis_arity is not None and 0 <= vis_arity < len(params):
+        tail = params[vis_arity:]
+        if all(base(p["canonical"]) in HIDE_DEFAULT and "*" not in norm(p["canonical"]) for p in tail):
+            hidden = tail
+            params = params[:vis_arity]
     if out is None:
         r = ret_emit(f["returnType"]["canonical"], f.get("sqlop"))
         ret_dt, ret_ser, ret_ptr, ret_out = r[1], r[2], (r[0] == "ptr"), False
@@ -291,6 +312,9 @@ def emit_single(name, f):
             callargs.append(f"dt_{a}")
         else:
             callargs.append(a)
+    # supply default literals for the SQL-hidden trailing flags (sqlArity..C-arity)
+    for p in hidden:
+        callargs.append(HIDE_DEFAULT[base(p["canonical"])])
     call = f"GeneratedFunctions.{f['name']}(" + ", ".join(callargs) + ")"
     L.append("        try {")
     if ret_out:
@@ -341,13 +365,14 @@ def _sig(f):
 
 def _safe_dispatch(f):
     """A function is safely arg-kind-dispatchable only if every pointer arg parses via a
-    hex-WKB or WKT parser — those are mutually discriminating and reject foreign input by
-    returning null. The text *_in parsers (stbox_in / tbox_in / cbuffer_in / npoint_in /
-    pose_in / jsonb_in) are NOT: fed a hex-WKB or WKT string they may mis-parse, so an
-    overload using one cannot be told apart at runtime and must not enter a dispatcher."""
+    type-safe hex-WKB wrapper (UdfMarshal.*FromHex, which checks the WKB type byte and
+    returns null on a foreign family) or the validating WKT parser (geo_from_text). The
+    text *_in parsers (stbox_in / tbox_in / cbuffer_in / npoint_in / pose_in / jsonb_in)
+    are NOT: fed a hex-WKB or WKT string they may mis-parse, so an overload using one
+    cannot be told apart at runtime and must not enter a dispatcher."""
     for p in classify(f)[0]:
         k = arg_kind(p["canonical"])
-        if k and k[0] == "ptr" and "from_hexwkb" not in k[1] and "geo_from_text" not in k[1]:
+        if k and k[0] == "ptr" and "FromHex" not in k[1] and "geo_from_text" not in k[1]:
             return False
     return True
 
@@ -373,16 +398,26 @@ def _famrank(f):
     return next((i for i, t in enumerate(_FAMTOK) if t in n), len(_FAMTOK))
 
 
-def emit_dispatch(name, cands):
+def emit_dispatch(name, cands, vis_arity=None):
     """Emit ONE Spark UDF for an @sqlfn name backed by SEVERAL C overloads that share
     a _sig (e.g. eIntersects <- eintersects_tgeo_tgeo / _tgeo_geo / _geo_tgeo). Spark
     cannot overload a UDF name, so the single lambda parses each pointer arg with each
     candidate's parsers in turn: the FIRST candidate whose every pointer arg parses is
     the matching overload (the hex-WKB / WKT / span parsers are mutually discriminating,
-    so exactly one matches). Parse-all-then-check keeps it leak-free on every path."""
+    so exactly one matches). Parse-all-then-check keeps it leak-free on every path.
+    vis_arity (SQL-required arity) exposes only the first N args, supplying HIDE_DEFAULT
+    literals for the optional trailing flags (shared across the overloads via _sig)."""
     rep = cands[0]
     slots, ret = _sig(rep)
     n = len(slots)
+    vis = n
+    rep_params = classify(rep)[0]
+    if vis_arity is not None and 0 <= vis_arity < n:
+        tail = rep_params[vis_arity:]
+        if all(base(p["canonical"]) in HIDE_DEFAULT and "*" not in norm(p["canonical"]) for p in tail):
+            vis = vis_arity
+            slots = slots[:vis]
+            n = vis
     argnames = ["a%d" % i for i in range(n)]
     argboxes = [("String" if s == "P" else ("Object" if s == "T" else s)) for s in slots]
     ret_kind, ret_dt, ret_ser = ret
@@ -415,6 +450,10 @@ def emit_dispatch(name, cands):
                 callargs.append("D_%s" % a)
             else:
                 callargs.append(a)
+        # SQL-hidden trailing flags get default literals (zip above paired only the
+        # first `vis` exposed args; the candidate's remaining params are the flags).
+        for p in cps[vis:]:
+            callargs.append(HIDE_DEFAULT[base(p["canonical"])])
         cond = " && ".join("%s != null" % p for p in ptrs) if ptrs else "true"
         free = " ".join("MeosMemory.free(%s);" % p for p in ptrs)
         call = "GeneratedFunctions.%s(%s)" % (f["name"], ", ".join(callargs))
@@ -510,9 +549,9 @@ final class UdfMarshal {
             BiFunction<Pointer, Pointer, Boolean> tspatial) {
         if (s1 == null || s2 == null) return null;
         MeosThread.ensureReady();
-        Pointer p1 = GeneratedFunctions.temporal_from_hexwkb(s1);
+        Pointer p1 = tFromHex(s1);
         if (p1 == null) return null;
-        Pointer p2 = GeneratedFunctions.temporal_from_hexwkb(s2);
+        Pointer p2 = tFromHex(s2);
         if (p2 == null) { MeosMemory.free(p1); return null; }
         try {
             return isTnumber(p1) ? tnumber.apply(p1, p2) : tspatial.apply(p1, p2);
@@ -520,6 +559,31 @@ final class UdfMarshal {
             MeosMemory.free(p1);
             MeosMemory.free(p2);
         }
+    }
+
+    // ── Type-SAFE hex-WKB parsing ────────────────────────────────────────────────
+    // A *_from_hexwkb parser reads the MEOS WKB structure for ONE type family and
+    // SEGV-crashes on a valid-hex buffer of a different family (a tstzspan hex fed to
+    // temporal_from_hexwkb). The WKB type lives in byte 1 (= the MeosType enum value),
+    // so read it first and only call the C parser when the family matches. These sets
+    // are generated from the catalog's MeosType enum (data-driven, no hardcoding).
+__WKB_KINDS__
+    // The MeosType byte = the 2nd WKB byte (hex chars [2,4)). -1 if not a hex-WKB string.
+    static int wkbType(String s) {
+        if (s == null || s.length() < 4 || !isHex(s)) return -1;
+        return Character.digit(s.charAt(2), 16) * 16 + Character.digit(s.charAt(3), 16);
+    }
+    static Pointer tFromHex(String s) {
+        return TEMPORAL_WKB.contains(wkbType(s)) ? GeneratedFunctions.temporal_from_hexwkb(s) : null;
+    }
+    static Pointer spanFromHex(String s) {
+        return SPAN_WKB.contains(wkbType(s)) ? GeneratedFunctions.span_from_hexwkb(s) : null;
+    }
+    static Pointer spansetFromHex(String s) {
+        return SPANSET_WKB.contains(wkbType(s)) ? GeneratedFunctions.spanset_from_hexwkb(s) : null;
+    }
+    static Pointer setFromHex(String s) {
+        return SET_WKB.contains(wkbType(s)) ? GeneratedFunctions.set_from_hexwkb(s) : null;
     }
 }
 """
@@ -616,8 +680,7 @@ def main():
     # position) dispatches every concrete subtype internally from the type-erased
     # hex-WKB — so one emit covers all six type families. Same emit machinery as the
     # comparison dispatch; only the backing-name pattern differs.
-    PREFIX = [("topology",     "%s_temporal_temporal"),
-              ("same",         "%s_temporal_temporal"),
+    PREFIX = [("same",         "%s_temporal_temporal"),
               ("timePosition", "%s_temporal_temporal"),
               ("spaceY",       "%s_tspatial_tspatial"),
               ("spaceZ",       "%s_tspatial_tspatial")]
@@ -631,6 +694,20 @@ def main():
                     emit_single(bare, backing))
                 nbare += 1
                 cov += 1
+    # topology (&&, @>, <@, -|-) is polymorphic over SPANS and TEMPORALS: overlaps(
+    # tstzspan, tstzspan) = overlaps_span_span, overlaps(tgeompoint, ...) =
+    # overlaps_temporal_temporal. Dispatch across both — the type-safe WKB parsers route a
+    # span (e.g. from timeSpan()) to the span backing instead of crashing the temporal one.
+    for e in fams.get("topology", []):
+        bare = e["bareName"]
+        cands = [by_name.get(bare + "_span_span"), by_name.get(bare + "_temporal_temporal")]
+        cands = [f for f in cands if f and supported(f) is None]
+        if not cands:
+            continue
+        code = emit_single(bare, cands[0]) if len(cands) == 1 else emit_dispatch(bare, cands)
+        grouped.setdefault("GeneratedUdfs_portable_operator", []).append(code)
+        nbare += 1
+        cov += 1
     print("  dispatch bare names (operator)    : %d" % nbare, file=sys.stderr)
 
     # (distance — tdistance / nearestApproachDistance — is NOT registered here: those
@@ -720,7 +797,11 @@ def main():
         if re.match(r"[ea][A-Z]", sname):
             disp = [dict(f, sqlop="?=") if norm(f["returnType"]["canonical"]) == "int" else f
                     for f in disp]
-        code = emit_single(sname, disp[0]) if len(disp) == 1 else emit_dispatch(sname, disp)
+        # expose the SQL-required arity (sqlArity) — default the optional trailing flags
+        # so e.g. asHexWKB(temporal) / trajectory(temporal) are 1-arg, matching SQL.
+        va = disp[0].get("sqlArity")
+        code = (emit_single(sname, disp[0], vis_arity=va) if len(disp) == 1
+                else emit_dispatch(sname, disp, vis_arity=va))
         if len(disp) > 1:
             nsqldisp += 1
         grouped.setdefault("GeneratedUdfs_sqlfn", []).append(code)
@@ -761,8 +842,29 @@ def main():
                 fh.write(body)
             written.append(cls)
 
+    # Build the WKB-kind byte sets from the catalog's MeosType enum (the WKB type byte =
+    # the enum value): categorise each T_* by name suffix so the safe hex parsers know
+    # which MeosType bytes belong to temporals vs spans vs spansets vs sets.
+    mt = next((e for e in cat.get("enums", []) if e["name"] in ("MeosType", "meosType")), None)
+    kinds = {"TEMPORAL_WKB": [], "SPAN_WKB": [], "SPANSET_WKB": [], "SET_WKB": []}
+    for v in (mt.get("values") or mt.get("members") or []) if mt else []:
+        nm = v["name"] if isinstance(v, dict) else v
+        val = v.get("value") if isinstance(v, dict) else None
+        if val is None or not nm:
+            continue
+        if nm.endswith("SPANSET"):
+            kinds["SPANSET_WKB"].append(val)
+        elif nm.endswith("SPAN"):
+            kinds["SPAN_WKB"].append(val)
+        elif nm.endswith("SET"):
+            kinds["SET_WKB"].append(val)
+        elif nm.startswith("T_T") and "BOX" not in nm:
+            kinds["TEMPORAL_WKB"].append(val)
+    wkb_lines = "\n".join(
+        "    private static final java.util.Set<Integer> %s = java.util.Set.of(%s);"
+        % (k, ", ".join(str(x) for x in sorted(set(v)))) for k, v in kinds.items())
     with open(os.path.join(args.out, "UdfMarshal.java"), "w") as fh:
-        fh.write(MARSHAL)
+        fh.write(MARSHAL.replace("__WKB_KINDS__", wkb_lines))
 
     main_cls = GEN_NOTE + IMPORTS + "\npublic final class GeneratedSpatioTemporalUDFs {\n"
     main_cls += "    private GeneratedSpatioTemporalUDFs() {}\n"
