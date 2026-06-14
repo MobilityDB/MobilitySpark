@@ -27,7 +27,6 @@ package org.mobilitydb.spark;
 
 import functions.GeneratedFunctions;
 import functions.error_handler_fn;
-import org.apache.spark.sql.api.java.*;
 
 /**
  * Per-thread MEOS initialisation for Spark executor threads.
@@ -38,14 +37,11 @@ import org.apache.spark.sql.api.java.*;
  * errno).  The ThreadLocal in MEOS_READY runs initialisation exactly once
  * per native thread.
  *
- * Usage — two patterns:
- *
- *   1. Wrap lambdas at registration time (preferred — no boilerplate in the
- *      lambda body and impossible to forget):
- *        spark.udf().register("foo", MeosThread.wrap((String s) -> ...), Type);
- *
- *   2. Call ensureReady() explicitly at the top of a lambda where wrapping is
- *      not convenient.
+ * The entire UDF surface is generated (GeneratedSpatioTemporalUDFs); every
+ * generated entry point calls {@link #ensureReady()} before its first MEOS
+ * call, so the executor thread running it is always initialised.  There are no
+ * hand-registered UDFs, so this class exposes only the guard — no registration
+ * helpers.
  */
 public final class MeosThread {
 
@@ -73,23 +69,5 @@ public final class MeosThread {
     /** Ensure MEOS is initialised for the calling thread. */
     public static void ensureReady() {
         MEOS_READY.get();
-    }
-
-    // ------------------------------------------------------------------
-    // UDF wrappers — call ensureReady() before delegating to the lambda.
-    // Use these in registerAll() instead of scattering ensureReady() calls
-    // inside every individual UDF method body.
-    // ------------------------------------------------------------------
-
-    public static <R> UDF1<String, R> wrap(UDF1<String, R> udf) {
-        return s -> { ensureReady(); return udf.call(s); };
-    }
-
-    public static <A, R> UDF2<String, A, R> wrap(UDF2<String, A, R> udf) {
-        return (s, a) -> { ensureReady(); return udf.call(s, a); };
-    }
-
-    public static <A, B, R> UDF3<String, A, B, R> wrap(UDF3<String, A, B, R> udf) {
-        return (s, a, b) -> { ensureReady(); return udf.call(s, a, b); };
     }
 }
