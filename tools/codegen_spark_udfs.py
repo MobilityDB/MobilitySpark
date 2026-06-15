@@ -39,7 +39,7 @@ PARSE = {
     "TInstant":     ("UdfMarshal.tFromHex(%s)",       "K_TEMPORAL"),
     "TSequence":    ("UdfMarshal.tFromHex(%s)",       "K_TEMPORAL"),
     "TSequenceSet": ("UdfMarshal.tFromHex(%s)",       "K_TEMPORAL"),
-    "GSERIALIZED":  ("GeneratedFunctions.geo_from_text(%s, 0)",     "K_GEO"),
+    "GSERIALIZED":  ("UdfMarshal.geoFromText(%s)",                  "K_GEO"),
     "Span":         ("UdfMarshal.spanFromHex(%s)",    "K_SPAN"),
     "SpanSet":      ("UdfMarshal.spansetFromHex(%s)", "K_SPANSET"),
     "Set":          ("UdfMarshal.setFromHex(%s)",     "K_SET"),
@@ -366,13 +366,14 @@ def _sig(f):
 def _safe_dispatch(f):
     """A function is safely arg-kind-dispatchable only if every pointer arg parses via a
     type-safe hex-WKB wrapper (UdfMarshal.*FromHex, which checks the WKB type byte and
-    returns null on a foreign family) or the validating WKT parser (geo_from_text). The
-    text *_in parsers (stbox_in / tbox_in / cbuffer_in / npoint_in / pose_in / jsonb_in)
-    are NOT: fed a hex-WKB or WKT string they may mis-parse, so an overload using one
-    cannot be told apart at runtime and must not enter a dispatcher."""
+    returns null on a foreign family) or the validating WKT/EWKT parser
+    (UdfMarshal.geoFromText, which delegates to geo_from_text and returns null on a
+    foreign string). The text *_in parsers (stbox_in / tbox_in / cbuffer_in / npoint_in /
+    pose_in / jsonb_in) are NOT: fed a hex-WKB or WKT string they may mis-parse, so an
+    overload using one cannot be told apart at runtime and must not enter a dispatcher."""
     for p in classify(f)[0]:
         k = arg_kind(p["canonical"])
-        if k and k[0] == "ptr" and "FromHex" not in k[1] and "geo_from_text" not in k[1]:
+        if k and k[0] == "ptr" and "FromHex" not in k[1] and "geoFromText" not in k[1]:
             return False
     return True
 
@@ -647,6 +648,30 @@ final class UdfMarshal {
         return true;
     }
 
+    // Geometry/geography arg parse. The canonical wire form is EWKT
+    // ("SRID=4326;POLYGON(...)") so the SRID survives to MEOS — but geo_from_text() is
+    // WKT-only and returns null on the "SRID=" prefix, dropping the SRID (which H3 /
+    // geo_to_h3index_set REQUIRE via ensure_srid_is_latlong). Split the prefix and pass
+    // its value as geo_from_text's srid argument; plain WKT (no prefix) parses at SRID 0.
+    // CRITICAL for overload dispatch: reject a pure-hex string up front. geo_from_text()
+    // also accepts hex-(E)WKB, so a temporal/set hex-WKB arg (a tgeompoint trip) would be
+    // MIS-READ as a geometry (garbage npoints / free() crash) when a (geo, tgeo) candidate
+    // is tried before the (tgeo, geo) one. A real WKT/EWKT geometry ALWAYS contains
+    // non-hex chars (P O L Y G N '(' '=' ';' ...), so isHex(s) is false for it; only a
+    // foreign WKB hex is pure-hex — exactly what must fall through to the next candidate.
+    static Pointer geoFromText(String s) {
+        if (s == null || isHex(s)) return null;
+        int srid = 0; String wkt = s;
+        if (s.length() > 5 && s.regionMatches(true, 0, "SRID=", 0, 5)) {
+            int semi = s.indexOf(';');
+            if (semi > 5) {
+                try { srid = Integer.parseInt(s.substring(5, semi).trim()); wkt = s.substring(semi + 1); }
+                catch (NumberFormatException e) { srid = 0; wkt = s; }
+            }
+        }
+        return GeneratedFunctions.geo_from_text(wkt, srid);
+    }
+
     // ── NxN array (tgeoarr) marshalling ──────────────────────────────────────────
     // The MEOS *_tgeoarr_tgeoarr kernels take (Temporal **arr, int n) array pairs and
     // run the whole NxN inside C. Spark passes array<string> as a scala Seq / WrappedArray
@@ -866,8 +891,12 @@ def main():
     # ── DISPATCH PASS: portable bare names from the contract families ──
     # Spark cannot overload by name, but MEOS exposes SUPERCLASS entrypoints that
     # dispatch every concrete temporal type internally from the type-erased hex-WKB
-    # string. So a portable bare name (everEq, tempLt, alwaysGe — RFC #920 / contract
-    # #19) is emitted ONCE, wrapping its superclass C symbol. No Java type-inspection.
+    # string. So a portable bare name (eEq, tLt, aGe — RFC #920 / contract #19) wraps its
+    # superclass *_temporal_temporal C symbol for ALL temporal subtypes. But some eEq/eNe
+    # overloads have a NON-temporal first arg — eEq(geo, tgeo), and the th3 cell-set
+    # prefilter eEq(h3indexset, th3index) whose first arg is a Set* — which the Temporal*
+    # superclass cannot reach. Gather those (same 2-pointer-Boolean signature, distinct
+    # parse-tuple, dispatch-safe) and emit ONE parse-dispatching UDF so they resolve too.
     by_name = {f["name"]: f for f in fns}
     fams = (cat.get("portableAliases") or {}).get("families", {})
     SUF = {"Eq": "eq", "Ne": "ne", "Lt": "lt", "Le": "le", "Gt": "gt", "Ge": "ge"}
@@ -880,11 +909,25 @@ def main():
             bare = e["bareName"]
             suf = next((v for k, v in SUF.items() if bare.endswith(k)), None)
             backing = by_name.get(pat % suf) if suf else None
-            if backing and supported(backing) is None:
-                grouped.setdefault("GeneratedUdfs_portable_comparison", []).append(
-                    emit_single(bare, backing))
-                ndisp += 1
-                cov += 1
+            if not (backing and supported(backing) is None):
+                continue
+            # Non-temporal overloads under the SAME @sqlfn bare name (geo/set first arg),
+            # sharing the superclass's (P,P)->Boolean signature, each parse-distinct.
+            rep_sig = _sig(backing)
+            cands, seen = [backing], {_parsetuple(backing)}
+            extras = [f for f in fns
+                      if f.get("sqlfn") == bare and f["name"] != backing["name"]
+                      and supported(f) is None and _safe_dispatch(f)
+                      and _sig(f) == rep_sig]
+            for f in sorted(extras, key=_famrank):
+                pt = _parsetuple(f)
+                if pt not in seen:
+                    seen.add(pt)
+                    cands.append(f)
+            emit = emit_single(bare, backing) if len(cands) == 1 else emit_dispatch(bare, cands)
+            grouped.setdefault("GeneratedUdfs_portable_comparison", []).append(emit)
+            ndisp += 1
+            cov += 1
     print("  dispatch bare names (comparison)  : %d" % ndisp, file=sys.stderr)
 
     # ── bare-name-IS-prefix families: topology / same / time / space Y,Z ──
