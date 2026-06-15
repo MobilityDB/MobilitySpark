@@ -143,10 +143,21 @@ public final class BerlinMODBench {
 
             // Time each query — flush results after every query so a crash
             // still leaves a valid JSON file with the timings collected so far.
-            // Every engine runs the identical canonical <query>.sql with bare
-            // portable names (no Spark-specific variant, no SQL rewriting).
+            // Every engine runs the identical canonical <query>.sql, EXCEPT the few
+            // whose canonical form uses PG-only SQL that Spark cannot express — an
+            // ordered aggregate `array_agg(x ORDER BY k)` and the SETOF table-function
+            // form `f(...) AS p(i, j)` (the NxN q06/q10). For those, a documented
+            // Spark-dialect override in berlinmod/spark-dialect/<q>.sql (same MEOS UDFs,
+            // same result; collect_list + array_sort + transform, LATERAL VIEW explode)
+            // is used when present. The MEOS computation is identical — only the SQL
+            // glue differs, because the engines genuinely diverge on these constructs.
+            Path dialectDir = Paths.get(sqlDir).getParent() == null ? null
+                    : Paths.get(sqlDir).getParent().resolve("spark-dialect");
             for (String q : queryList) {
-                Path sqlFile = Paths.get(sqlDir, q + ".sql");
+                Path canonical = Paths.get(sqlDir, q + ".sql");
+                Path dialect = dialectDir == null ? null : dialectDir.resolve(q + ".sql");
+                boolean useDialect = dialect != null && Files.exists(dialect);
+                Path sqlFile = useDialect ? dialect : canonical;
                 if (!Files.exists(sqlFile)) {
                     System.out.printf("  [skip] %s — SQL file not found%n", q);
                     continue;
