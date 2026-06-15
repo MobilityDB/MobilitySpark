@@ -492,6 +492,98 @@ def emit_timearg(name, op):
             '        }, DataTypes.StringType);' % (name, refs))
 
 
+def tgeoarr_shape(f):
+    """Recognize a MEOS NxN array kernel — params are one or more (Temporal **, int)
+    array pairs, an optional `double` (distance), and optional non-const out-params
+    (int *count, SpanSet ***periods). Returns a shape dict or None.
+    ret: 'double' (scalar, e.g. minDistance) | 'pairs' (int* of 2*count [i,j], e.g. the
+    *Pairs functions). periods=True iff a SpanSet*** out-param is present (tDwithin)."""
+    ps = f["params"]
+    n = len(ps)
+    i = arrays = 0
+    dist = has_count = periods = False
+    while i < n:
+        c = norm(ps[i]["canonical"]); isconst = "const" in ps[i]["canonical"]
+        bare = c.replace("*", "").strip()   # base() maps ** -> __INTERNAL__, so strip here
+        if bare == "Temporal" and c.endswith("**"):
+            if i + 1 < n and norm(ps[i + 1]["canonical"]) == "int":
+                arrays += 1; i += 2; continue
+            return None
+        if c == "double":
+            dist = True; i += 1; continue
+        if c == "int *" and not isconst:
+            has_count = True; i += 1; continue
+        if bare == "SpanSet" and c.count("*") == 3 and not isconst:
+            periods = True; i += 1; continue
+        return None
+    if arrays < 1:
+        return None
+    rt = norm(f["returnType"]["canonical"])
+    ret = "double" if rt == "double" else ("pairs" if rt == "int *" else None)
+    if ret is None or (ret == "pairs" and not has_count):
+        return None
+    return {"arrays": arrays, "dist": dist, "periods": periods, "ret": ret}
+
+
+def emit_tgeoarr(name, f, shape):
+    """Emit a Spark UDF for an NxN array kernel. Each (Temporal**, int) pair becomes one
+    Spark array<string> arg (the count is the array length); an optional `double` distance
+    is a Double arg; out-params (count / periods) are auto-allocated. Scalar-return kernels
+    yield a Double UDF; pairs-return kernels yield array<struct<i,j[,periods]>> (consumed via
+    LATERAL explode), with MEOS 1-based indices mapped to 0-based."""
+    nA = shape["arrays"]
+    argnames = ["a%d" % i for i in range(nA)] + (["dist"] if shape["dist"] else [])
+    boxes = ["Object"] * nA + (["Double"] if shape["dist"] else [])
+    if shape["ret"] == "double":
+        retbox, ret_dt = "Double", "DataTypes.DoubleType"
+    else:
+        fields = ['DataTypes.createStructField("i", DataTypes.IntegerType, false)',
+                  'DataTypes.createStructField("j", DataTypes.IntegerType, false)']
+        if shape["periods"]:
+            fields.append('DataTypes.createStructField("periods", DataTypes.StringType, true)')
+        struct = "DataTypes.createStructType(new org.apache.spark.sql.types.StructField[]{%s})" % ", ".join(fields)
+        retbox, ret_dt = "java.util.List<org.apache.spark.sql.Row>", "DataTypes.createArrayType(%s)" % struct
+    iface = "UDF%d<%s, %s>" % (len(argnames), ", ".join(boxes), retbox)
+    L = ['        spark.udf().register("%s", (%s) (%s) -> {' % (name, iface, ", ".join(argnames))]
+    L.append("        if (" + " || ".join("a%d == null" % i for i in range(nA)) + ") return null;")
+    L.append("        MeosThread.ensureReady();")
+    for i in range(nA):
+        L.append("        String[] s%d = UdfMarshal.asStrArray(a%d);" % (i, i))
+    L.append("        if (" + " || ".join("s%d == null" % i for i in range(nA)) + ") return null;")
+    L.append("        jnr.ffi.Runtime _rt = jnr.ffi.Runtime.getSystemRuntime();")
+    for i in range(nA):
+        L.append("        jnr.ffi.Pointer[] e%d = new jnr.ffi.Pointer[s%d.length];" % (i, i))
+        L.append("        jnr.ffi.Pointer arr%d = UdfMarshal.tArrNative(s%d, e%d, _rt);" % (i, i, i))
+    callargs = []
+    for i in range(nA):
+        callargs += ["arr%d" % i, "s%d.length" % i]
+    if shape["dist"]:
+        callargs.append("dist == null ? 0.0 : dist")
+    if shape["ret"] == "pairs":
+        L.append("        jnr.ffi.Pointer _cnt = jnr.ffi.Memory.allocateDirect(_rt, 4);")
+        callargs.append("_cnt")
+    if shape["periods"]:
+        L.append("        jnr.ffi.Pointer _per = jnr.ffi.Memory.allocateDirect(_rt, 8);")
+        callargs.append("_per")
+    call = "GeneratedFunctions.%s(%s)" % (f["name"], ", ".join(callargs))
+    L.append("        try {")
+    if shape["ret"] == "double":
+        L.append("            return %s;" % call)
+    else:
+        L.append("            jnr.ffi.Pointer _res = %s;" % call)
+        L.append("            int _c = _cnt.getInt(0L);")
+        if shape["periods"]:
+            L.append("            return UdfMarshal.readPairsPeriods(_res, _c, _per.getPointer(0L));")
+        else:
+            L.append("            return UdfMarshal.readPairs(_res, _c);")
+    L.append("        } finally {")
+    for i in range(nA):
+        L.append("            UdfMarshal.freeArr(e%d);" % i)
+    L.append("        }")
+    L.append("        }, %s);" % ret_dt)
+    return "\n".join(L)
+
+
 GEN_NOTE = "// GENERATED by tools/codegen_spark_udfs.py from the MEOS-API catalog. DO NOT EDIT.\n"
 IMPORTS = """\
 package org.mobilitydb.spark.generated;
@@ -513,7 +605,11 @@ package org.mobilitydb.spark.generated;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.function.BiFunction;
+import jnr.ffi.Memory;
 import jnr.ffi.Pointer;
+import jnr.ffi.Runtime;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import functions.GeneratedFunctions;
 import org.mobilitydb.spark.MeosMemory;
 import org.mobilitydb.spark.MeosThread;
@@ -547,6 +643,74 @@ final class UdfMarshal {
         for (int i = 0; i < n; i++)
             if (Character.digit(s.charAt(i), 16) < 0) return false;
         return true;
+    }
+
+    // ── NxN array (tgeoarr) marshalling ──────────────────────────────────────────
+    // The MEOS *_tgeoarr_tgeoarr kernels take (Temporal **arr, int n) array pairs and
+    // run the whole NxN inside C. Spark passes array<string> as a scala Seq / WrappedArray
+    // (or a java List), so normalize to String[] first.
+    static String[] asStrArray(Object o) {
+        if (o == null) return null;
+        if (o instanceof scala.collection.Seq) {
+            scala.collection.Seq<?> q = (scala.collection.Seq<?>) o;
+            String[] r = new String[q.length()];
+            for (int i = 0; i < r.length; i++) { Object e = q.apply(i); r[i] = e == null ? null : e.toString(); }
+            return r;
+        }
+        if (o instanceof java.util.List) {
+            java.util.List<?> l = (java.util.List<?>) o;
+            String[] r = new String[l.size()];
+            for (int i = 0; i < r.length; i++) { Object e = l.get(i); r[i] = e == null ? null : e.toString(); }
+            return r;
+        }
+        if (o instanceof Object[]) {
+            Object[] a = (Object[]) o; String[] r = new String[a.length];
+            for (int i = 0; i < r.length; i++) r[i] = a[i] == null ? null : a[i].toString();
+            return r;
+        }
+        return null;
+    }
+    // Parse a hex-temporal array into a native Temporal** buffer; the parsed element
+    // pointers are stored in `elems` (parallel) so the caller frees them after the call.
+    static Pointer tArrNative(String[] hex, Pointer[] elems, Runtime rt) {
+        Pointer buf = Memory.allocateDirect(rt, Math.max(1, hex.length) * 8);
+        for (int i = 0; i < hex.length; i++) {
+            Pointer p = (hex[i] != null && isHex(hex[i])) ? GeneratedFunctions.temporal_from_hexwkb(hex[i]) : null;
+            elems[i] = p;
+            buf.putPointer((long) i * 8L, p);
+        }
+        return buf;
+    }
+    static void freeArr(Pointer[] elems) { for (Pointer p : elems) MeosMemory.free(p); }
+    // A *_tgeoarr_tgeoarr kernel returns a flat int* of 2*count [i,j] index pairs (caller
+    // frees). The C kernel uses 0-based C indices (the PG SETOF wrapper is what makes them
+    // 1-based) — and the Spark UDF calls the kernel directly via JMEOS, so the indices are
+    // already 0-based array offsets; emit them as-is (matching MeosSetSetJoin).
+    static java.util.List<Row> readPairs(Pointer res, int cnt) {
+        java.util.ArrayList<Row> out = new java.util.ArrayList<>();
+        if (res == null || cnt <= 0) return out;
+        for (int k = 0; k < cnt; k++)
+            out.add(RowFactory.create(res.getInt((long) (2 * k) * 4L),
+                                      res.getInt((long) (2 * k + 1) * 4L)));
+        MeosMemory.free(res);
+        return out;
+    }
+    // tDwithin also returns a parallel SpanSet** of the per-pair intersection periods
+    // (via a SpanSet ***out-param); render each as hex-WKB. Frees res, the periods array,
+    // and each period span set.
+    static java.util.List<Row> readPairsPeriods(Pointer res, int cnt, Pointer ssArr) {
+        java.util.ArrayList<Row> out = new java.util.ArrayList<>();
+        if (res == null || cnt <= 0) { MeosMemory.free(res); return out; }
+        for (int k = 0; k < cnt; k++) {
+            Pointer ss = ssArr == null ? null : ssArr.getPointer((long) k * 8L);
+            String periods = ss == null ? null : GeneratedFunctions.spanset_as_hexwkb(ss, (byte) 0);
+            out.add(RowFactory.create(res.getInt((long) (2 * k) * 4L),
+                                      res.getInt((long) (2 * k + 1) * 4L), periods));
+            MeosMemory.free(ss);
+        }
+        MeosMemory.free(ssArr);
+        MeosMemory.free(res);
+        return out;
     }
 
     // True iff a hex-WKB temporal pointer is a tnumber (tint/tfloat): only those have
@@ -782,6 +946,27 @@ def main():
             cov += 1
     print("  dispatch bare names (space-axis)  : %d" % naxis, file=sys.stderr)
 
+    # ── NxN array (tgeoarr) pass: array-in + SETOF/array-of-struct UDFs ──
+    # The *_tgeoarr_tgeoarr kernels take Temporal** array args, so the 1:1 and @sqlfn
+    # passes exclude them (** -> internal). Emit each under its @sqlfn name via the array
+    # template: minDistance (array,array -> double) and the *Pairs (array,array[,dist] ->
+    # array<struct<i,j[,periods]>>, consumed by LATERAL explode; MEOS 1-based -> 0-based).
+    narr = 0
+    for f in fns:
+        s = f.get("sqlfn")
+        if not s or s in names:
+            continue
+        if jar_syms is not None and f["name"] not in jar_syms:
+            continue
+        shape = tgeoarr_shape(f)
+        if shape is None:
+            continue
+        grouped.setdefault(class_for(f.get("group")), []).append(emit_tgeoarr(s, f, shape))
+        names.add(s)
+        cov += 1
+        narr += 1
+    print("  NxN array (tgeoarr) UDFs          : %d" % narr, file=sys.stderr)
+
     # ── @sqlfn CANONICAL-NAME pass: emit the MobilityDB SQL surface ──
     # Every catalog function carries the canonical MobilityDB SQL spelling in its
     # @sqlfn tag (numInstants, eIntersects, atTime, asHexWKB ...). That is the name a
@@ -934,7 +1119,34 @@ def main():
     with open(os.path.join(args.out, "GeneratedSpatioTemporalUDFs.java"), "w") as fh:
         fh.write(main_cls)
 
+    # ── per-thread MEOS-init invariant (build-failing) ────────────────────────────
+    # MEOS keeps locale/collation, session timezone, PROJ context and RNGs in THREAD-
+    # LOCAL storage, so every thread (Spark executor threads run UDFs off the thread
+    # that called meos_initialize()) must run the per-thread init guard before its first
+    # MEOS call — exactly the gap that crashed MobilityDuck's table functions. Assert it
+    # for EVERY emitted entry point so a future emit path can't silently drop the guard
+    # as the bindings are regenerated (the codegen north-star). A register() lambda is
+    # guarded iff ensureReady() / axisBool / restrictTime (the latter two call
+    # ensureReady() first) appears before the first GeneratedFunctions call in its body.
+    unguarded = []
+    for fp in glob.glob(os.path.join(args.out, "*.java")):
+        src = open(fp).read()
+        for m in re.finditer(r'udf\(\)\.register\("([^"]+)"', src):
+            body = src[m.start():m.start() + 1600]
+            gf = body.find("GeneratedFunctions.")
+            guard = min([x for x in (body.find("ensureReady"), body.find("axisBool"),
+                                     body.find("restrictTime")) if x >= 0] or [1 << 30])
+            if gf >= 0 and guard > gf:
+                unguarded.append("%s (%s)" % (m.group(1), os.path.basename(fp)))
+    if unguarded:
+        print("FATAL: %d generated UDF entry point(s) reach MEOS without a per-thread "
+              "init guard (MeosThread.ensureReady):" % len(unguarded), file=sys.stderr)
+        for u in unguarded[:20]:
+            print("   " + u, file=sys.stderr)
+        sys.exit(1)
+
     print("wrote %d group classes + UdfMarshal + GeneratedSpatioTemporalUDFs in %s" % (len(written), args.out), file=sys.stderr)
+    print("  per-thread MEOS-init guard  : every entry point verified", file=sys.stderr)
     print("  JMEOS functions in catalog : %d" % total, file=sys.stderr)
     print("  1:1 UDFs emitted (reached)  : %d  (%.0f%%)" % (cov, 100.0*cov/total), file=sys.stderr)
     print("  internal (excluded)         : %d" % internal, file=sys.stderr)
