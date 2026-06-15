@@ -1,5 +1,11 @@
 package org.mobilitydb.spark;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterAll;
@@ -23,16 +29,34 @@ class GeneratedSurfaceTest {
         "0123000A030000000301000000009C57D3C11C00000200000000FC2EF1D51C000001000000005C060FEA1C0000";
 
     private static SparkSession spark;
+    private static Map<String, String> byOperator;
 
     @BeforeAll
-    static void setup() {
+    static void setup() throws Exception {
         spark = SparkSession.builder().appName("gen-verify").master("local[1]")
                 .config("spark.ui.enabled", "false").getOrCreate();
         GeneratedSpatioTemporalUDFs.registerAll(spark);
+        // The operator->bare-name dialect, read from the SAME catalog the generator emits
+        // from, so a dialect rename (e.g. ?= ever_eq->eEq, <-> tdistance->tDistance) updates
+        // this test automatically instead of hard-coding the names. byOperator is a flat
+        // string->string map; parse it directly (Spark's bundled jackson is version-skewed).
+        byOperator = new HashMap<>();
+        String json = Files.readString(Paths.get("tools/meos-idl.json"));
+        int b = json.indexOf('{', json.indexOf("\"byOperator\""));
+        Matcher m = Pattern.compile("\"([^\"]+)\"\\s*:\\s*\"([^\"]+)\"")
+                .matcher(json.substring(b + 1, json.indexOf('}', b)));
+        while (m.find()) byOperator.put(m.group(1), m.group(2));
     }
 
     @AfterAll
     static void teardown() { if (spark != null) spark.stop(); }
+
+    /** Canonical bare name for a SQL operator, per the catalog's byOperator map. */
+    private static String op(String operator) {
+        String n = byOperator.get(operator);
+        assertNotNull(n, "catalog byOperator has no entry for " + operator);
+        return n;
+    }
 
     private Object scalar(String sql) {
         Row r = spark.sql(sql).collectAsList().get(0);
@@ -113,33 +137,33 @@ class GeneratedSurfaceTest {
 
     @Test
     void portable_bare_name_dispatch_surface() {
-        // The portable bare-name operator dialect (contract families), now emitted by
-        // the generator's DISPATCH pass — NOT hand-registered. One assertion per family
-        // proves the superclass entrypoint dispatches the concrete subtype from hex-WKB.
+        // The portable bare-name operator dialect, emitted by the generator's DISPATCH pass
+        // — NOT hand-registered. The bare names are read from the catalog's byOperator map
+        // (op(...)) rather than hard-coded, so the dialect (e.g. ?=->eEq, <->->tDistance) is
+        // the single source: a rename updates this test automatically. One assertion per
+        // family proves the superclass entrypoint dispatches the concrete subtype from hex-WKB.
         // topology (&&): two identical tints overlap in time → true
         assertEquals(Boolean.TRUE, scalar(
-            "SELECT overlaps('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+            "SELECT " + op("&&") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
         // same (~=): a value equals itself
         assertEquals(Boolean.TRUE, scalar(
-            "SELECT same('" + TINT_HEX + "', '" + TINT_HEX + "')"));
-        // time position (&<#, overbefore): a value does not strictly precede itself in
-        // time, but its period overbefore-overlaps itself → true
+            "SELECT " + op("~=") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // time position (&<#): a value's period overbefore-overlaps itself → true
         assertEquals(Boolean.TRUE, scalar(
-            "SELECT overbefore('" + TINT_HEX + "', '" + TINT_HEX + "')"));
-        // temporal comparison (#=): tempEq of a value with itself is a temporal bool
-        // (hex-WKB string), non-null
-        assertNotNull(scalar("SELECT tempEq('" + TINT_HEX + "', '" + TINT_HEX + "')"));
-        // ever comparison (?=): everEq same value → true
+            "SELECT " + op("&<#") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // temporal comparison (#=): of a value with itself is a temporal bool, non-null
+        assertNotNull(scalar("SELECT " + op("#=") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // ever comparison (?=): same value → true
         assertEquals(Boolean.TRUE, scalar(
-            "SELECT everEq('" + TINT_HEX + "', '" + TINT_HEX + "')"));
-        // space-X axis classifier (&<): a tnumber routes to left_tnumber_tnumber; a
-        // value is overleft-of itself on its value axis → true (exercises axisBool)
+            "SELECT " + op("?=") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // space-X axis classifier (&<): a value is overleft-of itself on its value axis →
+        // true (exercises axisBool)
         assertEquals(Boolean.TRUE, scalar(
-            "SELECT overleft('" + TINT_HEX + "', '" + TINT_HEX + "')"));
-        // distance (<->): tdistance between two coincident tgeompoints → a temporal
+            "SELECT " + op("&<") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // distance (<->): lifted distance between two coincident tgeompoints → a temporal
         // (hex-WKB) of all-zero distance, non-null
         assertNotNull(scalar(
-            "SELECT tdistance('" + TGEOMPOINT_HEX + "', '" + TGEOMPOINT_HEX + "')"));
+            "SELECT " + op("<->") + "('" + TGEOMPOINT_HEX + "', '" + TGEOMPOINT_HEX + "')"));
     }
 
     @Test
@@ -207,5 +231,39 @@ class GeneratedSurfaceTest {
         assertNotNull(out);
         assertTrue(out.toString().contains("1@") && out.toString().contains("2@"),
                    "round-trip should render the values, got: " + out);
+    }
+
+    @Test
+    void nxn_array_tgeoarr_udfs() {
+        // The generated array-in UDFs: each (Temporal**, int) C pair is a Spark array<string>.
+        String p = "array('" + TGEOMPOINT_HEX + "')";          // a 1-element trip array
+        // minDistance(array,array) -> double: distance of a trip set to itself = 0.
+        assertEquals(0.0, ((Number) scalar(
+            "SELECT minDistance(" + p + ", " + p + ")")).doubleValue(), 1e-9);
+        // eDwithinPairs -> array<struct<i,j>>: the single trip is ever-within 1000 of itself,
+        // so exactly one [0,0] pair (indices 0-based).
+        assertEquals(1, ((Number) scalar(
+            "SELECT size(eDwithinPairs(" + p + ", " + p + ", CAST(1000.0 AS DOUBLE)))")).intValue());
+        assertEquals(0, ((Number) scalar(
+            "SELECT eDwithinPairs(" + p + ", " + p + ", CAST(1000.0 AS DOUBLE))[0].i")).intValue());
+        assertEquals(0, ((Number) scalar(
+            "SELECT eDwithinPairs(" + p + ", " + p + ", CAST(1000.0 AS DOUBLE))[0].j")).intValue());
+        // tDwithinPairs -> array<struct<i,j,periods>>: same pair, with a non-null period hex-WKB.
+        assertEquals(1, ((Number) scalar(
+            "SELECT size(tDwithinPairs(" + p + ", " + p + ", CAST(1000.0 AS DOUBLE)))")).intValue());
+        assertNotNull(scalar(
+            "SELECT tDwithinPairs(" + p + ", " + p + ", CAST(1000.0 AS DOUBLE))[0].periods"));
+        // aDisjointPairs: a trip is never always-disjoint from itself -> no pairs.
+        assertEquals(0, ((Number) scalar(
+            "SELECT size(aDisjointPairs(" + p + ", " + p + "))")).intValue());
+        // The bench's q06/q10 consumption shape: LATERAL VIEW explode over the array<struct>.
+        // One [0,0] pair explodes to a single row; pr.i / pr.j index back into the 0-based arrays.
+        assertEquals(1, ((Number) scalar(
+            "SELECT count(*) FROM (SELECT explode(eDwithinPairs(" + p + ", " + p
+            + ", CAST(1000.0 AS DOUBLE))) AS pr)")).intValue());
+        // A BARE numeric literal (1000.0) is a Spark decimal, not a double — the canonical
+        // queries write it bare, so the dist arg must coerce via Number (not a Double cast).
+        assertEquals(1, ((Number) scalar(
+            "SELECT size(eDwithinPairs(" + p + ", " + p + ", 1000.0))")).intValue());
     }
 }

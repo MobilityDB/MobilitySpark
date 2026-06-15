@@ -34,7 +34,7 @@ jobs:
           # Ecosystem pin: the SAME commit the vendored catalog (tools/meos-idl.json)
           # and the bundled JMEOS jar are generated against.
           repository: estebanzimanyi/MobilityDB
-          ref: ecosystem-pin-2026-06-14m
+          ref: ecosystem-pin-2026-06-15a
           path: MobilityDB-src
 
       - name: Build and install libmeos.so
