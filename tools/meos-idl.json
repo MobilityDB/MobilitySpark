@@ -77681,6 +77681,10 @@
           "canonical": "int"
         }
       ],
+      "mdbC": "Geo_to_h3indexset",
+      "sqlfn": "geoToH3IndexSet",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
       "group": "meos_h3_conversion"
     },
     {
