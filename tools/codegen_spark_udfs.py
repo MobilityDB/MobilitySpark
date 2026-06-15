@@ -533,7 +533,9 @@ def emit_tgeoarr(name, f, shape):
     LATERAL explode), with MEOS 1-based indices mapped to 0-based."""
     nA = shape["arrays"]
     argnames = ["a%d" % i for i in range(nA)] + (["dist"] if shape["dist"] else [])
-    boxes = ["Object"] * nA + (["Double"] if shape["dist"] else [])
+    # dist arrives as Object: a bare SQL literal like 10.0 is decimal (BigDecimal), not
+    # double, so take it as Object and coerce via Number rather than failing the cast.
+    boxes = ["Object"] * nA + (["Object"] if shape["dist"] else [])
     if shape["ret"] == "double":
         retbox, ret_dt = "Double", "DataTypes.DoubleType"
     else:
@@ -558,7 +560,7 @@ def emit_tgeoarr(name, f, shape):
     for i in range(nA):
         callargs += ["arr%d" % i, "s%d.length" % i]
     if shape["dist"]:
-        callargs.append("dist == null ? 0.0 : dist")
+        callargs.append("dist == null ? 0.0 : ((Number) dist).doubleValue()")
     if shape["ret"] == "pairs":
         L.append("        jnr.ffi.Pointer _cnt = jnr.ffi.Memory.allocateDirect(_rt, 4);")
         callargs.append("_cnt")

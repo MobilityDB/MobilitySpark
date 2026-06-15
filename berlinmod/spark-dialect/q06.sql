@@ -9,9 +9,9 @@ WITH Raw AS (
   WHERE  v.type = 'truck'
 ),
 Trucks AS (
-  SELECT transform(rows, x -> x.trip)    AS trips,
-         transform(rows, x -> x.licence) AS licences,
-         transform(rows, x -> x.vehId)   AS vehIds
+  SELECT rows.trip    AS trips,
+         rows.licence AS licences,
+         rows.vehId   AS vehIds
   FROM   Raw
 )
 SELECT k.licences[p.i] AS licence1, k.licences[p.j] AS licence2
