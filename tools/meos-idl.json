@@ -85875,6 +85875,69 @@
       ]
     },
     {
+      "name": "tpointcloudinst_make",
+      "file": "meos_pointcloud.h",
+      "returnType": {
+        "c": "TInstant *",
+        "canonical": "struct TInstant *"
+      },
+      "params": [
+        {
+          "name": "pt",
+          "cType": "const Pcpoint *",
+          "canonical": "const struct Pcpoint *"
+        },
+        {
+          "name": "t",
+          "cType": "TimestampTz",
+          "canonical": "TimestampTz"
+        }
+      ],
+      "group": "meos_pointcloud_constructor"
+    },
+    {
+      "name": "eintersects_tpcpoint_geo",
+      "file": "meos_pointcloud.h",
+      "returnType": {
+        "c": "bool",
+        "canonical": "bool"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        },
+        {
+          "name": "gs",
+          "cType": "const GSERIALIZED *",
+          "canonical": "const GSERIALIZED *"
+        }
+      ],
+      "group": "meos_pointcloud_ever"
+    },
+    {
+      "name": "nad_tpcpoint_geo",
+      "file": "meos_pointcloud.h",
+      "returnType": {
+        "c": "double",
+        "canonical": "double"
+      },
+      "params": [
+        {
+          "name": "temp",
+          "cType": "const Temporal *",
+          "canonical": "const Temporal *"
+        },
+        {
+          "name": "gs",
+          "cType": "const GSERIALIZED *",
+          "canonical": "const GSERIALIZED *"
+        }
+      ],
+      "group": "meos_pointcloud_dist"
+    },
+    {
       "name": "pose_as_ewkt",
       "file": "meos_pose.h",
       "returnType": {
