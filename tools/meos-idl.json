@@ -27458,58 +27458,6 @@
       "group": "meos_temporal_bbox_split"
     },
     {
-      "name": "adjacent_numspan_tnumber",
-      "file": "meos.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "sp",
-          "cType": "const Span *",
-          "canonical": "const struct Span *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Adjacent_numspan_tnumber",
-      "sqlfn": "adjacent",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "-|-",
-      "group": "meos_temporal_bbox_topo"
-    },
-    {
-      "name": "adjacent_tbox_tnumber",
-      "file": "meos.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "box",
-          "cType": "const TBox *",
-          "canonical": "const struct TBox *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Adjacent_tbox_tnumber",
-      "sqlfn": "adjacent",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "-|-",
-      "group": "meos_temporal_bbox_topo"
-    },
-    {
       "name": "adjacent_temporal_temporal",
       "file": "meos.h",
       "returnType": {
@@ -27633,32 +27581,6 @@
         }
       ],
       "mdbC": "Adjacent_tnumber_tnumber",
-      "sqlfn": "adjacent",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "-|-",
-      "group": "meos_temporal_bbox_topo"
-    },
-    {
-      "name": "adjacent_tstzspan_temporal",
-      "file": "meos.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "sp",
-          "cType": "const Span *",
-          "canonical": "const struct Span *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Adjacent_tstzspan_temporal",
       "sqlfn": "adjacent",
       "sqlArity": 2,
       "sqlArityMax": 2,
@@ -28082,58 +28004,6 @@
       "group": "meos_temporal_bbox_topo"
     },
     {
-      "name": "overlaps_numspan_tnumber",
-      "file": "meos.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "sp",
-          "cType": "const Span *",
-          "canonical": "const struct Span *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Overlaps_numspan_tnumber",
-      "sqlfn": "overlaps",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "&&",
-      "group": "meos_temporal_bbox_topo"
-    },
-    {
-      "name": "overlaps_tbox_tnumber",
-      "file": "meos.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "box",
-          "cType": "const TBox *",
-          "canonical": "const struct TBox *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Overlaps_tbox_tnumber",
-      "sqlfn": "overlaps",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "&&",
-      "group": "meos_temporal_bbox_topo"
-    },
-    {
       "name": "overlaps_temporal_temporal",
       "file": "meos.h",
       "returnType": {
@@ -28264,84 +28134,6 @@
       "group": "meos_temporal_bbox_topo"
     },
     {
-      "name": "overlaps_tstzspan_temporal",
-      "file": "meos.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "sp",
-          "cType": "const Span *",
-          "canonical": "const struct Span *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Overlaps_tstzspan_temporal",
-      "sqlfn": "overlaps",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "&&",
-      "group": "meos_temporal_bbox_topo"
-    },
-    {
-      "name": "same_numspan_tnumber",
-      "file": "meos.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "sp",
-          "cType": "const Span *",
-          "canonical": "const struct Span *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Same_numspan_tnumber",
-      "sqlfn": "same",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "~=",
-      "group": "meos_temporal_bbox_topo"
-    },
-    {
-      "name": "same_tbox_tnumber",
-      "file": "meos.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "box",
-          "cType": "const TBox *",
-          "canonical": "const struct TBox *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Same_tbox_tnumber",
-      "sqlfn": "same",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "~=",
-      "group": "meos_temporal_bbox_topo"
-    },
-    {
       "name": "same_temporal_temporal",
       "file": "meos.h",
       "returnType": {
@@ -28465,32 +28257,6 @@
         }
       ],
       "mdbC": "Same_tnumber_tnumber",
-      "sqlfn": "same",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "~=",
-      "group": "meos_temporal_bbox_topo"
-    },
-    {
-      "name": "same_tstzspan_temporal",
-      "file": "meos.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "sp",
-          "cType": "const Span *",
-          "canonical": "const struct Span *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Same_tstzspan_temporal",
       "sqlfn": "same",
       "sqlArity": 2,
       "sqlArityMax": 2,
@@ -40290,32 +40056,6 @@
       "group": "meos_geo_bbox_split"
     },
     {
-      "name": "adjacent_stbox_tspatial",
-      "file": "meos_geo.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "box",
-          "cType": "const STBox *",
-          "canonical": "const struct STBox *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Adjacent_stbox_tspatial",
-      "sqlfn": "adjacent",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "-|-",
-      "group": "meos_geo_bbox_topo"
-    },
-    {
       "name": "adjacent_tspatial_stbox",
       "file": "meos_geo.h",
       "returnType": {
@@ -40524,32 +40264,6 @@
       "group": "meos_geo_bbox_topo"
     },
     {
-      "name": "overlaps_stbox_tspatial",
-      "file": "meos_geo.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "box",
-          "cType": "const STBox *",
-          "canonical": "const struct STBox *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Overlaps_stbox_tspatial",
-      "sqlfn": "overlaps",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "&&",
-      "group": "meos_geo_bbox_topo"
-    },
-    {
       "name": "overlaps_tspatial_stbox",
       "file": "meos_geo.h",
       "returnType": {
@@ -40599,32 +40313,6 @@
       "sqlArity": 2,
       "sqlArityMax": 2,
       "sqlop": "&&",
-      "group": "meos_geo_bbox_topo"
-    },
-    {
-      "name": "same_stbox_tspatial",
-      "file": "meos_geo.h",
-      "returnType": {
-        "c": "bool",
-        "canonical": "bool"
-      },
-      "params": [
-        {
-          "name": "box",
-          "cType": "const STBox *",
-          "canonical": "const struct STBox *"
-        },
-        {
-          "name": "temp",
-          "cType": "const Temporal *",
-          "canonical": "const Temporal *"
-        }
-      ],
-      "mdbC": "Same_stbox_tspatial",
-      "sqlfn": "same",
-      "sqlArity": 2,
-      "sqlArityMax": 2,
-      "sqlop": "~=",
       "group": "meos_geo_bbox_topo"
     },
     {
@@ -70035,7 +69723,12 @@
           "cType": "int",
           "canonical": "int"
         }
-      ]
+      ],
+      "mdbC": "Geo_gs_point_to_h3index",
+      "sqlfn": "geoToH3Cell",
+      "sqlArity": 2,
+      "sqlArityMax": 2,
+      "group": "meos_h3_conversion"
     },
     {
       "name": "h3_cell_to_gs_point",
