@@ -1,0 +1,31 @@
+# USER-APPROVED-PIN-WRITE — creating MobilitySpark's first pin manifest (user 2026-06-25,
+#   per-binding generator policy rollout). New file in the MobilitySpark repo, NOT a mutation
+#   of MobilityDB's pin tooling.
+#
+# MobilitySpark pin — THE canonical, dependency-ordered fold manifest (per-binding policy).
+#
+# MobilitySpark is a CONSUMER binding: it binds the JMEOS jar (not MEOS-API directly) and
+# generates its Spark UDF surface from it. `main` predates the catalog-driven generator,
+# which lives in the open stack. (policy: generator-per-binding-canonical-policy)
+#
+# SCOPE: MobilitySpark owns its generator IN-REPO at `tools/codegen_spark_udfs.py` (mirrors
+# the JMEOS FunctionsGenerator; emits the Spark UDF registrations, organized by @ingroup).
+#
+# Format:  <PR#> <head-branch>            # role.   '?' = membership/order UNCONFIRMED.
+# base = current origin/main. Derived from the live DAG (gh pr list, this turn).
+
+# ── WAVE 0 — GENERATOR ──
+27    feat/spark-udf-generator              # the catalog-driven Spark UDF generator (foundation)
+28    feat/generated-dispatch               # register the catalog-generated UDF dispatch surface (on #27)
+
+# ── WAVE 1 — BENCHMARK (evidence vehicle; not a deliverable) ──
+23    feat/berlinmod-benchmark              # Spark-only BerlinMOD harness consuming the canonical suite
+16    integration/berlinmod-bench           # integration evidence (907/907 green)
+
+# ── WAVE 2 — DOCS ──
+8     doc/reviewer-guide                    # PR Reviewer Guide (uniform with MobilityDB/MobilityDuck)
+
+# ════════════════════════════════════════════════════════════════════════════════════
+# DISPOSITION: land the generator (#27) + the generated dispatch (#28); the hand UDF layer
+# is retired generate-then-retire (the whole UDF layer becomes registerAll). See GENERATION.md.
+# ════════════════════════════════════════════════════════════════════════════════════
