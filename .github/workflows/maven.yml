@@ -1,0 +1,67 @@
+name: Maven CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  # ── Linux ────────────────────────────────────────────────────────────────────
+  linux:
+    name: Build and test — Linux (Java 21 / Spark 3.5)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Install MEOS build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            cmake ninja-build \
+            libjson-c-dev libgeos-dev libproj-dev libgsl-dev libh3-dev
+
+      - name: Checkout MobilityDB source (for MEOS build)
+        uses: actions/checkout@v4
+        with:
+          # Ecosystem pin: the SAME commit the vendored catalog (tools/meos-idl.json)
+          # and the bundled JMEOS jar are generated against.
+          repository: estebanzimanyi/MobilityDB
+          ref: ecosystem-pin-2026-06-15f
+          path: MobilityDB-src
+
+      - name: Build and install libmeos.so
+        run: |
+          # The build dir lives inside MobilityDB-src so the vendored pgtypes headers
+          # ("../../meos/include/...") resolve against the source tree.
+          cmake -S MobilityDB-src -B MobilityDB-src/meos-build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DMEOS=ON \
+            -DCBUFFER=ON -DNPOINT=ON -DPOSE=ON -DRGEO=ON \
+            -DH3=ON \
+            -DH3_LIBRARY=/usr/lib/x86_64-linux-gnu/libh3.so \
+            -DH3_INCLUDE_DIR=/usr/include/h3
+          cmake --build MobilityDB-src/meos-build -j
+          sudo cmake --install MobilityDB-src/meos-build
+          echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
+
+      - name: Install the bundled JMEOS jar into the local repo
+        # The generator reads this jar's symbols at build time and the UDFs call it at
+        # runtime (org.jmeos:meos:1.0); it is not on Maven Central.
+        run: |
+          mvn -B install:install-file \
+            -Dfile=libs/JMEOS.jar \
+            -DgroupId=org.jmeos -DartifactId=meos -Dversion=1.0 -Dpackaging=jar
+
+      - name: Build + generate + unit tests
+        # generate-sources runs the catalog-driven UDF generator; test exercises the
+        # generated surface against libmeos through JMEOS.
+        run: mvn -B clean test
