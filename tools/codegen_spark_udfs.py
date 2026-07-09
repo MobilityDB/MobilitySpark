@@ -50,6 +50,7 @@ PARSE = {
     "Nsegment":     ("GeneratedFunctions.nsegment_in(%s)",          "K_NSEGMENT"),
     "Pose":         ("GeneratedFunctions.pose_in(%s)",              "K_POSE"),
     "Jsonb":        ("GeneratedFunctions.jsonb_in(%s)",             "K_JSONB"),
+    "Raquet":       ("GeneratedFunctions.raquet_in(%s)",            "K_RAQUET"),
 }
 # ── Pointer-typed returns: canonical base -> GeneratedFunctions serializer ──
 SERIAL = {
@@ -68,6 +69,7 @@ SERIAL = {
     "Nsegment":     "GeneratedFunctions.nsegment_out(%s, 15)",
     "Pose":         "GeneratedFunctions.pose_out(%s, 15)",
     "Jsonb":        "GeneratedFunctions.jsonb_out(%s)",
+    "Raquet":       "GeneratedFunctions.raquet_out(%s)",
 }
 # ── Scalar args: canonical -> (Spark DataType, Java boxed type, "parse expr") ──
 SCALAR_ARG = {

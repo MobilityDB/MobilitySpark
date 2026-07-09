@@ -26,15 +26,21 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y \
             cmake ninja-build \
-            libjson-c-dev libgeos-dev libproj-dev libgsl-dev libh3-dev
+            libjson-c-dev libgeos-dev libproj-dev libgsl-dev libh3-dev libgdal-dev
+
+      - name: Resolve the MEOS source commit
+        id: meos
+        # The vendored catalog (tools/meos-idl.json) and JMEOS jar are generated from one
+        # upstream MobilityDB commit, recorded once in tools/meos-source-commit.txt. CI reads
+        # it so the libmeos build stays in lockstep with the vendored surface — bumping the
+        # surface is a single edit there, with no SHA duplicated in this workflow.
+        run: echo "sha=$(tr -d '[:space:]' < tools/meos-source-commit.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Checkout MobilityDB source (for MEOS build)
         uses: actions/checkout@v4
         with:
-          # Ecosystem pin: the SAME commit the vendored catalog (tools/meos-idl.json)
-          # and the bundled JMEOS jar are generated against.
-          repository: estebanzimanyi/MobilityDB
-          ref: ecosystem-pin-2026-06-15f
+          repository: MobilityDB/MobilityDB
+          ref: ${{ steps.meos.outputs.sha }}
           path: MobilityDB-src
 
       - name: Build and install libmeos.so
@@ -45,7 +51,7 @@ jobs:
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DMEOS=ON \
-            -DCBUFFER=ON -DNPOINT=ON -DPOSE=ON -DRGEO=ON \
+            -DCBUFFER=ON -DNPOINT=ON -DPOSE=ON -DRGEO=ON -DQUADBIN=ON -DRASTER=ON \
             -DH3=ON \
             -DH3_LIBRARY=/usr/lib/x86_64-linux-gnu/libh3.so \
             -DH3_INCLUDE_DIR=/usr/include/h3
