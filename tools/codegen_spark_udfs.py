@@ -1029,7 +1029,12 @@ def main():
     sqlgroups = {}
     for f in fns:
         s = f.get("sqlfn")
-        if not s or s in names or s in portable_names or supported(f) is not None:
+        # A backing-only @sqlfn (the shared bbox-topological tag same_bbox/contains_bbox/…,
+        # classified in the catalog by MEOS-API) is NOT a deployed SQL name — MobilityDB
+        # exposes only the operator's bare portable alias (registered by the topology pass).
+        # Never register the `_bbox` backing tag as a UDF. (catalog SoT: sqlfnBackingOnly.)
+        if not s or s in names or s in portable_names or f.get("sqlfnBackingOnly") \
+                or supported(f) is not None:
             continue
         sqlgroups.setdefault(s, []).append(f)
     nsql = nsqldisp = ndropped = nskip = 0
