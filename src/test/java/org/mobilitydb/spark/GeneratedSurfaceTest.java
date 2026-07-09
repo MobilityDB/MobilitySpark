@@ -136,6 +136,19 @@ class GeneratedSurfaceTest {
     }
 
     @Test
+    void json_path_query_surface() {
+        // The JSON-path query surface (jsonb_path_exists/match/query_*, jsonbset_path_*,
+        // tjsonb_path_*) is reached by the JsonPath marshalling rule (jsonpath_in/out) —
+        // the sibling of the Jsonb rule. This proves the generated jsonpath_in arg-parse
+        // binds and runs: a path present in the document is found (1), an absent one is
+        // not (0). The trailing vars('{}')/silent/tz args are the C-faithful signature.
+        assertEquals(1, ((Number) scalar(
+            "SELECT jsonb_path_exists('{\"a\": 1}', '$.a', '{}', false, false)")).intValue());
+        assertEquals(0, ((Number) scalar(
+            "SELECT jsonb_path_exists('{\"a\": 1}', '$.b', '{}', false, false)")).intValue());
+    }
+
+    @Test
     void portable_bare_name_dispatch_surface() {
         // The portable bare-name operator dialect, emitted by the generator's DISPATCH pass
         // — NOT hand-registered. The bare names are read from the catalog's byOperator map
