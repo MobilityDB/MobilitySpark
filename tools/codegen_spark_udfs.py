@@ -154,33 +154,34 @@ def arg_kind(canon):
 
 
 def classify(f):
-    """Split params into (in_params, out): a single trailing NON-const writable
-    pointer out-param on a bool/void function is dropped, and JMEOS returns a
-    Pointer to it. out is (DataType, serialize/deref-expr) or None. The out-param
-    may be a primitive (deref) or a struct in SERIAL (serialize). const pointers
-    are inputs, never out-params."""
+    """Split params into (in_params, out). Out-parameters are the params the catalog
+    flags in shape.outParams — the source's Doxygen @param[out], cross-checked against
+    the C signature in MEOS-API, so the same signal drives the JMEOS jar's folding and
+    ours. A size_t* out-param is the buffer-length JMEOS swallows and drops (the
+    *_as_wkb / *_as_hexwkb family). A single non-size pointer out-param on a bool/void
+    function folds to a returned Pointer, dereferenced (OUTPRIM) or serialized (SERIAL);
+    out is (DataType, expr) or None. Functions with two or more value out-params do not
+    fold — their out-params stay visible."""
     params = f["params"]
-    # A trailing non-const `size_t *` is the canonical buffer-length out-param of the
-    # *_as_wkb / *_as_hexwkb / *_as_ewkb family: JMEOS swallows it and returns the
-    # buffer (char* / byte[]) directly, so it is never a Java-visible parameter.
-    if params and "const" not in params[-1]["canonical"] and norm(params[-1]["canonical"]) == "size_t *":
-        params = params[:-1]
+    outset = set(f.get("shape", {}).get("outParams", []))
+    # size_t* out-params are the byte-count buffers of the *_as_wkb/_as_hexwkb family:
+    # JMEOS swallows them and returns the buffer directly, so they are never visible.
+    vis = [p for p in params
+           if not (p["name"] in outset and norm(p["canonical"]) == "size_t *")]
     rt = norm(f["returnType"]["canonical"])
-    if rt in ("bool", "void") and params:
-        lastc = params[-1]["canonical"]
+    results = [p for p in vis if p["name"] in outset
+               and "const" not in p["canonical"]
+               and norm(p["canonical"]).endswith("*")]
+    if rt in ("bool", "void") and len(results) == 1:
+        p = results[0]
+        lastc = p["canonical"]
         lastn = norm(lastc)
-        writable = "const" not in lastc and lastn.endswith("*")
-        # no other writable out-param may precede it (single-out-param only)
-        others = [p for p in params[:-1]
-                  if "const" not in p["canonical"]
-                  and (norm(p["canonical"]) in OUTPRIM or base(p["canonical"]) in SERIAL)
-                  and norm(p["canonical"]).endswith("*")]
-        if writable and not others:
-            if lastn in OUTPRIM:
-                return params[:-1], OUTPRIM[lastn]
-            if base(lastc) in SERIAL:
-                return params[:-1], ("StringType", SERIAL[base(lastc)])
-    return params, None
+        in_params = [q for q in vis if q is not p]
+        if lastn in OUTPRIM:
+            return in_params, OUTPRIM[lastn]
+        if base(lastc) in SERIAL:
+            return in_params, ("StringType", SERIAL[base(lastc)])
+    return vis, None
 
 
 def ret_emit(canon, sqlop):

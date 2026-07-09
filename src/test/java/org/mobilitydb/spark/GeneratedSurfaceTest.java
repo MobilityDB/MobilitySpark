@@ -251,6 +251,19 @@ class GeneratedSurfaceTest {
     }
 
     @Test
+    void bool_result_value_at_timestamptz_folds_the_value_out_param() {
+        // tint_value_at_timestamptz(temp, t, strict, int *value) returns bool and writes
+        // the result through the `value` out-param, which the catalog flags in
+        // shape.outParams. JMEOS folds it (returns the buffer) and the UDF derefs the int.
+        // The value at instant 2001-01-02 is 2; a strict lookup off any instant is the
+        // boolean+result NULL.
+        assertEquals(2, ((Number) scalar(
+            "SELECT tint_value_at_timestamptz('" + TINT_HEX + "', '2001-01-02', true)")).intValue());
+        assertNull(scalar(
+            "SELECT tint_value_at_timestamptz('" + TINT_HEX + "', '1999-01-01', true)"));
+    }
+
+    @Test
     void parser_round_trip_entirely_on_the_generated_surface() {
         // tint_in is the newly-generated cstring (WKT) parser: a full parse->operate
         // round-trip driven only by generated UDFs, no externally-computed hex.
