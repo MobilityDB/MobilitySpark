@@ -149,6 +149,23 @@ class GeneratedSurfaceTest {
     }
 
     @Test
+    void scalar_value_array_accessors() {
+        // The value-array accessors (tint_values / tfloat_values / *set_values / ...) return
+        // a native scalar array with the element count via an int* out-param, marshalled to
+        // a Spark array<int|long|double>. Inspect via Spark SQL size()/array_contains() (no
+        // Java-side Seq casting). tint_values of [1@.., 2@.., 1@..] = the distinct set {1, 2}.
+        assertEquals(2, ((Number) scalar(
+            "SELECT size(tint_values('" + TINT_HEX + "'))")).intValue());
+        assertEquals(Boolean.TRUE, scalar(
+            "SELECT array_contains(tint_values('" + TINT_HEX + "'), 1)"));
+        assertEquals(Boolean.TRUE, scalar(
+            "SELECT array_contains(tint_values('" + TINT_HEX + "'), 2)"));
+        // double element type: tfloat_values of [1.5@.., 2.5@..] = {1.5, 2.5}
+        assertEquals(2, ((Number) scalar(
+            "SELECT size(tfloat_values('" + TFLOAT_HEX + "'))")).intValue());
+    }
+
+    @Test
     void portable_bare_name_dispatch_surface() {
         // The portable bare-name operator dialect, emitted by the generator's DISPATCH pass
         // — NOT hand-registered. The bare names are read from the catalog's byOperator map
