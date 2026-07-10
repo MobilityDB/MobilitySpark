@@ -21,12 +21,32 @@ jobs:
           java-version: "21"
           cache: maven
 
+      # Prefer apt.postgresql.org over the runner's preinstalled PostgreSQL so
+      # the postgresql-server-dev package resolves cleanly. Only pg_config is
+      # needed here — pgPointCloud produces a static libpc.a, no server.
+      - name: Remove existing PostgreSQL installations [prefer apt.postgresql.org]
+        run: |
+          sudo service postgresql stop || true
+          sudo apt-get --purge remove postgresql* -y || true
+          sudo rm -rf /var/lib/postgresql/ /etc/postgresql/ \
+            /var/log/postgresql/ || true
+
+      - name: Add PostgreSQL APT repository
+        run: |
+          sudo apt-get install -y curl ca-certificates gnupg
+          curl https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo apt-key add -
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ \
+            $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+
       - name: Install MEOS build dependencies
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y \
             cmake ninja-build \
-            libjson-c-dev libgeos-dev libproj-dev libgsl-dev libh3-dev libgdal-dev
+            libjson-c-dev libgeos-dev libproj-dev libgsl-dev libh3-dev libgdal-dev \
+            libxml2-dev autoconf automake libtool pkg-config \
+            postgresql-17 postgresql-server-dev-17
 
       - name: Resolve the MEOS source commit
         id: meos
@@ -51,10 +71,10 @@ jobs:
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DMEOS=ON \
-            -DCBUFFER=ON -DNPOINT=ON -DPOSE=ON -DRGEO=ON -DQUADBIN=ON -DRASTER=ON \
-            -DH3=ON \
+            -DALL=ON \
             -DH3_LIBRARY=/usr/lib/x86_64-linux-gnu/libh3.so \
-            -DH3_INCLUDE_DIR=/usr/include/h3
+            -DH3_INCLUDE_DIR=/usr/include/h3 \
+            -DPOSTGRESQL_PG_CONFIG=/usr/lib/postgresql/17/bin/pg_config
           cmake --build MobilityDB-src/meos-build -j
           sudo cmake --install MobilityDB-src/meos-build
           echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
