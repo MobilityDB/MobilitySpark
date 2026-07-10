@@ -21,62 +21,32 @@ jobs:
           java-version: "21"
           cache: maven
 
-      # Prefer apt.postgresql.org over the runner's preinstalled PostgreSQL so
-      # the postgresql-server-dev package resolves cleanly. Only pg_config is
-      # needed here — pgPointCloud produces a static libpc.a, no server.
-      - name: Remove existing PostgreSQL installations [prefer apt.postgresql.org]
-        run: |
-          sudo service postgresql stop || true
-          sudo apt-get --purge remove postgresql* -y || true
-          sudo rm -rf /var/lib/postgresql/ /etc/postgresql/ \
-            /var/log/postgresql/ || true
-
-      - name: Add PostgreSQL APT repository
-        run: |
-          sudo apt-get install -y curl ca-certificates gnupg
-          curl https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-            | sudo apt-key add -
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ \
-            $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-
-      - name: Install MEOS build dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y \
-            cmake ninja-build \
-            libjson-c-dev libgeos-dev libproj-dev libgsl-dev libh3-dev libgdal-dev \
-            libxml2-dev autoconf automake libtool pkg-config \
-            postgresql-17 postgresql-server-dev-17
-
       - name: Resolve the MEOS source commit
         id: meos
-        # The vendored catalog (tools/meos-idl.json) and JMEOS jar are generated from one
-        # upstream MobilityDB commit, recorded once in tools/meos-source-commit.txt. CI reads
-        # it so the libmeos build stays in lockstep with the vendored surface — bumping the
-        # surface is a single edit there, with no SHA duplicated in this workflow.
+        # The catalog (tools/meos-idl.json) and JMEOS jar are derived from one upstream
+        # MobilityDB commit, recorded once in tools/meos-source-commit.txt. CI reads it so
+        # the derived catalog and the libmeos build stay in lockstep with the pinned
+        # surface — bumping the surface is a single edit there, with no SHA duplicated.
         run: echo "sha=$(tr -d '[:space:]' < tools/meos-source-commit.txt)" >> "$GITHUB_OUTPUT"
 
-      - name: Checkout MobilityDB source (for MEOS build)
-        uses: actions/checkout@v4
+      # Derive the MEOS catalog (meos-idl.json via run.py) and build+install the
+      # all-families libmeos.so from the pinned MobilityDB commit, through the shared
+      # composite action. It does the full libmeos provisioning itself (PostgreSQL
+      # purge, PGDG, PG17, build deps, cmake, install under /usr/local), so no inline
+      # apt/PG/cmake steps are needed here.
+      - name: Provision MEOS catalog + libmeos
+        id: provision
+        uses: MobilityDB/MEOS-API/.github/actions/provision-meos@master
         with:
-          repository: MobilityDB/MobilityDB
-          ref: ${{ steps.meos.outputs.sha }}
-          path: MobilityDB-src
+          mobilitydb-ref: ${{ steps.meos.outputs.sha }}
+          build-libmeos: "true"
 
-      - name: Build and install libmeos.so
+      - name: Stage the derived catalog for the generator
+        # The build-time UDF generator (pom.xml, exec-maven-plugin) and GeneratedSurfaceTest
+        # both read tools/meos-idl.json; place the derived catalog there so their wiring is
+        # unchanged. The catalog is gitignored — it only ever exists as a build artifact.
         run: |
-          # The build dir lives inside MobilityDB-src so the vendored pgtypes headers
-          # ("../../meos/include/...") resolve against the source tree.
-          cmake -S MobilityDB-src -B MobilityDB-src/meos-build \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DMEOS=ON \
-            -DALL=ON \
-            -DH3_LIBRARY=/usr/lib/x86_64-linux-gnu/libh3.so \
-            -DH3_INCLUDE_DIR=/usr/include/h3 \
-            -DPOSTGRESQL_PG_CONFIG=/usr/lib/postgresql/17/bin/pg_config
-          cmake --build MobilityDB-src/meos-build -j
-          sudo cmake --install MobilityDB-src/meos-build
+          cp "${{ steps.provision.outputs.catalog-path }}" tools/meos-idl.json
           echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
       - name: Install the bundled JMEOS jar into the local repo
