@@ -268,6 +268,38 @@ HIDE_DEFAULT = {"bool": "false", "unsigned char": "(byte) 4", "int": "0",
                 "double": "0.0", "int64_t": "0L", "uint64_t": "0L"}
 
 
+def _java_bound(v, ctype):
+    """Translate a C `shape.boundArgs` literal to a Java literal for `ctype`, or None if
+    it has no direct Java form (an enum/macro or NULL — the caller then falls back to the
+    generic type default)."""
+    if v in ("true", "false"):
+        return v
+    if re.fullmatch(r"-?\d+", v):
+        if ctype == "unsigned char":
+            return "(byte) %s" % v
+        if ctype in ("int64_t", "uint64_t"):
+            return "%sL" % v
+        return v
+    if re.fullmatch(r"-?\d+\.\d+", v):
+        return v
+    return None
+
+
+def hidden_arg(f, p):
+    """The literal a generated UDF supplies for a SQL-hidden trailing param. When the
+    catalog records the value the MobilityDB wrapper binds (`shape.boundArgs`, e.g.
+    valueAtTimestamp binds strict=true), emit THAT; otherwise fall back to the generic
+    type default. Without boundArgs the generic default silently diverged from MobilityDB
+    (valueAtTimestamp returned the value at an exclusive bound instead of NULL)."""
+    ct = base(p["canonical"])
+    bound = f.get("shape", {}).get("boundArgs", {}).get(p["name"])
+    if bound is not None:
+        lit = _java_bound(bound, ct)
+        if lit is not None:
+            return lit
+    return HIDE_DEFAULT[ct]
+
+
 def emit_single(name, f, vis_arity=None):
     params, out = classify(f)
     # SQL-faithful arity: expose only the first vis_arity params, supplying HIDE_DEFAULT
@@ -317,9 +349,10 @@ def emit_single(name, f, vis_arity=None):
             callargs.append(f"dt_{a}")
         else:
             callargs.append(a)
-    # supply default literals for the SQL-hidden trailing flags (sqlArity..C-arity)
+    # supply the wrapper-bound literal (shape.boundArgs) — or the generic type default —
+    # for the SQL-hidden trailing flags (sqlArity..C-arity)
     for p in hidden:
-        callargs.append(HIDE_DEFAULT[base(p["canonical"])])
+        callargs.append(hidden_arg(f, p))
     call = f"GeneratedFunctions.{f['name']}(" + ", ".join(callargs) + ")"
     L.append("        try {")
     if ret_out:
@@ -456,10 +489,11 @@ def emit_dispatch(name, cands, vis_arity=None):
                 callargs.append("D_%s" % a)
             else:
                 callargs.append(a)
-        # SQL-hidden trailing flags get default literals (zip above paired only the
-        # first `vis` exposed args; the candidate's remaining params are the flags).
+        # SQL-hidden trailing flags get the wrapper-bound literal (shape.boundArgs) or the
+        # generic default (zip above paired only the first `vis` exposed args; the
+        # candidate's remaining params are the flags).
         for p in cps[vis:]:
-            callargs.append(HIDE_DEFAULT[base(p["canonical"])])
+            callargs.append(hidden_arg(f, p))
         cond = " && ".join("%s != null" % p for p in ptrs) if ptrs else "true"
         free = " ".join("MeosMemory.free(%s);" % p for p in ptrs)
         call = "GeneratedFunctions.%s(%s)" % (f["name"], ", ".join(callargs))
