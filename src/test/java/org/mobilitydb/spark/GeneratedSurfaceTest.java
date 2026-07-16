@@ -309,4 +309,30 @@ class GeneratedSurfaceTest {
         assertEquals(1, ((Number) scalar(
             "SELECT size(eDwithinPairs(" + p + ", " + p + ", 1000.0))")).intValue());
     }
+
+    @Test
+    void h3_cell_prefilter_surface() {
+        // The temporal-H3 cell surface (th3index / geoToH3IndexSet / the
+        // ever_eq_h3indexset_th3index prefilter) — the index-less BerlinMOD Q13 join key.
+        // H3 requires lon/lat (EPSG:4326), so the geometries carry SRID=4326 (UdfMarshal
+        // .geoFromText splits the "SRID=" prefix). A 4326 trip that stays on one point
+        // (Paris) and a region geom at the SAME point share an H3 cell at resolution 7.
+        String paris = "SRID=4326;POINT(2.34 48.86)";
+        String nyc   = "SRID=4326;POINT(-73.98 40.75)";
+        String trip  = "tgeompoint_in('SRID=4326;[POINT(2.34 48.86)@2001-01-01, "
+                     + "POINT(2.34 48.86)@2001-01-02]')";
+
+        // geoToH3IndexSet(geo, res): a 4326 point yields a non-null cell set (hex).
+        assertNotNull(scalar("SELECT geoToH3IndexSet('" + paris + "', 7)"));
+        // th3index(trip, res): the 4326 trip yields a non-null temporal cell index (hex).
+        assertNotNull(scalar("SELECT th3index(" + trip + ", 7)"));
+        // ever_eq prefilter: the trip's cell IS in the same-point region's cell set -> true.
+        assertEquals(Boolean.TRUE, scalar(
+            "SELECT ever_eq_h3indexset_th3index("
+            + "geoToH3IndexSet('" + paris + "', 7), th3index(" + trip + ", 7))"));
+        // ... but NOT in a far-away region's cell set (NYC vs a Paris trip) -> false.
+        assertEquals(Boolean.FALSE, scalar(
+            "SELECT ever_eq_h3indexset_th3index("
+            + "geoToH3IndexSet('" + nyc + "', 7), th3index(" + trip + ", 7))"));
+    }
 }
