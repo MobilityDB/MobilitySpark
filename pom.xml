@@ -49,8 +49,11 @@
         <plugins>
             <!-- Generate the whole UDF surface from the vendored MEOS-API catalog at
                  build time (North Star: bindings are GENERATED from MEOS, never hand
-                 written). The generator reads the org.jmeos:meos jar's actual symbols
-                 so it never emits a call to an absent/mismatched JMEOS method. -->
+                 written). codegen_jvm.py is the single generator shared by every JVM
+                 binding; the spark engine delegates to codegen_spark_udfs.py so the
+                 emitted surface is identical to that generator's. It reads the
+                 org.jmeos:meos jar's actual symbols so it never emits a call to an
+                 absent/mismatched JMEOS method. -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -63,7 +66,9 @@
                         <configuration>
                             <executable>python3</executable>
                             <arguments>
-                                <argument>${project.basedir}/tools/codegen_spark_udfs.py</argument>
+                                <argument>${project.basedir}/tools/codegen_jvm.py</argument>
+                                <argument>--engine</argument>
+                                <argument>spark</argument>
                                 <argument>--catalog</argument>
                                 <argument>${project.basedir}/tools/meos-idl.json</argument>
                                 <argument>--jar</argument>

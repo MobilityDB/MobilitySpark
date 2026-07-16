@@ -11,11 +11,15 @@ binding owns its generator in its own repo. The source of truth is the catalog
 ## MobilitySpark is a consumer binding
 
 MobilitySpark binds the **JMEOS jar** (the JVM FFI projection of the catalog), not MEOS-API
-directly. Its generator **`tools/codegen_spark_udfs.py`** mirrors the JMEOS
-`FunctionsGenerator`: it reads the JMEOS surface and the catalog's `@sqlfn` names and emits the
-Spark UDF registration layer, organized **by `@ingroup` group** (one unit per group, the same
-structure as the reference manual). Every emitted `register()` is preceded by the per-thread
-MEOS-init guard, enforced at build time.
+directly. Its generator is the shared **`tools/codegen_jvm.py --engine spark`**, the single
+generator vendored identically by every JVM binding (MobilitySpark, MobilityFlink,
+MobilityKafka). The `spark` engine delegates verbatim to the sibling
+**`tools/codegen_spark_udfs.py`** (which mirrors the JMEOS `FunctionsGenerator`): it reads the
+JMEOS surface and the catalog's `@sqlfn` names and emits the Spark UDF registration layer,
+organized **by `@ingroup` group** (one unit per group, the same structure as the reference
+manual). Every emitted `register()` is preceded by the per-thread MEOS-init guard, enforced at
+build time. Sharing one generator across the JVM bindings is what keeps the surface from
+drifting between engines.
 
 ## Inputs
 
