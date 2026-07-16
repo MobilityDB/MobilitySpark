@@ -21,24 +21,18 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Resolve the MEOS source commit
-        id: meos
-        # The catalog (tools/meos-idl.json) and JMEOS jar are derived from one upstream
-        # MobilityDB commit, recorded once in tools/meos-source-commit.txt. CI reads it so
-        # the derived catalog and the libmeos build stay in lockstep with the pinned
-        # surface — bumping the surface is a single edit there, with no SHA duplicated.
-        run: echo "sha=$(tr -d '[:space:]' < tools/meos-source-commit.txt)" >> "$GITHUB_OUTPUT"
-
       # Derive the MEOS catalog (meos-idl.json via run.py) and build+install the
-      # all-families libmeos.so from the pinned MobilityDB commit, through the shared
+      # all-families libmeos.so from upstream MobilityDB master, through the shared
       # composite action. It does the full libmeos provisioning itself (PostgreSQL
       # purge, PGDG, PG17, build deps, cmake, install under /usr/local), so no inline
-      # apt/PG/cmake steps are needed here.
+      # apt/PG/cmake steps are needed here. Tracking master (not a pinned commit) keeps
+      # the source and the @master derivation toolchain moving together, so the catalog
+      # can never drift from the run.py that derives it.
       - name: Provision MEOS catalog + libmeos
         id: provision
         uses: MobilityDB/MEOS-API/.github/actions/provision-meos@master
         with:
-          mobilitydb-ref: ${{ steps.meos.outputs.sha }}
+          mobilitydb-ref: master
           build-libmeos: "true"
 
       - name: Stage the derived catalog for the generator
@@ -49,12 +43,35 @@ jobs:
           cp "${{ steps.provision.outputs.catalog-path }}" tools/meos-idl.json
           echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
-      - name: Install the bundled JMEOS jar into the local repo
-        # The generator reads this jar's symbols at build time and the UDFs call it at
-        # runtime (org.jmeos:meos:1.0); it is not on Maven Central.
+      - name: Check out JMEOS at master
+        # The JMEOS jar (org.jmeos:meos:1.0) is built from JMEOS main against the SAME
+        # master-derived catalog and libmeos as above — so the jar's FFI surface can never
+        # drift from the catalog the generator reads, and JMEOS tracks master in lockstep
+        # with this binding.
+        uses: actions/checkout@v4
+        with:
+          repository: MobilityDB/JMEOS
+          ref: main
+          path: jmeos
+
+      - name: Build + install the JMEOS jar as org.jmeos:meos:1.0
+        # Mirror JMEOS's own CI: stage the already-derived catalog + libmeos into the JMEOS
+        # checkout and build it (jmeos-core's generate-sources emits GeneratedFunctions from
+        # the catalog). Building from the same commit that produced the catalog keeps the jar's
+        # GeneratedFunctions signatures in lockstep with it. The jar plugin writes the plain
+        # jar/JMEOS.jar (finalName JMEOS) — jnr-ffi is supplied by this project's own pom, so
+        # the plain jar, not the shaded jar/JMEOS-fat.jar, is what the committed libs/JMEOS.jar
+        # was; libmeos is loaded from LD_LIBRARY_PATH, never from the jar. It is installed under
+        # the org.jmeos:meos:1.0 coordinates the generator and UDF runtime consume (not on
+        # Maven Central, so built here rather than pulled). Tests are skipped — only the jar is
+        # needed; JMEOS's own CI exercises its FFI suite.
         run: |
+          mkdir -p jmeos/codegen/input
+          cp "${{ steps.provision.outputs.catalog-path }}" jmeos/codegen/input/meos-idl.json
+          cp /usr/local/lib/libmeos.so jmeos/jmeos-core/src/
+          mvn -B -f jmeos/pom.xml clean install -Dmaven.test.skip=true
           mvn -B install:install-file \
-            -Dfile=libs/JMEOS.jar \
+            -Dfile=jmeos/jar/JMEOS.jar \
             -DgroupId=org.jmeos -DartifactId=meos -Dversion=1.0 -Dpackaging=jar
 
       - name: Build + generate + unit tests

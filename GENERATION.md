@@ -19,9 +19,14 @@ MEOS-init guard, enforced at build time.
 
 ## Inputs
 
-The generator reads two vendored inputs, both tracked to MobilityDB master:
+The generator reads two inputs, both derived in CI from upstream MobilityDB master:
 
-- the MEOS-API catalog `tools/meos-idl.json`, and
-- the JMEOS jar `libs/JMEOS.jar` (its `javap` surface).
+- the MEOS-API catalog `tools/meos-idl.json`, derived by the shared `provision-meos`
+  action (`mobilitydb-ref: master`), and
+- the JMEOS jar `org.jmeos:meos` (its `javap` surface), built from JMEOS `main` against
+  that same master catalog and libmeos.
+
+Tracking master keeps the source and the `@master` derivation toolchain moving together,
+so the catalog and jar never drift from the `run.py` that derives them.
 
 The UDF layer is the generated `registerAll()` — zero hand-written registrations.
