@@ -29,12 +29,13 @@ import functions.GeneratedFunctions;
 import functions.error_handler_fn;
 
 /**
- * Per-thread MEOS initialisation for Spark executor threads.
+ * MEOS initialisation for Spark executor threads.
  *
- * In Spark's multi-threaded executor model every task thread initialises
- * MEOS independently.  meos_initialize() sets up the per-thread MEOS state
- * (session_timezone, timezone cache, GEOS context, PROJ context, GSL RNGs,
- * errno).  The ThreadLocal in MEOS_READY runs initialisation exactly once
+ * Spark runs tasks on a pool of executor threads, and MEOS setup has two
+ * lifetimes: process-global state (the allocator and the error handler) is
+ * installed once per JVM, while thread-local state (the timezone and collation
+ * caches, and the PROJ, GEOS and GSL contexts) belongs to each thread. This
+ * class installs the process-global part once and the thread-local part once
  * per native thread.
  *
  * The entire UDF surface is generated (GeneratedSpatioTemporalUDFs); every
@@ -59,10 +60,35 @@ public final class MeosThread {
     public static final error_handler_fn NOEXIT_ERROR_HANDLER =
         (errorLevel, errorCode, errorMessage) -> { /* do not exit the JVM */ };
 
+    /**
+     * Process-global MEOS setup, installed exactly once per JVM: the allocator
+     * and the error handler are process-global, not thread-local. The holder's
+     * class initialiser runs under the JVM class-initialisation lock, so a
+     * thread that reaches its per-thread setup always sees a fully-installed
+     * no-exit handler — MEOS's exiting default is never observable to another
+     * thread.
+     */
+    private static final class ProcessInit {
+        static {
+            GeneratedFunctions.meos_initialize();
+            GeneratedFunctions.meos_initialize_error_handler(NOEXIT_ERROR_HANDLER);
+        }
+        /** Invoking this forces the class initialiser above to run once. */
+        static void ensure() { /* side effect: class initialisation */ }
+    }
+
+    /**
+     * Per-thread MEOS setup, run once per native thread: only the thread-local
+     * caches. The timezone and collation caches are thread-local and set
+     * explicitly per thread; the PROJ, GEOS and GSL contexts are thread-local
+     * too and are created lazily by MEOS on first use. Full meos_initialize() is
+     * NOT run per thread — it re-installs the exiting default error handler that
+     * every other thread relies on being the no-exit one.
+     */
     private static final ThreadLocal<Boolean> MEOS_READY = ThreadLocal.withInitial(() -> {
-        GeneratedFunctions.meos_initialize();
+        ProcessInit.ensure();
         GeneratedFunctions.meos_initialize_timezone("UTC");
-        GeneratedFunctions.meos_initialize_error_handler(NOEXIT_ERROR_HANDLER);
+        GeneratedFunctions.meos_initialize_collation();
         return Boolean.TRUE;
     });
 
