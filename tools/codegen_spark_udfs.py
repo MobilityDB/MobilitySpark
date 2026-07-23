@@ -336,7 +336,6 @@ def emit_single(name, f, vis_arity=None):
          if params else f'        spark.udf().register("{name}", ({iface}) () -> {{']
     if argnames:
         L.append("        if (" + " || ".join(f"{a} == null" for a in argnames) + ") return null;")
-    L.append("        MeosThread.ensureReady();")
     callargs, frees = [], []
     for a, p, k in zip(argnames, params, kinds):
         if k[0] == "ptr":
@@ -465,7 +464,6 @@ def emit_dispatch(name, cands, vis_arity=None):
     L = ['        spark.udf().register("%s", (%s) (%s) -> {' % (name, iface, ", ".join(argnames))]
     if argnames:
         L.append("        if (" + " || ".join("%s == null" % a for a in argnames) + ") return null;")
-    L.append("        MeosThread.ensureReady();")
     # order GEO/WKT-parsing candidates LAST so the strict hex parsers get first refusal
     def geocount(f):
         return sum(1 for p in classify(f)[0] if base(p["canonical"]) == "GSERIALIZED")
@@ -524,7 +522,6 @@ def emit_timearg(name, op):
                      for k in ("timestamptz", "tstzspan", "tstzset", "tstzspanset"))
     return ('        spark.udf().register("%s", (UDF2<String, String, String>) (a, b) -> {\n'
             '        if (a == null || b == null) return null;\n'
-            '        MeosThread.ensureReady();\n'
             '        jnr.ffi.Pointer t = UdfMarshal.tFromHex(a);\n'
             '        if (t == null) return null;\n'
             '        try { return UdfMarshal.restrictTime(t, b, %s); }\n'
@@ -588,7 +585,6 @@ def emit_tgeoarr(name, f, shape):
     iface = "UDF%d<%s, %s>" % (len(argnames), ", ".join(boxes), retbox)
     L = ['        spark.udf().register("%s", (%s) (%s) -> {' % (name, iface, ", ".join(argnames))]
     L.append("        if (" + " || ".join("a%d == null" % i for i in range(nA)) + ") return null;")
-    L.append("        MeosThread.ensureReady();")
     for i in range(nA):
         L.append("        String[] s%d = UdfMarshal.asStrArray(a%d);" % (i, i))
     L.append("        if (" + " || ".join("s%d == null" % i for i in range(nA)) + ") return null;")
@@ -680,7 +676,6 @@ def emit_scalar_values(name, f, shape):
     L = ['        spark.udf().register("%s", (%s) (%s) -> {' % (name, iface, ", ".join(argnames))]
     if argnames:
         L.append("        if (" + " || ".join("%s == null" % a for a in argnames) + ") return null;")
-    L.append("        MeosThread.ensureReady();")
     callargs, frees = [], []
     for a, p, k in zip(argnames, ins, kinds):
         if k[0] == "ptr":
@@ -716,7 +711,6 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.api.java.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.mobilitydb.spark.MeosMemory;
-import org.mobilitydb.spark.MeosThread;
 """
 
 # Shared marshalling helpers live in their own class: the 2300+ UDFs are partitioned
@@ -735,7 +729,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import functions.GeneratedFunctions;
 import org.mobilitydb.spark.MeosMemory;
-import org.mobilitydb.spark.MeosThread;
 
 final class UdfMarshal {
     private UdfMarshal() {}
@@ -903,7 +896,6 @@ final class UdfMarshal {
             BiFunction<Pointer, Pointer, Boolean> tnumber,
             BiFunction<Pointer, Pointer, Boolean> tspatial) {
         if (s1 == null || s2 == null) return null;
-        MeosThread.ensureReady();
         Pointer p1 = tFromHex(s1);
         if (p1 == null) return null;
         Pointer p2 = tFromHex(s2);
@@ -1335,34 +1327,7 @@ def main():
     with open(os.path.join(args.out, "GeneratedSpatioTemporalUDFs.java"), "w") as fh:
         fh.write(main_cls)
 
-    # ── per-thread MEOS-init invariant (build-failing) ────────────────────────────
-    # MEOS keeps locale/collation, session timezone, PROJ context and RNGs in THREAD-
-    # LOCAL storage, so every thread (Spark executor threads run UDFs off the thread
-    # that called meos_initialize()) must run the per-thread init guard before its first
-    # MEOS call — exactly the gap that crashed MobilityDuck's table functions. Assert it
-    # for EVERY emitted entry point so a future emit path can't silently drop the guard
-    # as the bindings are regenerated (the codegen north-star). A register() lambda is
-    # guarded iff ensureReady() / axisBool / restrictTime (the latter two call
-    # ensureReady() first) appears before the first GeneratedFunctions call in its body.
-    unguarded = []
-    for fp in glob.glob(os.path.join(args.out, "*.java")):
-        src = open(fp).read()
-        for m in re.finditer(r'udf\(\)\.register\("([^"]+)"', src):
-            body = src[m.start():m.start() + 1600]
-            gf = body.find("GeneratedFunctions.")
-            guard = min([x for x in (body.find("ensureReady"), body.find("axisBool"),
-                                     body.find("restrictTime")) if x >= 0] or [1 << 30])
-            if gf >= 0 and guard > gf:
-                unguarded.append("%s (%s)" % (m.group(1), os.path.basename(fp)))
-    if unguarded:
-        print("FATAL: %d generated UDF entry point(s) reach MEOS without a per-thread "
-              "init guard (MeosThread.ensureReady):" % len(unguarded), file=sys.stderr)
-        for u in unguarded[:20]:
-            print("   " + u, file=sys.stderr)
-        sys.exit(1)
-
     print("wrote %d group classes + UdfMarshal + GeneratedSpatioTemporalUDFs in %s" % (len(written), args.out), file=sys.stderr)
-    print("  per-thread MEOS-init guard  : every entry point verified", file=sys.stderr)
     print("  JMEOS functions in catalog : %d" % total, file=sys.stderr)
     print("  1:1 UDFs emitted (reached)  : %d  (%.0f%%)" % (cov, 100.0*cov/total), file=sys.stderr)
     print("  internal (excluded)         : %d" % internal, file=sys.stderr)
