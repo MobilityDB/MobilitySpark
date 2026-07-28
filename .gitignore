@@ -20,3 +20,6 @@ src/main/java/org/mobilitydb/spark/generated/
 
 # Derived MEOS catalog (generated in CI via the provision-meos action)
 tools/meos-idl.json
+
+# tools/refresh-from-master.sh scratch (sibling clones + libmeos prefix).
+.meos-chain/
