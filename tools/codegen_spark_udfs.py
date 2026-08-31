@@ -400,6 +400,31 @@ def _sig(f):
     return (tuple(slots), ret)
 
 
+def _visparams(f):
+    """The parameters a generated UDF exposes: the SQL-required ones, when the trailing C
+    parameters the SQL surface hides are all defaultable flags. This is the shape the UDF
+    presents and the shape emit_dispatch emits, so it is the shape overloads are grouped
+    and told apart by — grouping on the wider C shape puts an overload whose flag is
+    SQL-optional in a group of its own, where a larger group of siblings outvotes it and
+    the overload the SQL name means is dropped before any preference is consulted."""
+    params = classify(f)[0]
+    va = f.get("sqlArity")
+    if va is not None and 0 <= va < len(params):
+        tail = params[va:]
+        if all(base(q["canonical"]) in HIDE_DEFAULT and "*" not in norm(q["canonical"])
+               for q in tail):
+            return params[:va]
+    return params
+
+
+def _sqlsig(f):
+    """_sig over the SQL-visible parameters — the Java UDF interface the name presents."""
+    sig = _sig(f)
+    if sig is None:
+        return None
+    return (tuple(sig[0][:len(_visparams(f))]), sig[1])
+
+
 def _safe_dispatch(f):
     """A function is safely arg-kind-dispatchable only if every pointer arg parses via a
     type-safe hex-WKB wrapper (UdfMarshal.*FromHex, which checks the WKB type byte and
@@ -416,14 +441,14 @@ def _safe_dispatch(f):
 
 
 def _parsetuple(f):
-    """The arg KINDS that a runtime parse can actually DISTINGUISH: K_TEMPORAL / K_GEO /
-    K_SPAN ... for pointer args, a constant marker for scalars/timestamps. Two overloads
-    with the SAME _parsetuple differ only by temporal SUBTYPE (tdistance_tgeo_tgeo vs
-    tdistance_tnpoint_tnpoint — both (Temporal,Temporal)) and so CANNOT be told apart by
-    parsing the hex-WKB; only one of them may go into a parse-based dispatcher."""
+    """The arg KINDS that a runtime parse can actually DISTINGUISH, over the SQL-visible
+    parameters: K_TEMPORAL / K_GEO / K_SPAN ... for pointer args, a constant marker for
+    scalars and timestamps, and K_TEMPORAL:<type> where the overload names a concrete
+    temporal type the WKB byte identifies. Two overloads with the SAME _parsetuple cannot
+    be told apart by parsing, so only one of them may go into a parse-based dispatcher;
+    ones that carry different concrete types can, and both are kept."""
     out = []
-    for p in classify(f)[0]:
-        k = arg_kind(p["canonical"])
+    for k in _argkinds(f):
         out.append(k[2] if k[0] == "ptr" else ("TS" if k[0] == "ts" else "S"))
     return tuple(out)
 
@@ -434,6 +459,45 @@ _FAMTOK = ["_tgeo_", "tgeo_", "_geo_", "_geo", "geo_", "temporal_", "_tspatial_"
 def _famrank(f):
     n = f["name"]
     return next((i for i, t in enumerate(_FAMTOK) if t in n), len(_FAMTOK))
+
+
+# MeosType name -> WKB type byte, for the temporal types only, filled from the catalog's
+# MeosType enum in main(). A C overload whose name begins with one of these names takes
+# that concrete temporal type, so the dispatcher can tell it apart from a sibling overload
+# by the WKB type byte instead of guessing.
+TEMPTYPE_CODE = {}
+
+
+def _expected_temptype(f):
+    """The concrete temporal type a C overload takes, from its name, or None.
+
+    MobilityDB names a typed entry point `<type>_<operation>`, and the catalog's MeosType
+    enum is the list of type names, so the longest MeosType temporal name the function name
+    starts with is the type of its receiver. A name built on a type CLASS rather than a type
+    (tpoint_trajectory, eintersects_tgeo_tgeo) matches nothing and stays generic."""
+    n = f["name"]
+    cands = [t for t in TEMPTYPE_CODE if n.startswith(t + "_")]
+    return max(cands, key=len) if cands else None
+
+
+def _argkinds(f):
+    """The arg kinds of f's SQL-visible parameters, with the receiver refined to the
+    concrete temporal type the overload takes.
+
+    arg_kind resolves a `Temporal *` to one generic parser, so two overloads that differ
+    only by temporal type (tgeompoint_to_th3index / tgeogpoint_to_th3index) look identical
+    to a parse-based dispatcher and one of them is answered by the other's C function. The
+    WKB type byte distinguishes them, so the receiver of a typed overload parses through
+    the type-checked parser and carries that type in its kind."""
+    ks = [arg_kind(p["canonical"]) for p in _visparams(f)]
+    t = _expected_temptype(f)
+    if t is not None:
+        for i, k in enumerate(ks):
+            if k and k[0] == "ptr" and k[2] == "K_TEMPORAL":
+                ks[i] = ("ptr", "UdfMarshal.tFromHexOf(%%s, %d)" % TEMPTYPE_CODE[t],
+                         "K_TEMPORAL:" + t)
+                break
+    return ks
 
 
 def emit_dispatch(name, cands, vis_arity=None):
@@ -464,12 +528,17 @@ def emit_dispatch(name, cands, vis_arity=None):
     L = ['        spark.udf().register("%s", (%s) (%s) -> {' % (name, iface, ", ".join(argnames))]
     if argnames:
         L.append("        if (" + " || ".join("%s == null" % a for a in argnames) + ") return null;")
-    # order GEO/WKT-parsing candidates LAST so the strict hex parsers get first refusal
+    # order the PERMISSIVE parsers LAST so the strict ones get first refusal: a GEO/WKT
+    # parser accepts what a hex parser refuses, and an overload named after a type CLASS
+    # (tpoint_trajectory) accepts every temporal, so it must not answer for a sibling
+    # named after a concrete type (tpose_trajectory) that the WKB byte would have matched.
     def geocount(f):
         return sum(1 for p in classify(f)[0] if base(p["canonical"]) == "GSERIALIZED")
-    for f in sorted(cands, key=geocount):
+    def permissiveness(f):
+        return (geocount(f), 0 if _expected_temptype(f) else 1)
+    for f in sorted(cands, key=permissiveness):
         cps = classify(f)[0]
-        ks = [arg_kind(p["canonical"]) for p in cps]
+        ks = _argkinds(f)
         callargs, ptrs = [], []
         L.append("        {")
         for a, k in zip(argnames, ks):
@@ -923,6 +992,13 @@ __WKB_KINDS__
     static Pointer tFromHex(String s) {
         return TEMPORAL_WKB.contains(wkbType(s)) ? GeneratedFunctions.temporal_from_hexwkb(s) : null;
     }
+    // The same parse restricted to ONE temporal type, for an overload named after a
+    // concrete type: `code` is that type's MeosType value, which is the WKB type byte, so
+    // a value of a sibling type is refused here and answered by its own overload instead
+    // of reaching a C function that rejects it as the wrong type at run time.
+    static Pointer tFromHexOf(String s, int code) {
+        return wkbType(s) == code ? GeneratedFunctions.temporal_from_hexwkb(s) : null;
+    }
     static Pointer spanFromHex(String s) {
         return SPAN_WKB.contains(wkbType(s)) ? GeneratedFunctions.span_from_hexwkb(s) : null;
     }
@@ -980,6 +1056,15 @@ def main():
     args = ap.parse_args()
 
     cat = json.load(open(args.catalog))
+    # The temporal MeosType names and their WKB type bytes, from the catalog's own enum:
+    # what lets the dispatcher tell two overloads of one SQL name apart by the type of the
+    # value handed to it. Filled before any emit pass reads it.
+    _mt = next((e for e in cat.get("enums", []) if e["name"] in ("MeosType", "meosType")), None)
+    for _v in (_mt.get("values") or _mt.get("members") or []) if _mt else []:
+        _nm = _v["name"] if isinstance(_v, dict) else _v
+        _val = _v.get("value") if isinstance(_v, dict) else None
+        if _val is not None and _nm and _nm.startswith("T_T") and "BOX" not in _nm:
+            TEMPTYPE_CODE[_nm[2:].lower()] = _val
     fns = cat["functions"]
 
     # The catalog is the raw extern parse of the MobilityDB headers; JMEOS curates
@@ -1216,7 +1301,7 @@ def main():
         # Spark UDF — take the dominant shape, the rest stay reachable via their C name).
         bysig = {}
         for f in sqlgroups[sname]:
-            sig = _sig(f)
+            sig = _sqlsig(f)
             if sig is not None:
                 bysig.setdefault(sig, []).append(f)
         if not bysig:
