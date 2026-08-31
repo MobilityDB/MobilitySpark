@@ -10,7 +10,6 @@
 #
 # All of refresh-jvm-chain.sh's options pass through, e.g.:
 #   tools/refresh-from-master.sh --mdb ~/src/MobilityDB   # refresh against a local MobilityDB branch
-#   tools/refresh-from-master.sh --skip-tests             # regenerate + compile, skip the test run
 #
 # MEOSAPI=<path> uses an existing MEOS-API checkout (any branch); otherwise MEOS-API master is
 # cloned into the work dir. WORK_DIR overrides the scratch location (default <repo>/.meos-chain).
