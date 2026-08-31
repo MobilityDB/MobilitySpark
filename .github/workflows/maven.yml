@@ -54,6 +54,14 @@ jobs:
           ref: main
           path: jmeos
 
+      - name: Stage the JVM generator JMEOS owns
+        # codegen_jvm.py emits calls into the functions.GeneratedFunctions the jar below
+        # carries, so JMEOS owns it and this repository holds no copy: a vendored one goes
+        # stale the moment that surface folds an out-parameter or widens a return. Staged
+        # beside the catalog and gitignored, exactly as the catalog is. codegen_spark_udfs.py
+        # comes along because the spark arm loads it from the generator's own directory.
+        run: cp jmeos/tools/codegen_jvm.py jmeos/tools/codegen_spark_udfs.py tools/
+
       - name: Build + install the JMEOS jar as org.jmeos:meos:1.0
         # JMEOS's own tools/regen-from-catalog.sh is the single runnable definition of this
         # build — it stages the catalog and libmeos, and jmeos-core's generate-sources emits
