@@ -55,21 +55,21 @@ jobs:
           path: jmeos
 
       - name: Build + install the JMEOS jar as org.jmeos:meos:1.0
-        # Mirror JMEOS's own CI: stage the already-derived catalog + libmeos into the JMEOS
-        # checkout and build it (jmeos-core's generate-sources emits GeneratedFunctions from
-        # the catalog). Building from the same commit that produced the catalog keeps the jar's
-        # GeneratedFunctions signatures in lockstep with it. The jar plugin writes the plain
-        # jar/JMEOS.jar (finalName JMEOS) — jnr-ffi is supplied by this project's own pom, so
-        # the plain jar, not the shaded jar/JMEOS-fat.jar, is what the committed libs/JMEOS.jar
-        # was; libmeos is loaded from LD_LIBRARY_PATH, never from the jar. It is installed under
-        # the org.jmeos:meos:1.0 coordinates the generator and UDF runtime consume (not on
-        # Maven Central, so built here rather than pulled). Tests are skipped — only the jar is
-        # needed; JMEOS's own CI exercises its FFI suite.
+        # JMEOS's own tools/regen-from-catalog.sh is the single runnable definition of this
+        # build — it stages the catalog and libmeos, and jmeos-core's generate-sources emits
+        # GeneratedFunctions from the catalog, so the jar's signatures stay in lockstep with the
+        # commit that produced it. tools/refresh-from-master.sh reaches the same script through
+        # the shared chain, so the CI path and the by-hand path cannot drift. The jar plugin
+        # writes the plain jar/JMEOS.jar (finalName JMEOS) — jnr-ffi is supplied by this
+        # project's own pom, and libmeos is loaded from LD_LIBRARY_PATH, never from the jar —
+        # installed under the org.jmeos:meos:1.0 coordinates the generator and UDF runtime
+        # consume (not on Maven Central, so built here rather than pulled). Naming LIBMEOS runs
+        # JMEOS's FFI suite against the libmeos this job just built, which is what tells a jar
+        # that merely compiles from one whose generated surface answers.
         run: |
-          mkdir -p jmeos/codegen/input
-          cp "${{ steps.provision.outputs.catalog-path }}" jmeos/codegen/input/meos-idl.json
-          cp /usr/local/lib/libmeos.so jmeos/jmeos-core/src/
-          mvn -B -f jmeos/pom.xml clean install -Dmaven.test.skip=true
+          CATALOG="${{ steps.provision.outputs.catalog-path }}" \
+          LIBMEOS=/usr/local/lib/libmeos.so \
+            jmeos/tools/regen-from-catalog.sh
           mvn -B install:install-file \
             -Dfile=jmeos/jar/JMEOS.jar \
             -DgroupId=org.jmeos -DartifactId=meos -Dversion=1.0 -Dpackaging=jar
