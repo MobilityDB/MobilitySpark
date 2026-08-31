@@ -20,6 +20,10 @@ src/main/java/org/mobilitydb/spark/generated/
 
 # Derived MEOS catalog (generated in CI via the provision-meos action)
 tools/meos-idl.json
+# The JVM generator JMEOS owns, staged beside the catalog by the refresh chain
+# and by CI. Vendoring it is what let three copies drift apart.
+tools/codegen_jvm.py
+tools/codegen_spark_udfs.py
 
 # tools/refresh-from-master.sh scratch (sibling clones + libmeos prefix).
 .meos-chain/
