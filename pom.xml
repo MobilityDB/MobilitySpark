@@ -47,10 +47,13 @@
 
     <build>
         <plugins>
-            <!-- Generate the whole UDF surface from the vendored MEOS-API catalog at
-                 build time (North Star: bindings are GENERATED from MEOS, never hand
-                 written). codegen_jvm.py is the single generator shared by every JVM
-                 binding; the spark engine delegates to codegen_spark_udfs.py so the
+            <!-- Generate the whole UDF surface from the MEOS-API catalog at build
+                 time (North Star: bindings are GENERATED from MEOS, never hand
+                 written). Both the catalog and the generator are STAGED into tools/
+                 and gitignored, never committed: the catalog is derived from
+                 MobilityDB master by the provision-meos action, and codegen_jvm.py
+                 with its codegen_spark_udfs.py sibling is copied in from JMEOS, which
+                 owns them. The spark engine delegates to codegen_spark_udfs.py so the
                  emitted surface is identical to that generator's. It reads the
                  org.jmeos:meos jar's actual symbols so it never emits a call to an
                  absent/mismatched JMEOS method. -->

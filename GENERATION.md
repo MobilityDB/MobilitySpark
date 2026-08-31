@@ -11,15 +11,20 @@ binding owns its generator in its own repo. The source of truth is the catalog
 ## MobilitySpark is a consumer binding
 
 MobilitySpark binds the **JMEOS jar** (the JVM FFI projection of the catalog), not MEOS-API
-directly. Its generator is the shared **`tools/codegen_jvm.py --engine spark`**, the single
-generator vendored identically by every JVM binding (MobilitySpark, MobilityFlink,
-MobilityKafka). The `spark` engine delegates verbatim to the sibling
+directly. Its generator is the shared **`tools/codegen_jvm.py --engine spark`**, which **JMEOS
+owns** and this repository STAGES: `tools/codegen_jvm.py` and `tools/codegen_spark_udfs.py` are
+gitignored here, copied in by the refresh chain and by CI from the JMEOS checkout, exactly as the
+catalog is. Every symbol the generator emits is a call into the `functions.GeneratedFunctions`
+that jar carries, so the generator and the surface it binds are one unit: a copy left in this tree
+goes stale the moment that surface folds an out-parameter or widens a return. MobilityFlink and
+MobilityKafka stage the same two files from the same place. The `spark` engine delegates verbatim
+to the sibling
 **`tools/codegen_spark_udfs.py`** (which mirrors the JMEOS `FunctionsGenerator`): it reads the
 JMEOS surface and the catalog's `@sqlfn` names and emits the Spark UDF registration layer,
 organized **by `@ingroup` group** (one unit per group, the same structure as the reference
 manual). Every emitted `register()` is preceded by the per-thread MEOS-init guard, enforced at
-build time. Sharing one generator across the JVM bindings is what keeps the surface from
-drifting between engines.
+build time. One generator with one home is what keeps the surface from drifting between engines;
+three copies of it drifted by 202 lines before JMEOS took ownership.
 
 ## Inputs
 
