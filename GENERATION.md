@@ -50,7 +50,6 @@ master the first time). All of that script's options pass through:
 
 ```bash
 tools/refresh-from-master.sh --mdb ~/src/MobilityDB   # refresh against a local MobilityDB branch
-tools/refresh-from-master.sh --skip-tests             # regenerate + compile, skip the tests
 ```
 
 This repo's last leg is `tools/refresh.conf`: the repo-root Maven module, the `org.jmeos:meos:1.0`
