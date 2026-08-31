@@ -6,6 +6,20 @@ on:
   pull_request:
 
 jobs:
+  # The tree is checked before anything is built: the four rules read
+  # `git ls-files` and nothing else, so a finding arrives in seconds rather than
+  # after a libmeos build. The rules live in MEOS-API beside the catalog and the
+  # provisioning recipe, so this repository carries no copy of them to go stale.
+  hygiene:
+    name: Tree hygiene
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refuse tracked build output, skipped suites and stale pins
+        uses: MobilityDB/MEOS-API/.github/actions/check-tree-hygiene@master
+
   # ── Linux ────────────────────────────────────────────────────────────────────
   linux:
     name: Build and test — Linux (Java 21 / Spark 3.5)
