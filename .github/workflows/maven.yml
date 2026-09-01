@@ -99,4 +99,18 @@ jobs:
       - name: Build + generate + unit tests
         # generate-sources runs the catalog-driven UDF generator; test exercises the
         # generated surface against libmeos through JMEOS.
-        run: mvn -B clean test
+        run: |
+          set -o pipefail
+          mvn -B clean test | tee "$RUNNER_TEMP/build.log"
+
+      # The build's own summary states two things this job's conclusion does
+      # not: a test reported SKIPPED asserts nothing while the job still reads
+      # success, and a test the run never collects appears in no count at all,
+      # so removing one leaves the skip number at zero. The floor is what
+      # guards the second. Raise it when the suite grows; lowering it belongs
+      # in the commit that accounts for the removal.
+      - name: Refuse a skip, and a suite that shrank
+        uses: MobilityDB/MEOS-API/.github/actions/check-test-outcome@master
+        with:
+          log: ${{ runner.temp }}/build.log
+          min-tests: "13"
