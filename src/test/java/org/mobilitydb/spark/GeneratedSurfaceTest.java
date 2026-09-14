@@ -30,6 +30,7 @@ class GeneratedSurfaceTest {
 
     private static SparkSession spark;
     private static Map<String, String> byOperator;
+    private static String json;
 
     @BeforeAll
     static void setup() throws Exception {
@@ -37,11 +38,13 @@ class GeneratedSurfaceTest {
                 .config("spark.ui.enabled", "false").getOrCreate();
         GeneratedSpatioTemporalUDFs.registerAll(spark);
         // The operator->bare-name dialect, read from the SAME catalog the generator emits
-        // from, so a dialect rename (e.g. ?= ever_eq->eEq, <-> tdistance->tDistance) updates
-        // this test automatically instead of hard-coding the names. byOperator is a flat
-        // string->string map; parse it directly (Spark's bundled jackson is version-skewed).
+        // from, so a dialect rename (e.g. ?= ever_eq->eEqual, <-> tdistance->tDistance)
+        // updates this test automatically instead of hard-coding the names. byOperator is a
+        // flat string->string map; parse it directly (Spark's bundled jackson is
+        // version-skewed). A position operator has no bare name: positionNames gives its
+        // name for each class (see position()).
         byOperator = new HashMap<>();
-        String json = Files.readString(Paths.get("tools/meos-idl.json"));
+        json = Files.readString(Paths.get("tools/meos-idl.json"));
         int b = json.indexOf('{', json.indexOf("\"byOperator\""));
         Matcher m = Pattern.compile("\"([^\"]+)\"\\s*:\\s*\"([^\"]+)\"")
                 .matcher(json.substring(b + 1, json.indexOf('}', b)));
@@ -56,6 +59,23 @@ class GeneratedSurfaceTest {
         String n = byOperator.get(operator);
         assertNotNull(n, "catalog byOperator has no entry for " + operator);
         return n;
+    }
+
+    /**
+     * The SQL name of a position operator for one class of operands, per the catalog's
+     * positionNames (operator -> class -> name): &lt;&lt; is stboxLeft for an stbox,
+     * tboxLeft for a tbox, and a temporal operand takes the class of its bounding box.
+     */
+    private static String position(String operator, String cls) {
+        int p = json.indexOf("\"positionNames\"");
+        assertTrue(p >= 0, "catalog has no positionNames");
+        int k = json.indexOf("\"" + operator + "\"", p);
+        assertTrue(k >= 0, "catalog positionNames has no entry for " + operator);
+        int b = json.indexOf('{', k);
+        Matcher m = Pattern.compile("\"" + Pattern.quote(cls) + "\"\\s*:\\s*\"([^\"]+)\"")
+                .matcher(json.substring(b + 1, json.indexOf('}', b)));
+        assertTrue(m.find(), "catalog positionNames has no " + cls + " name for " + operator);
+        return m.group(1);
     }
 
     private Object scalar(String sql) {
@@ -167,29 +187,34 @@ class GeneratedSurfaceTest {
 
     @Test
     void portable_bare_name_dispatch_surface() {
-        // The portable bare-name operator dialect, emitted by the generator's DISPATCH pass
-        // — NOT hand-registered. The bare names are read from the catalog's byOperator map
-        // (op(...)) rather than hard-coded, so the dialect (e.g. ?=->eEq, <->->tDistance) is
-        // the single source: a rename updates this test automatically. One assertion per
-        // family proves the superclass entrypoint dispatches the concrete subtype from hex-WKB.
+        // The portable operator dialect, emitted by the generator — NOT hand-registered. The
+        // names are read from the catalog (op(...) from byOperator, position(...) from
+        // positionNames) rather than hard-coded, so the dialect (e.g. ?=->eEqual,
+        // <->->tDistance, &<#->tboxOverbefore for a tnumber) is the single source: a rename
+        // updates this test automatically. One assertion per family proves the entrypoint
+        // dispatches the concrete subtype from hex-WKB.
         // topology (&&): two identical tints overlap in time → true
         assertEquals(Boolean.TRUE, scalar(
             "SELECT " + op("&&") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
         // same (~=): a value equals itself
         assertEquals(Boolean.TRUE, scalar(
             "SELECT " + op("~=") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
-        // time position (&<#): a value's period overbefore-overlaps itself → true
+        // time position (&<#), named for the tbox class of a tnumber: a value's period
+        // overbefore-overlaps itself → true
         assertEquals(Boolean.TRUE, scalar(
-            "SELECT " + op("&<#") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
-        // temporal comparison (#=): of a value with itself is a temporal bool, non-null
-        assertNotNull(scalar("SELECT " + op("#=") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+            "SELECT " + position("&<#", "tbox") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+        // temporal comparison (#=): of a value with itself is a temporal bool, carried as
+        // hex-WKB, not the boolean of the traditional =
+        Object teq = scalar("SELECT " + op("#=") + "('" + TINT_HEX + "', '" + TINT_HEX + "')");
+        assertNotNull(teq);
+        assertTrue(teq instanceof String, "#= answers a temporal boolean, not " + teq.getClass());
         // ever comparison (?=): same value → true
         assertEquals(Boolean.TRUE, scalar(
             "SELECT " + op("?=") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
-        // space-X axis classifier (&<): a value is overleft-of itself on its value axis →
-        // true (exercises axisBool)
+        // value-axis position (&<), named for the tbox class of a tnumber: a value is
+        // overleft-of itself on its value axis → true
         assertEquals(Boolean.TRUE, scalar(
-            "SELECT " + op("&<") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+            "SELECT " + position("&<", "tbox") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
         // distance (<->): lifted distance between two coincident tgeompoints → a temporal
         // (hex-WKB) of all-zero distance, non-null
         assertNotNull(scalar(
