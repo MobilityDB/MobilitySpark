@@ -123,8 +123,9 @@ FROM (SELECT explode(eDwithinPairs(trips_a, trips_b, 1000.0)) AS pr FROM trip_ar
 ```
 
 The C-level entry points are registered too (`tint_in`, `tint_out`, `temporal_num_instants`,
-`tnumber_twavg`, …), as is the portable bare-name operator dialect the catalog's `byOperator` map
-defines. Because the names come from the catalog, a rename upstream arrives here by
+`tnumber_twavg`, …), as is the portable operator dialect the catalog defines: the bare names of
+its `byOperator` map and, for a position operator, the name for each class of operands in its
+`positionNames` (`tboxOverbefore` for a tnumber, `stboxLeft` for a tgeompoint). Because the names come from the catalog, a rename upstream arrives here by
 regeneration rather than by editing this repository.
 
 Free what you keep: pointers returned across the FFI boundary are raw native addresses the JVM
@@ -142,9 +143,9 @@ mvn -B clean test
 it *binds and executes*, not merely that it compiles: scalar accessors and I/O round-trips, double
 / boolean / byte marshalling, the cbuffer and npoint families, the JSON-path surface, value-array
 accessors, the N-by-N array UDFs, the canonical `@sqlfn` names with runtime argument-kind
-dispatch, a folded out-parameter, and the H3 cell prefilter. The bare-name operators are read from
-the catalog's own `byOperator` map rather than hard-coded, so a dialect rename updates the test by
-itself.
+dispatch, a folded out-parameter, and the H3 cell prefilter. The operator names are read from the
+catalog's own `byOperator` and `positionNames` maps rather than hard-coded, so a dialect rename
+updates the test by itself.
 
 MEOS keeps process-global state and cannot be re-initialised in a JVM that has finalised it, so
 Surefire runs one JVM per test class (`forkCount=1`, `reuseForks=false`). Keep that configuration.
