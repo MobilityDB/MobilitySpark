@@ -62,6 +62,13 @@ public final class MobilitySparkExtensions
                 return new OrderConjunctsByCost();
             }
         });
+        extensions.injectOptimizerRule(new AbstractFunction1<SparkSession, Rule<LogicalPlan>>() {
+            @Override
+            public Rule<LogicalPlan> apply(SparkSession session) {
+                return new MaterializeNestedLoopSides(
+                        session.sparkContext().defaultParallelism());
+            }
+        });
         return BoxedUnit.UNIT;
     }
 }

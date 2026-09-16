@@ -124,7 +124,7 @@ public final class OrderConjunctsByCost extends Rule<LogicalPlan> {
     }
 
     /** Whether the expression calls a user-defined function anywhere inside it */
-    private static boolean callsUdf(Expression expression) {
+    static boolean callsUdf(Expression expression) {
         if (expression instanceof ScalaUDF) {
             return true;
         }
