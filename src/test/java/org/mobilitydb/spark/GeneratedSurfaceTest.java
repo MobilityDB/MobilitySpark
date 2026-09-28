@@ -283,6 +283,12 @@ class GeneratedSurfaceTest {
         assertTrue(t instanceof byte[], "a temporal travels as WKB, got " + t.getClass());
         Object span = scalar("SELECT timeSpan(" + tint + ")");
         assertTrue(span instanceof byte[], "a span travels as WKB, got " + span.getClass());
+        // A box travels as its WKB bytes too, and is read from those bytes and from its text.
+        String box = "'STBOX X((1,1),(2,2))'";
+        Object stbox = scalar("SELECT stbox_in(" + box + ")");
+        assertTrue(stbox instanceof byte[], "a box travels as WKB, got " + stbox.getClass());
+        assertEquals("STBOX X((1,1),(2,2))", scalar("SELECT stbox_out(stbox_in(" + box + "), 15)"));
+        assertEquals(Boolean.FALSE, scalar("SELECT hasZ(" + box + ")"));
         // The bytes and the hex-WKB text of one value answer alike.
         assertEquals(3, ((Number) scalar("SELECT numInstants(" + tint + ")")).intValue());
         assertEquals(3, ((Number) scalar("SELECT numInstants('" + TINT_HEX + "')")).intValue());

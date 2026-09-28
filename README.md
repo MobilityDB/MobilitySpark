@@ -104,9 +104,11 @@ SparkSession spark = SparkSession.builder().appName("mobilityspark").master("loc
 GeneratedSpatioTemporalUDFs.registerAll(spark);
 ```
 
-Temporal values, spans, span sets and sets travel as their MEOS WKB bytes, a binary column, and a
-column of their hex-WKB text reads as well; geometries travel as WKT or EWKT text, and boxes,
-circular buffers, network points and poses as their text form:
+A value travels in the codec the MEOS catalog states for its type: temporal values, spans, span
+sets, sets, boxes, circular buffers, network points and poses as their MEOS WKB bytes, a binary
+column, read as well from their hex-WKB text and, for a type with a generic text reader such as a
+box, from their text form; geometries travel as EWKT and are read from WKT or EWKT, and network
+segments and JSON as their text form:
 
 ```sql
 -- accessors under their canonical MobilityDB SQL names
