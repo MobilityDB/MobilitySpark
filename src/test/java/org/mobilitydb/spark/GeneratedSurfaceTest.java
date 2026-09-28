@@ -360,4 +360,60 @@ class GeneratedSurfaceTest {
             "SELECT ever_eq_h3indexset_th3index("
             + "geoToH3IndexSet('" + nyc + "', 7), th3index(" + trip + ", 7))"));
     }
+
+    /**
+     * The text of an aggregate over three temporal values, one partition each, so the
+     * transition runs in every partition and the combine joins the partial states the
+     * shuffle carries between them.
+     */
+    private String aggregate(String agg, String in, String out, String... values) {
+        StringBuilder rows = new StringBuilder();
+        for (String v : values)
+            rows.append(rows.length() == 0 ? "" : ", ").append("('").append(v).append("')");
+        return (String) scalar("SELECT " + out + "(" + agg + "(v)) FROM (SELECT /*+ REPARTITION("
+            + values.length + ") */ " + in + "(s) AS v FROM VALUES " + rows + " AS t(s))");
+    }
+
+    @Test
+    void temporal_aggregates_answer_what_mobilitydb_answers() {
+        // The expected texts are what MobilityDB answers for the same aggregate over the
+        // same values, with the time zone set to UTC.
+        String[] tints = {"[1@2001-01-01, 2@2001-01-03]", "[3@2001-01-02, 4@2001-01-04]",
+                          "[5@2001-01-03, 5@2001-01-05]"};
+        assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00, "
+            + "3@2001-01-03 00:00:00+00], (2@2001-01-03 00:00:00+00, 2@2001-01-04 00:00:00+00], "
+            + "(1@2001-01-04 00:00:00+00, 1@2001-01-05 00:00:00+00]}",
+            aggregate("tCount", "tint_in", "tint_out", tints));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-03 00:00:00+00], "
+            + "(3@2001-01-03 00:00:00+00, 4@2001-01-04 00:00:00+00], "
+            + "(5@2001-01-04 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
+            aggregate("tMinAgg", "tint_in", "tint_out", tints));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 3@2001-01-02 00:00:00+00, "
+            + "5@2001-01-03 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
+            aggregate("tMaxAgg", "tint_in", "tint_out", tints));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 4@2001-01-02 00:00:00+00, "
+            + "10@2001-01-03 00:00:00+00], (8@2001-01-03 00:00:00+00, 9@2001-01-04 00:00:00+00], "
+            + "(5@2001-01-04 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
+            aggregate("tSum", "tint_in", "tint_out", tints));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00], "
+            + "[3@2001-01-03 00:00:00+00, 4@2001-01-04 00:00:00+00], "
+            + "[5@2001-01-05 00:00:00+00, 6@2001-01-06 00:00:00+00]}",
+            aggregate("mergeAgg", "tint_in", "tint_out", "[1@2001-01-01, 2@2001-01-02]",
+                      "[3@2001-01-03, 4@2001-01-04]", "[5@2001-01-05, 6@2001-01-06]"));
+        String[] tbools = {"[true@2001-01-01, false@2001-01-03]",
+                           "[true@2001-01-02, true@2001-01-04]"};
+        assertEquals("{[t@2001-01-01 00:00:00+00, f@2001-01-03 00:00:00+00], "
+            + "(t@2001-01-03 00:00:00+00, t@2001-01-04 00:00:00+00]}",
+            aggregate("tAndAgg", "tbool_in", "tbool_out", tbools));
+        assertEquals("{[t@2001-01-01 00:00:00+00, t@2001-01-04 00:00:00+00]}",
+            aggregate("tOrAgg", "tbool_in", "tbool_out", tbools));
+        // A temporal integer and a temporal float in two partitions are values of two
+        // types, which a typed aggregate refuses as MobilityDB's typed aggregates do.
+        Exception e = assertThrows(Exception.class, () -> scalar("SELECT tSum(v) FROM (SELECT "
+            + "/*+ REPARTITION(2) */ CASE k WHEN 0 THEN tint_in(s) ELSE tfloat_in(s) END AS v "
+            + "FROM VALUES (0, '[1@2001-01-01, 2@2001-01-02]'), "
+            + "(1, '[1.5@2001-01-01, 2.5@2001-01-02]') AS t(k, s))"));
+        assertTrue(String.valueOf(e.getMessage()).contains("values of one temporal type"),
+            "the refusal names the mix of types, got: " + e.getMessage());
+    }
 }
