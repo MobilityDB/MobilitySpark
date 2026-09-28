@@ -104,8 +104,9 @@ SparkSession spark = SparkSession.builder().appName("mobilityspark").master("loc
 GeneratedSpatioTemporalUDFs.registerAll(spark);
 ```
 
-Temporal values travel as strings in MEOS hex-WKB, and geometries as hex-EWKB, so any Spark type
-system carries them:
+Temporal values, spans, span sets and sets travel as their MEOS WKB bytes, a binary column, and a
+column of their hex-WKB text reads as well; geometries travel as WKT or EWKT text, and boxes,
+circular buffers, network points and poses as their text form:
 
 ```sql
 -- accessors under their canonical MobilityDB SQL names
@@ -140,8 +141,8 @@ mvn -B clean test
 ```
 
 `GeneratedSurfaceTest` drives the generated surface from known hex-WKB literals and asserts that
-it *binds and executes*, not merely that it compiles: scalar accessors and I/O round-trips, double
-/ boolean / byte marshalling, the cbuffer and npoint families, the JSON-path surface, value-array
+it *binds and executes*, not merely that it compiles: scalar accessors and I/O round-trips, the
+WKB bytes the functions return and the hex-WKB text they read, double / boolean / byte marshalling, the cbuffer and npoint families, the JSON-path surface, value-array
 accessors, the N-by-N array UDFs, the canonical `@sqlfn` names with runtime argument-kind
 dispatch, a folded out-parameter, and the H3 cell prefilter. The operator names are read from the
 catalog's own `byOperator` and `positionNames` maps rather than hard-coded, so a dialect rename
