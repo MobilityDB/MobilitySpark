@@ -204,10 +204,10 @@ class GeneratedSurfaceTest {
         assertEquals(Boolean.TRUE, scalar(
             "SELECT " + position("&<#", "tbox") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
         // temporal comparison (#=): of a value with itself is a temporal bool, carried as
-        // hex-WKB, not the boolean of the traditional =
+        // WKB, not the boolean of the traditional =
         Object teq = scalar("SELECT " + op("#=") + "('" + TINT_HEX + "', '" + TINT_HEX + "')");
         assertNotNull(teq);
-        assertTrue(teq instanceof String, "#= answers a temporal boolean, not " + teq.getClass());
+        assertTrue(teq instanceof byte[], "#= answers a temporal boolean, not " + teq.getClass());
         // ever comparison (?=): same value → true
         assertEquals(Boolean.TRUE, scalar(
             "SELECT " + op("?=") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
@@ -273,6 +273,30 @@ class GeneratedSurfaceTest {
         assertNotNull(hex);
         assertEquals(3, ((Number) scalar(
             "SELECT temporal_num_instants(temporal_from_hexwkb('" + hex + "'))")).intValue());
+    }
+
+    @Test
+    void values_travel_as_wkb_and_hex_wkb_stays_readable() {
+        String tint = "tint_in('[1@2001-01-01, 2@2001-01-02, 1@2001-01-03]')";
+        // A temporal, and the span a function derives from it, travel as their WKB bytes.
+        Object t = scalar("SELECT " + tint);
+        assertTrue(t instanceof byte[], "a temporal travels as WKB, got " + t.getClass());
+        Object span = scalar("SELECT timeSpan(" + tint + ")");
+        assertTrue(span instanceof byte[], "a span travels as WKB, got " + span.getClass());
+        // The bytes and the hex-WKB text of one value answer alike.
+        assertEquals(3, ((Number) scalar("SELECT numInstants(" + tint + ")")).intValue());
+        assertEquals(3, ((Number) scalar("SELECT numInstants('" + TINT_HEX + "')")).intValue());
+        // Hex-WKB in the big-endian byte order (WKB_EXTENDED | WKB_XDR = 20) is read by its
+        // own order, the type standing in the second and third bytes.
+        assertEquals(3, ((Number) scalar("SELECT numInstants(temporal_as_hexwkb("
+            + tint + ", CAST(20 AS BYTE)))")).intValue());
+        // An aggregate over a column of hex-WKB text answers what it answers over the WKB
+        // of the same value.
+        Object overWkb = scalar("SELECT tint_out(tCount(v)) FROM (SELECT temporal_from_hexwkb('"
+            + TINT_HEX + "') AS v)");
+        assertNotNull(overWkb);
+        assertEquals(overWkb,
+            scalar("SELECT tint_out(tCount(s)) FROM VALUES ('" + TINT_HEX + "') AS t(s)"));
     }
 
     @Test

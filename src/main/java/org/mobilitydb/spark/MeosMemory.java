@@ -47,7 +47,7 @@ import java.lang.reflect.Field;
  *
  * Usage:
  * <pre>
- *   Pointer tptr = GeneratedFunctions.temporal_from_hexwkb(hex);
+ *   Pointer tptr = GeneratedFunctions.temporal_from_wkb(wkb);
  *   try {
  *       // ... use tptr ...
  *   } finally {
