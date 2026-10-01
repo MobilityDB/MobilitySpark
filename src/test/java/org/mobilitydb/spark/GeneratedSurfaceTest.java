@@ -101,6 +101,34 @@ class GeneratedSurfaceTest {
     }
 
     @Test
+    void set_returning_rows_as_arrays() {
+        // A set-returning function answers its rows as an array, which inline/explode unfold.
+        // tint_unnest: one row per value, ordered; 1 holds two periods, 2 holds one.
+        assertEquals(2, ((Number) scalar(
+            "SELECT size(tint_unnest('" + TINT_HEX + "'))")).intValue());
+        assertEquals(1, ((Number) scalar(
+            "SELECT tint_unnest('" + TINT_HEX + "')[0].value")).intValue());
+        assertEquals(2, ((Number) scalar(
+            "SELECT spanset_num_spans(tint_unnest('" + TINT_HEX + "')[0].time)")).intValue());
+        // tint_value_split by 1 from 0: the bins of 1 and 2
+        assertEquals(2, ((Number) scalar(
+            "SELECT size(tint_value_split('" + TINT_HEX + "', 1, 0))")).intValue());
+        assertEquals(2, ((Number) scalar(
+            "SELECT tint_value_split('" + TINT_HEX + "', 1, 0)[1].number")).intValue());
+        // the value tiles of the tint's box: the first tile's index is 1, as in SQL
+        assertEquals(1, ((Number) scalar(
+            "SELECT tintbox_value_tiles(tnumber_to_tbox('" + TINT_HEX + "'), 1, 0)[0].index"))
+            .intValue());
+        // the rows unfold through LATERAL VIEW inline
+        assertEquals(2L, ((Number) scalar(
+            "SELECT count(*) FROM (SELECT 1) LATERAL VIEW inline(tint_unnest('" + TINT_HEX
+            + "')) u AS value, time")).longValue());
+        // dynTimeWarpPath of a tint with itself: the diagonal, 3 matches
+        assertEquals(3, ((Number) scalar(
+            "SELECT size(dynTimeWarpPath('" + TINT_HEX + "', '" + TINT_HEX + "'))")).intValue());
+    }
+
+    @Test
     void numeric_op_on_generated_surface() {
         // tnumber_integral over the linear-free (step) tint is a finite double
         Object integral = scalar("SELECT tnumber_integral('" + TINT_HEX + "')");
