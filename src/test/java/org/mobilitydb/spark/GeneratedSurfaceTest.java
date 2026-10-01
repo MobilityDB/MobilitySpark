@@ -101,6 +101,20 @@ class GeneratedSurfaceTest {
     }
 
     @Test
+    void interval_in_and_out_as_text() {
+        // An interval travels in its text form: interval_in reads an argument, interval_out
+        // writes a result. The tint spans two days.
+        assertEquals("2 days", scalar(
+            "SELECT temporal_duration('" + TINT_HEX + "', false)"));
+        assertEquals("4 days", scalar(
+            "SELECT temporal_duration(temporal_scale_time('" + TINT_HEX + "', '4 days'), false)"));
+        assertEquals("1 day", scalar(
+            "SELECT minus_timestamptz_timestamptz("
+            + "temporal_start_timestamptz(temporal_shift_time('" + TINT_HEX + "', '1 day')), "
+            + "temporal_start_timestamptz('" + TINT_HEX + "'))"));
+    }
+
+    @Test
     void set_returning_rows_as_arrays() {
         // A set-returning function answers its rows as an array, which inline/explode unfold.
         // tint_unnest: one row per value, ordered; 1 holds two periods, 2 holds one.
