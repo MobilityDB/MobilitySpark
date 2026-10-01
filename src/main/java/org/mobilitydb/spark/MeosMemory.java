@@ -25,9 +25,8 @@
 
 package org.mobilitydb.spark;
 
+import com.kenai.jffi.MemoryIO;
 import jnr.ffi.Pointer;
-import sun.misc.Unsafe;
-import java.lang.reflect.Field;
 
 /**
  * Native memory management for MEOS objects returned by JNR-FFI calls.
@@ -40,10 +39,11 @@ import java.lang.reflect.Field;
  * without bound (one leaked Temporal* per UDF call × millions of rows
  * in cross-join queries like Q2/Q4/Q5/Q6).
  *
- * Implementation uses sun.misc.Unsafe.freeMemory() which calls the system
- * free() underneath — safe for MEOS pointers since MEOS standalone mode
- * uses the system allocator.  This avoids JNR-FFI classloader boundary
- * issues that arise when loading libc via LibraryLoader inside Spark.
+ * Implementation uses jffi's MemoryIO.freeMemory(), which calls the system
+ * free() — safe for MEOS pointers since MEOS standalone mode uses the
+ * system allocator.  jffi is the native layer JNR-FFI itself runs on, so it
+ * shares the classloader of every MEOS call inside Spark, without loading
+ * libc through LibraryLoader and without an internal JDK API.
  *
  * Usage:
  * <pre>
@@ -57,28 +57,19 @@ import java.lang.reflect.Field;
  */
 public final class MeosMemory {
 
-    private static final Unsafe UNSAFE;
-    static {
-        try {
-            Field f = Unsafe.class.getDeclaredField("theUnsafe");
-            f.setAccessible(true);
-            UNSAFE = (Unsafe) f.get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
+    private static final MemoryIO IO = MemoryIO.getInstance();
 
     private MeosMemory() {}
 
     /** Free a native pointer allocated by MEOS.  Null-safe. */
     public static void free(Pointer ptr) {
-        if (ptr != null) UNSAFE.freeMemory(ptr.address());
+        if (ptr != null) IO.freeMemory(ptr.address());
     }
 
     /** Free multiple native pointers in one call.  Null-safe. */
     public static void free(Pointer... ptrs) {
         for (Pointer p : ptrs) {
-            if (p != null) UNSAFE.freeMemory(p.address());
+            if (p != null) IO.freeMemory(p.address());
         }
     }
 }
