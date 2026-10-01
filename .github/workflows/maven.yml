@@ -103,6 +103,16 @@ jobs:
           set -o pipefail
           mvn -B clean test | tee "$RUNNER_TEMP/build.log"
 
+      # The build prints no warning: Maven's [WARNING] lines and the WARNING:
+      # lines JUnit and the JVM print during the tests. One of either fails
+      # the step and is listed.
+      - name: Refuse a build warning
+        run: |
+          if grep -E '^\[WARNING\]|^WARNING:' "$RUNNER_TEMP/build.log"; then
+            echo "::error::the build prints $(grep -cE '^\[WARNING\]|^WARNING:' "$RUNNER_TEMP/build.log") warning line(s)"
+            exit 1
+          fi
+
       # The build's own summary states two things this job's conclusion does
       # not: a test reported SKIPPED asserts nothing while the job still reads
       # success, and a test the run never collects appears in no count at all,

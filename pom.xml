@@ -14,6 +14,19 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- ZooKeeper, which Spark depends on, reads audience-annotations. From 0.15.0
+                 its parent POM declares no system-scope jdk.tools on lib/tools.jar, a file
+                 no JDK from 9 on ships. -->
+            <dependency>
+                <groupId>org.apache.yetus</groupId>
+                <artifactId>audience-annotations</artifactId>
+                <version>0.15.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.spark</groupId>
