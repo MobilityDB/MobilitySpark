@@ -110,14 +110,16 @@ class GeneratedSurfaceTest {
             "SELECT tint_unnest('" + TINT_HEX + "')[0].value")).intValue());
         assertEquals(2, ((Number) scalar(
             "SELECT spanset_num_spans(tint_unnest('" + TINT_HEX + "')[0].time)")).intValue());
-        // tint_value_split by 1 from 0: the bins of 1 and 2
+        // tint_value_split by 1 from 0, the upper border included as in SQL: the bins of 1
+        // and 2
         assertEquals(2, ((Number) scalar(
-            "SELECT size(tint_value_split('" + TINT_HEX + "', 1, 0))")).intValue());
+            "SELECT size(tint_value_split('" + TINT_HEX + "', 1, 0, true))")).intValue());
         assertEquals(2, ((Number) scalar(
-            "SELECT tint_value_split('" + TINT_HEX + "', 1, 0)[1].number")).intValue());
-        // the value tiles of the tint's box: the first tile's index is 1, as in SQL
+            "SELECT tint_value_split('" + TINT_HEX + "', 1, 0, true)[1].number")).intValue());
+        // the value tiles of the tint's box, the upper border included: the first tile's
+        // index is 1, as in SQL
         assertEquals(1, ((Number) scalar(
-            "SELECT tintbox_value_tiles(tnumber_to_tbox('" + TINT_HEX + "'), 1, 0)[0].index"))
+            "SELECT tintbox_value_tiles(tnumber_to_tbox('" + TINT_HEX + "'), 1, 0, true)[0].index"))
             .intValue());
         // the rows unfold through LATERAL VIEW inline
         assertEquals(2L, ((Number) scalar(
