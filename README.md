@@ -87,13 +87,42 @@ With the catalog and the jar already in place, the ordinary Maven build regenera
 mvn -B clean test
 ```
 
-`generate-sources` runs the generator; `build-helper` adds `target/generated-sources/spark` as a
-source root. No skip-the-tests variant is offered, deliberately: the suite is what distinguishes a
+`generate-sources` runs the generator twice, `--engine spark` and `--engine spark-sql`;
+`build-helper` adds `target/generated-sources/spark` and `target/generated-sources/spark-sql/src/main/java` as
+source roots. No skip-the-tests variant is offered, deliberately: the suite is what distinguishes a
 regenerated surface from a merely well-formed one, and the tree-hygiene job fails a tree that
 introduces a skip flag.
 
 
 ## Using the binding
+
+### The typed SQL surface
+
+`MobilitySparkSql.registerAll` registers the surface the `spark-sql` engine generates from the
+overloads the Flink SQL surface of MobilityFlink uses. Each MEOS SQL type is a Spark type of its
+own (`tint`, `tfloat`, `tgeompoint`, `floatspan`, ...), carried as the form its catalog codec
+writes, and each MobilityDB SQL name is registered once, its overload and result type chosen from
+the argument types while Spark plans the call, as PostgreSQL resolves them:
+
+```java
+import org.mobilitydb.spark.sql.MobilitySparkSql;
+
+MobilitySparkSql.registerAll(spark);
+```
+
+```sql
+SELECT maxValue(tintFromHexWKB(h)) FROM t;        -- an int over a tint
+SELECT maxValue(tfloatFromHexWKB(h)) FROM t;      -- a double over a tfloat
+SELECT startTimestamp(shiftTime(v, INTERVAL '1' DAY)) FROM t;
+SELECT explode(unnest(set(array(3, 1, 2))));      -- a set-returning function's rows
+```
+
+A value enters through its type's constructors (`tfloatFromHexWKB`, `tfloat(value, time)`, ...),
+as a PostgreSQL value does. A name Spark itself answers keeps answering its own arguments:
+`lower('ABC')` and `round(2.5)` are Spark's. `GeneratedSqlSurfaceTest` asserts the queries
+MobilityFlink's `GeneratedSqlSurfaceTest` asserts.
+
+### The UDF surface
 
 Register the generated surface on a `SparkSession`, then call the functions from Spark SQL:
 
