@@ -94,6 +94,28 @@
                             </arguments>
                         </configuration>
                     </execution>
+                    <!-- The typed SQL surface: one Spark type per MEOS SQL type and one
+                         registration per SQL name resolving its overloads from the argument
+                         types, generated from the overloads the Flink SQL surface uses. -->
+                    <execution>
+                        <id>generate-sql-surface</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>python3</executable>
+                            <arguments>
+                                <argument>${project.basedir}/tools/codegen_jvm.py</argument>
+                                <argument>--engine</argument>
+                                <argument>spark-sql</argument>
+                                <argument>--catalog</argument>
+                                <argument>${project.basedir}/tools/meos-idl.json</argument>
+                                <argument>--jar</argument>
+                                <argument>${settings.localRepository}/org/jmeos/meos/1.0/meos-1.0.jar</argument>
+                                <argument>--out</argument>
+                                <argument>${project.build.directory}/generated-sources/spark-sql</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -108,6 +130,7 @@
                         <configuration>
                             <sources>
                                 <source>${project.build.directory}/generated-sources/spark</source>
+                                <source>${project.build.directory}/generated-sources/spark-sql/src/main/java</source>
                             </sources>
                         </configuration>
                     </execution>
