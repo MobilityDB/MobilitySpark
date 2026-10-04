@@ -185,4 +185,72 @@ class GeneratedSqlSurfaceTest {
         assertEquals(1, pairs.get(0).get(0));
         assertEquals(2, pairs.get(0).get(1));
     }
+
+    /**
+     * The text of an aggregate over typed values, each value in a partition of its own, so the
+     * transition runs in every partition and the combine joins the partial states the shuffle
+     * carries between them; mirrors GeneratedSurfaceTest's aggregate over binary values.
+     */
+    private static String aggregate(String agg, String in, String... values) {
+        StringBuilder rows = new StringBuilder();
+        for (String v : values) {
+            rows.append(rows.length() == 0 ? "" : ", ").append("('").append(v).append("')");
+        }
+        return (String) scalar("SELECT asText(" + agg + "(v)) FROM (SELECT /*+ REPARTITION("
+                + values.length + ") */ " + in + "(s) AS v FROM VALUES " + rows + " AS t(s))");
+    }
+
+    @Test
+    void temporalAggregatesAnswerWhatMobilityDBAnswers() {
+        // The values and the expected texts of GeneratedSurfaceTest, what MobilityDB answers for
+        // the same aggregate over the same values with the time zone set to UTC.
+        String[] tints = {"[1@2001-01-01 00:00:00+00, 2@2001-01-03 00:00:00+00]", "[3@2001-01-02 00:00:00+00, 4@2001-01-04 00:00:00+00]",
+                          "[5@2001-01-03 00:00:00+00, 5@2001-01-05 00:00:00+00]"};
+        assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00, "
+            + "3@2001-01-03 00:00:00+00], (2@2001-01-03 00:00:00+00, 2@2001-01-04 00:00:00+00], "
+            + "(1@2001-01-04 00:00:00+00, 1@2001-01-05 00:00:00+00]}",
+            aggregate("tCount", "tintFromText", tints));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-03 00:00:00+00], "
+            + "(3@2001-01-03 00:00:00+00, 4@2001-01-04 00:00:00+00], "
+            + "(5@2001-01-04 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
+            aggregate("tMinAgg", "tintFromText", tints));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 3@2001-01-02 00:00:00+00, "
+            + "5@2001-01-03 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
+            aggregate("tMaxAgg", "tintFromText", tints));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 4@2001-01-02 00:00:00+00, "
+            + "10@2001-01-03 00:00:00+00], (8@2001-01-03 00:00:00+00, 9@2001-01-04 00:00:00+00], "
+            + "(5@2001-01-04 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
+            aggregate("tSum", "tintFromText", tints));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00], "
+            + "[3@2001-01-03 00:00:00+00, 4@2001-01-04 00:00:00+00], "
+            + "[5@2001-01-05 00:00:00+00, 6@2001-01-06 00:00:00+00]}",
+            aggregate("mergeAgg", "tintFromText", "[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00]",
+                      "[3@2001-01-03 00:00:00+00, 4@2001-01-04 00:00:00+00]", "[5@2001-01-05 00:00:00+00, 6@2001-01-06 00:00:00+00]"));
+        String[] tbools = {"[true@2001-01-01 00:00:00+00, false@2001-01-03 00:00:00+00]",
+                           "[true@2001-01-02 00:00:00+00, true@2001-01-04 00:00:00+00]"};
+        assertEquals("{[t@2001-01-01 00:00:00+00, f@2001-01-03 00:00:00+00], "
+            + "(t@2001-01-03 00:00:00+00, t@2001-01-04 00:00:00+00]}",
+            aggregate("tAndAgg", "tboolFromText", tbools));
+        assertEquals("{[t@2001-01-01 00:00:00+00, t@2001-01-04 00:00:00+00]}",
+            aggregate("tOrAgg", "tboolFromText", tbools));
+        // the result is a typed value the surface reads on: an int over the tint tCount answers
+        assertEquals("tint", type("SELECT tCount(" + tint + ")"));
+        assertEquals(3, scalar("SELECT maxValue(tCount(v)) FROM (SELECT /*+ REPARTITION(3) */ "
+            + "tintFromText(s) AS v FROM VALUES ('" + String.join("'), ('", tints) + "') AS t(s))"));
+    }
+
+    @Test
+    void peakCountOverMergedPieces() {
+        // The pieces of one trip are merged first, so the count counts trips, not pieces: two
+        // trips overlap on the second day, one of them stored as two pieces.
+        String rows = String.join(", ",
+            "(1, '[Point(0 0)@2020-01-01 00:00:00+00, Point(1 1)@2020-01-02 00:00:00+00]')",
+            "(1, '[Point(1 1)@2020-01-03 00:00:00+00, Point(2 2)@2020-01-04 00:00:00+00]')",
+            "(2, '[Point(5 5)@2020-01-02 00:00:00+00, Point(6 6)@2020-01-03 00:00:00+00]')");
+        assertEquals(2, scalar("SELECT maxValue(tCount(g)) FROM (SELECT k, mergeAgg(g) AS g FROM "
+            + "(SELECT k, tgeompointFromText(s) AS g FROM VALUES " + rows + " AS t(k, s)) GROUP BY k)"));
+        assertEquals(1, scalar("SELECT maxValue(tCount(g)) FROM (SELECT k, mergeAgg(g) AS g FROM "
+            + "(SELECT k, tgeompointFromText(s) AS g FROM VALUES " + rows + " AS t(k, s)) "
+            + "WHERE k = 1 GROUP BY k)"));
+    }
 }
