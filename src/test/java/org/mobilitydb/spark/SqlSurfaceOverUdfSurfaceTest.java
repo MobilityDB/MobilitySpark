@@ -49,9 +49,6 @@ class SqlSurfaceOverUdfSurfaceTest {
 
     @BeforeAll
     static void init() {
-        // No-op error handler so a parse error returns rather than terminating the JVM.
-        GeneratedFunctions.meos_initialize_error_handler((level, code, message) -> { });
-        GeneratedFunctions.meos_initialize();
         trip = "tgeompointFromHexEWKB('" + TGeomPoint.encode(GeneratedFunctions.tgeompoint_in(
                 "[Point(1 1)@2020-01-01 00:00:00+00, Point(2 2)@2020-01-02 00:00:00+00]")) + "')";
         spark = SparkSession.builder().appName("sql-over-udf-surface").master("local[1]")
@@ -64,11 +61,10 @@ class SqlSurfaceOverUdfSurfaceTest {
     }
 
     @AfterAll
-    static void finalizeMeos() {
+    static void stopSpark() {
         if (spark != null) {
             spark.stop();
         }
-        GeneratedFunctions.meos_finalize();
     }
 
     private static Object scalar(String sql) {
