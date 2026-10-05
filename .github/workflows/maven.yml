@@ -22,7 +22,7 @@ jobs:
 
   # ── Linux ────────────────────────────────────────────────────────────────────
   linux:
-    name: Build and test — Linux (Java 21 / Spark 3.5)
+    name: Build and test — Linux (Java 21 / Spark 4.0)
     runs-on: ubuntu-latest
 
     steps:
