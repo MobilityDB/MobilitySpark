@@ -57,9 +57,6 @@ class GeneratedSqlSurfaceTest {
 
     @BeforeAll
     static void init() {
-        // No-op error handler so a parse error returns rather than terminating the JVM.
-        GeneratedFunctions.meos_initialize_error_handler((level, code, message) -> { });
-        GeneratedFunctions.meos_initialize();
         tfloat = "tfloatFromHexWKB('" + TFloat.encode(GeneratedFunctions.tfloat_in(
                 "[1@2020-01-01 00:00:00+00, 3@2020-01-03 00:00:00+00]")) + "')";
         tint = "tintFromHexWKB('" + TInt.encode(GeneratedFunctions.tint_in(
@@ -74,11 +71,10 @@ class GeneratedSqlSurfaceTest {
     }
 
     @AfterAll
-    static void finalizeMeos() {
+    static void stopSpark() {
         if (spark != null) {
             spark.stop();
         }
-        GeneratedFunctions.meos_finalize();
     }
 
     private static Object scalar(String sql) {
