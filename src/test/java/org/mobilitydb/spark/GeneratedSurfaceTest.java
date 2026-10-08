@@ -410,6 +410,30 @@ class GeneratedSurfaceTest {
     }
 
     @Test
+    void point_conversion_between_geography_and_geometry_keeps_the_interpolation() {
+        // tgeogpoint_to_tgeompoint and tgeompoint_to_tgeogpoint answer what
+        // tgeompoint(tgeogpoint) and tgeogpoint(tgeompoint) answer in MobilityDB. A linear
+        // lon/lat trip whose two instants lie west and east of a lon/lat envelope crosses it
+        // only between them, so the converted trip intersects the envelope when the
+        // conversion keeps the linear interpolation, and the step trip with the same
+        // instants does not.
+        String trip = "tgeogpoint_in('SRID=4326;[POINT(80 -30)@2001-01-01, "
+                    + "POINT(179 -30)@2001-01-02]')";
+        String step = "tgeogpoint_in('SRID=4326;Interp=Step;[POINT(80 -30)@2001-01-01, "
+                    + "POINT(179 -30)@2001-01-02]')";
+        String box = "SRID=4326;POLYGON((93.41 -60.55,173.34 -60.55,173.34 -8.47,"
+                   + "93.41 -8.47,93.41 -60.55))";
+        String geom = "tgeogpoint_to_tgeompoint(" + trip + ")";
+        assertEquals("Linear", scalar("SELECT temporal_interp(" + geom + ")"));
+        assertEquals(Boolean.TRUE, scalar("SELECT eIntersects(" + geom + ", '" + box + "')"));
+        assertEquals(Boolean.FALSE, scalar(
+            "SELECT eIntersects(tgeogpoint_to_tgeompoint(" + step + "), '" + box + "')"));
+        // The reverse conversion gives back the trip it started from.
+        assertEquals(scalar("SELECT tspatial_as_text(" + trip + ", 6)"),
+            scalar("SELECT tspatial_as_text(tgeompoint_to_tgeogpoint(" + geom + "), 6)"));
+    }
+
+    @Test
     void h3_cell_prefilter_surface() {
         // The temporal-H3 cell surface (th3index / geoToH3IndexSet / the
         // ever_eq_h3indexset_th3index prefilter) — the index-less BerlinMOD Q13 join key.
