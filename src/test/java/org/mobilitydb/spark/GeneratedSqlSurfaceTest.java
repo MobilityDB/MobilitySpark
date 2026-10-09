@@ -145,6 +145,29 @@ class GeneratedSqlSurfaceTest {
     }
 
     @Test
+    void anOmittedInterpolationIsTheOneOfTheType() {
+        // appendInstant and the sequence set constructors without an interpolation take the
+        // one the temporal type supports: linear for a tfloat, step for a tint. A linear
+        // sequence drops an instant on the line of its neighbours, a step one keeps it.
+        String tfloat = "tfloatFromText('[1@2020-01-01, 2@2020-01-02]')";
+        String tint = "tintFromText('[1@2020-01-01, 2@2020-01-02]')";
+        assertEquals(3, scalar("SELECT numInstants(appendInstant(" + tfloat
+                + ", tfloatFromText('5@2020-01-03')))"));
+        assertEquals(2, scalar("SELECT numInstants(appendInstant(" + tfloat
+                + ", tfloatFromText('3@2020-01-03')))"));
+        assertEquals(3, scalar("SELECT numInstants(appendInstant(" + tint
+                + ", tintFromText('3@2020-01-03')))"));
+        assertEquals("Linear", scalar("SELECT interp(appendInstant(" + tfloat
+                + ", tfloatFromText('5@2020-01-03')))"));
+        assertEquals("Step", scalar("SELECT interp(appendInstant(" + tint
+                + ", tintFromText('3@2020-01-03')))"));
+        // a gap of more than a day between instants starts a new sequence
+        assertEquals(2, scalar("SELECT numSequences(tintSeqSetGaps(array("
+                + "tintFromText('1@2020-01-01'), tintFromText('2@2020-01-02'), "
+                + "tintFromText('3@2020-01-05')), INTERVAL '1' DAY, CAST(100.0 AS DOUBLE)))"));
+    }
+
+    @Test
     void arraysCrossAsSparkArrays() {
         assertEquals("{1, 2, 3}", scalar("SELECT intset_out(set(array(3, 1, 2)))"));
         assertEquals(Instant.parse("2020-01-01T00:00:00Z"), scalar("SELECT startValue(set(array("
