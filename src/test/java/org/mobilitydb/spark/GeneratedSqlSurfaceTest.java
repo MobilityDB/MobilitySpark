@@ -306,6 +306,37 @@ class GeneratedSqlSurfaceTest {
                       "[3@2001-01-02 00:00:00+00, 5@2001-01-04 00:00:00+00]"));
     }
 
+    /** The text of a window aggregate over the values and a window of one day, each value in a
+     * partition of its own, as #aggregate reads an aggregate of one argument. */
+    private static String windowAggregate(String agg, String in, String... values) {
+        StringBuilder rows = new StringBuilder();
+        for (String v : values) {
+            rows.append(rows.length() == 0 ? "" : ", ").append("('").append(v).append("')");
+        }
+        return (String) scalar("SELECT asText(" + agg + "(v, INTERVAL '1' DAY)) FROM (SELECT /*+ REPARTITION("
+                + values.length + ") */ " + in + "(s) AS v FROM VALUES " + rows + " AS t(s))");
+    }
+
+    @Test
+    void windowAggregatesAnswerWhatMobilityDBAnswers() {
+        // What MobilityDB answers for the same window aggregate over the same values and a window
+        // of one day with the time zone set to UTC, each value in a partition of its own, so the
+        // interval reaches the transition of every partition and the combine joins their states.
+        String[] tints = {"[1@2001-01-01 00:00:00+00, 2@2001-01-03 00:00:00+00]",
+                          "[3@2001-01-02 00:00:00+00, 4@2001-01-04 00:00:00+00]"};
+        assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00, 2@2001-01-04 00:00:00+00], "
+            + "(1@2001-01-04 00:00:00+00, 1@2001-01-05 00:00:00+00]}",
+            windowAggregate("wCount", "tintFromText", tints));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 3@2001-01-02 00:00:00+00, 3@2001-01-05 00:00:00+00]}",
+            windowAggregate("wMax", "tintFromText", tints));
+        assertEquals("Interp=Step;{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00, "
+            + "2@2001-01-04 00:00:00+00], (3@2001-01-04 00:00:00+00, 3@2001-01-05 00:00:00+00]}",
+            windowAggregate("wAvg", "tintFromText", tints));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 1@2001-01-02 00:00:00+00], "
+            + "[3@2001-01-03 00:00:00+00, 3@2001-01-04 00:00:00+00]}",
+            windowAggregate("wSum", "tfloatFromText", "{1@2001-01-01 00:00:00+00, 3@2001-01-03 00:00:00+00}"));
+    }
+
     @Test
     void peakCountOverMergedPieces() {
         // The pieces of one trip are merged first, so the count counts trips, not pieces: two
