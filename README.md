@@ -104,6 +104,24 @@ own (`tint`, `tfloat`, `tgeompoint`, `floatspan`, ...), carried as the form its 
 writes, and each MobilityDB SQL name is registered once, its overload and result type chosen from
 the argument types while Spark plans the call, as PostgreSQL resolves them:
 
+Naming `MobilitySparkExtensions` in `spark.sql.extensions` registers the surface on every session
+Spark builds: the session the builder answers, each `newSession()`, each Spark Connect session and
+each Thrift Server session, with no further call:
+
+```java
+SparkSession spark = SparkSession.builder()
+    .config("spark.sql.extensions", "org.mobilitydb.spark.catalyst.MobilitySparkExtensions")
+    .getOrCreate();
+```
+
+```
+spark-submit --conf spark.sql.extensions=org.mobilitydb.spark.catalyst.MobilitySparkExtensions ...
+```
+
+The same extension adds the optimizer rules of `org.mobilitydb.spark.catalyst`. A session built
+without it registers the surface on itself through `MobilitySparkSql.registerAll`, which answers
+alike on a session the extension already serves:
+
 ```java
 import org.mobilitydb.spark.sql.MobilitySparkSql;
 

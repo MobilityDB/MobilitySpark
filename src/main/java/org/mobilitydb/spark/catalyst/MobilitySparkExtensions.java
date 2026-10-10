@@ -29,21 +29,31 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSessionExtensions;
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
 import org.apache.spark.sql.catalyst.rules.Rule;
+import org.mobilitydb.spark.sql.MobilitySparkSql;
 
 import scala.Function1;
 import scala.runtime.AbstractFunction1;
 import scala.runtime.BoxedUnit;
 
 /**
- * The Catalyst rules MobilitySpark adds to a Spark session, named in `spark.sql.extensions`:
+ * The typed SQL surface and the Catalyst rules MobilitySpark adds to a Spark session, named in
+ * `spark.sql.extensions`:
  *
  * <pre>
  *   SparkSession.builder().config("spark.sql.extensions",
  *       "org.mobilitydb.spark.catalyst.MobilitySparkExtensions")
  * </pre>
  *
- * Spark applies the named class to the session's extensions, as a Scala function of one argument,
- * which this class provides through scala.runtime.AbstractFunction1.
+ * Spark applies the named class to the extensions of every session it builds, the default one,
+ * each newSession(), each Spark Connect session and each Thrift Server session, as a Scala
+ * function of one argument, which this class provides through scala.runtime.AbstractFunction1.
+ *
+ * It registers {@link MobilitySparkSql} on each of those sessions through a check rule, which
+ * Spark builds once per session when it builds the session's analyzer, before the session
+ * resolves its first function, as Apache Sedona's SedonaSqlExtensions registers its functions
+ * through SedonaContext.create. The rule itself checks nothing. A session thus holds the whole
+ * typed surface without calling {@link MobilitySparkSql#registerAll}, and a call to it on such a
+ * session answers as the surface already answers.
  *
  * It injects {@link OrderConjunctsByCost}, which moves a MobilitySpark function behind the
  * comparisons beside it in one conjunction. Spark holds no cost for a user-defined function, so
@@ -56,6 +66,19 @@ public final class MobilitySparkExtensions
 
     @Override
     public BoxedUnit apply(SparkSessionExtensions extensions) {
+        extensions.injectCheckRule(
+                new AbstractFunction1<SparkSession, Function1<LogicalPlan, BoxedUnit>>() {
+            @Override
+            public Function1<LogicalPlan, BoxedUnit> apply(SparkSession session) {
+                MobilitySparkSql.registerAll(session);
+                return new AbstractFunction1<LogicalPlan, BoxedUnit>() {
+                    @Override
+                    public BoxedUnit apply(LogicalPlan plan) {
+                        return BoxedUnit.UNIT;
+                    }
+                };
+            }
+        });
         extensions.injectOptimizerRule(new AbstractFunction1<SparkSession, Rule<LogicalPlan>>() {
             @Override
             public Rule<LogicalPlan> apply(SparkSession session) {
