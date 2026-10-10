@@ -237,9 +237,10 @@ class GeneratedSurfaceTest {
         // <->->tDistance, &<#->tboxOverbefore for a tnumber) is the single source: a rename
         // updates this test automatically. One assertion per family proves the entrypoint
         // dispatches the concrete subtype from hex-WKB.
-        // topology (&&): two identical tints overlap in time → true
+        // topology (&&), named for the tbox class of a tnumber: two identical tints overlap
+        // → true
         assertEquals(Boolean.TRUE, scalar(
-            "SELECT " + op("&&") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
+            "SELECT " + position("&&", "tbox") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
         // same (~=): a value equals itself
         assertEquals(Boolean.TRUE, scalar(
             "SELECT " + op("~=") + "('" + TINT_HEX + "', '" + TINT_HEX + "')"));
