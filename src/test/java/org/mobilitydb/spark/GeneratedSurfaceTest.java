@@ -505,6 +505,13 @@ class GeneratedSurfaceTest {
             aggregate("tAndAgg", "tbool_in", "tbool_out", tbools));
         assertEquals("{[t@2001-01-01 00:00:00+00, t@2001-01-04 00:00:00+00]}",
             aggregate("tOrAgg", "tbool_in", "tbool_out", tbools));
+        // The skip list of tAvg carries the sum and the count of each instant, which the bytes
+        // taggstate_serialize writes carry across the shuffle.
+        assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00), "
+            + "[2.5@2001-01-02 00:00:00+00, 3.5@2001-01-03 00:00:00+00], "
+            + "(4@2001-01-03 00:00:00+00, 5@2001-01-04 00:00:00+00]}",
+            aggregate("tAvg", "tfloat_in", "asText", "[1@2001-01-01, 3@2001-01-03]",
+                      "[3@2001-01-02, 5@2001-01-04]"));
         // A temporal integer and a temporal float in two partitions are values of two
         // types, which a typed aggregate refuses as MobilityDB's typed aggregates do.
         Exception e = assertThrows(Exception.class, () -> scalar("SELECT tSum(v) FROM (SELECT "
