@@ -42,8 +42,13 @@ MobilityDB (master)
 The generator is `tools/codegen_jvm.py --engine spark`, which **JMEOS owns**. This repository
 stages it: `tools/codegen_jvm.py`, `tools/codegen_spark_udfs.py` and `tools/meos-idl.json` are
 gitignored, and the refresh chain and CI copy them in. Nothing under `target/generated-sources`
-is committed either. The one hand-written class in `src/main` is `MeosMemory`, which frees the
-native pointers MEOS returns.
+is committed either. The hand-written classes in `src/main` register no function themselves:
+`MeosMemory` frees the native pointers MEOS returns, and the three classes of the package
+`catalyst` extend a Spark session: `MobilitySparkExtensions`, named in `spark.sql.extensions`,
+registers the generated surface on every session and adds the two optimizer rules
+`OrderConjunctsByCost`, which evaluates a conjunct calling a user-defined function after the
+conjuncts that do not, and `MaterializeNestedLoopSides`, which computes once each side of a
+nested-loop join that calls one.
 
 `GENERATION.md` is the full contract.
 
