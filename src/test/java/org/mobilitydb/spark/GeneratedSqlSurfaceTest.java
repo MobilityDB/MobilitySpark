@@ -145,6 +145,21 @@ class GeneratedSqlSurfaceTest {
     }
 
     @Test
+    void anArgumentLeftToItsNullDefaultIsWhatTheWrapperPasses() {
+        // tintSeqSetGaps without maxdist splits on time alone (the wrapper's -1.0), and
+        // without maxt either it splits on nothing (the wrapper's NULL)
+        String instants = "array(tintFromText('1@2020-01-01'), tintFromText('2@2020-01-02'), "
+                + "tintFromText('3@2020-01-05'))";
+        assertEquals(2, scalar("SELECT numSequences(tintSeqSetGaps(" + instants
+                + ", INTERVAL '1' DAY))"));
+        assertEquals(1, scalar("SELECT numSequences(tintSeqSetGaps(" + instants + "))"));
+        // tfloatSeq without an interpolation keeps the value's own (the wrapper's
+        // INTERP_NONE) and makes an instant a sequence
+        assertEquals("Sequence", scalar("SELECT tempSubtype(tfloatSeq("
+                + "tfloatFromText('1@2020-01-01')))"));
+    }
+
+    @Test
     void anOmittedInterpolationIsTheOneOfTheType() {
         // appendInstant and the sequence set constructors without an interpolation take the
         // one the temporal type supports: linear for a tfloat, step for a tint. A linear
