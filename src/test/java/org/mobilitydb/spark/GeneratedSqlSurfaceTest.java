@@ -111,11 +111,36 @@ class GeneratedSqlSurfaceTest {
     }
 
     @Test
-    void sparkKeepsItsOwnFunctionsUnderASharedName() {
-        assertEquals(1.0, scalar("SELECT lower(floatspan_in('[1, 3]'))"));
+    void aNameSparkOwnsStaysSparksAndMeosTakesTheClassName() {
+        assertEquals(1.0, scalar("SELECT spanLower(floatspan_in('[1, 3]'))"));
         assertEquals("abc", scalar("SELECT lower('ABC')"));
         assertEquals(new java.math.BigDecimal("3"), scalar("SELECT round(2.5)"));
+        assertEquals(List.of(2, 4), spark.sql("SELECT transform(array(1, 2), x -> x * 2)")
+                .collectAsList().get(0).getList(0));
+        assertThrows(Exception.class, () -> scalar("SELECT lower(floatspan_in('[1, 3]'))"));
     }
+
+    @Test
+    void aTemporalPointTakesAnotherSpatialReferenceSystem() {
+        // geoTransform is the name of transform over the geo types in Spark, which owns
+        // transform as its higher-order array function
+        String trip = "tgeompointFromText('SRID=4326;[Point(4.35 50.85)@2020-01-01, "
+                + "Point(2.35 48.85)@2020-01-02]')";
+        assertEquals(3035, scalar("SELECT SRID(geoTransform(" + trip + ", 3035))"));
+        assertEquals(2, scalar("SELECT numInstants(geoTransform(" + trip + ", 3035))"));
+        // the coordinates MobilityDB answers for transform(trip, 3035)
+        String text = (String) scalar("SELECT asText(geoTransform(" + trip + ", 3035), 6)");
+        assertTrue(text.contains("POINT(3923550.150776 3097410.482363)"), text);
+        assertTrue(text.contains("POINT(3760536.822902 2888771.02095)"), text);
+    }
+
+    @Test
+    void aTemporalPointOverlapsTheExpandedBoxOfAnother() {
+        // stboxOverlaps is the function of && between a temporal point and a box
+        String a = tgeompoint("[Point(0 0)@2020-01-01, Point(0 10)@2020-01-02]");
+        String b = tgeompoint("[Point(5 0)@2020-01-01, Point(5 10)@2020-01-02]");
+        assertEquals(true, scalar("SELECT stboxOverlaps(" + a + ", expandSpace(" + b + ", 6.0))"));
+        assertEquals(false, scalar("SELECT stboxOverlaps(" + a + ", expandSpace(" + b + ", 4.0))"));    }
 
     @Test
     void timeValuesCrossAsSparkTypes() {
@@ -184,8 +209,8 @@ class GeneratedSqlSurfaceTest {
 
     @Test
     void arraysCrossAsSparkArrays() {
-        assertEquals("{1, 2, 3}", scalar("SELECT intset_out(set(array(3, 1, 2)))"));
-        assertEquals(Instant.parse("2020-01-01T00:00:00Z"), scalar("SELECT startValue(set(array("
+        assertEquals("{1, 2, 3}", scalar("SELECT intset_out(setMake(array(3, 1, 2)))"));
+        assertEquals(Instant.parse("2020-01-01T00:00:00Z"), scalar("SELECT startValue(setMake(array("
                 + "TIMESTAMP '2020-01-02 00:00:00', TIMESTAMP '2020-01-01 00:00:00')))"));
         String origin = tgeompoint("[Point(0 0)@2020-01-01, Point(0 0)@2020-01-02]");
         String far = tgeompoint("[Point(3 4)@2020-01-01, Point(3 4)@2020-01-02]");
@@ -194,23 +219,23 @@ class GeneratedSqlSurfaceTest {
         assertEquals(1.0, scalar("SELECT minDistance(array(" + origin + "), array(" + far + ", "
                 + near + "))"));
         assertThrows(Exception.class,
-                () -> scalar("SELECT intset_out(set(array(1, CAST(NULL AS INT))))"));
+                () -> scalar("SELECT intset_out(setMake(array(1, CAST(NULL AS INT))))"));
         // An array of fixed-size values reaches MEOS as the contiguous C array it reads
         assertEquals("{[1, 3), [5, 7)}", scalar("SELECT intspanset_out(spanset(array("
                 + "intspan_in('[5, 7)'), intspan_in('[1, 3)'))))"));
-        assertEquals(2, scalar("SELECT numValues(set(array(npoint_in('NPoint(1, 0.5)'), "
+        assertEquals(2, scalar("SELECT numValues(setMake(array(npoint_in('NPoint(1, 0.5)'), "
                 + "npoint_in('NPoint(2, 0.3)'), npoint_in('NPoint(1, 0.5)'))))"));
-        assertEquals(2, scalar("SELECT numValues(set(array(cbuffer_in('Cbuffer(Point(1 1), 0.5)'), "
+        assertEquals(2, scalar("SELECT numValues(setMake(array(cbuffer_in('Cbuffer(Point(1 1), 0.5)'), "
                 + "cbuffer_in('Cbuffer(Point(2 2), 1)'))))"));
     }
 
     @Test
     void setReturningRowsUnfoldThroughExplode() {
         // A set-returning function answers its rows as an array, which explode and inline unfold.
-        List<Row> elems = spark.sql("SELECT explode(unnest(set(array(3, 1, 2))))").collectAsList();
+        List<Row> elems = spark.sql("SELECT explode(setUnnest(setMake(array(3, 1, 2))))").collectAsList();
         assertEquals(List.of(1, 2, 3), elems.stream().map(r -> r.get(0)).toList());
-        // unnest of a tint: one row per distinct value, with the time it holds that value
-        List<Row> values = spark.sql("SELECT inline(unnest(" + tint + "))").collectAsList();
+        // temporalUnnest of a tint: one row per distinct value, with the time it holds that value
+        List<Row> values = spark.sql("SELECT inline(temporalUnnest(" + tint + "))").collectAsList();
         assertEquals(List.of(1, 2), values.stream().map(r -> (Integer) r.get(0)).sorted().toList());
         // timeSplit by a day from the first instant: the fragments of the two days and the
         // instant on the last border
