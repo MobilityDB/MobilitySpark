@@ -362,6 +362,58 @@ class GeneratedSqlSurfaceTest {
             windowAggregate("wSum", "tfloatFromText", "{1@2001-01-01 00:00:00+00, 3@2001-01-03 00:00:00+00}"));
     }
 
+    /** The text of an append aggregate over the values, given out of time order, and the further
+     * arguments, each value in a partition of its own, as #windowAggregate reads a window
+     * aggregate. */
+    private static String appendAggregate(String agg, String in, String args, String... values) {
+        StringBuilder rows = new StringBuilder();
+        for (String v : values) {
+            rows.append(rows.length() == 0 ? "" : ", ").append("('").append(v).append("')");
+        }
+        return (String) scalar("SELECT asText(" + agg + "(v" + args + ")) FROM (SELECT /*+ REPARTITION("
+                + values.length + ") */ " + in + "(s) AS v FROM VALUES " + rows + " AS t(s))");
+    }
+
+    @Test
+    void appendAggregatesAnswerWhatMobilityDBAnswersOrderedByTime() {
+        // What MobilityDB answers for the same aggregate over the same values ordered by their
+        // start timestamp, with the time zone set to UTC; the values come in another order, each
+        // in a partition of its own, so the aggregate orders them whatever order it receives.
+        assertEquals("[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00, 3@2001-01-03 00:00:00+00]",
+            appendAggregate("appendInstantAgg", "tintFromText", "",
+                "3@2001-01-03 00:00:00+00", "1@2001-01-01 00:00:00+00", "2@2001-01-02 00:00:00+00"));
+        assertEquals("{1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00, 3@2001-01-03 00:00:00+00}",
+            appendAggregate("appendInstantAgg", "tfloatFromText", ", 'discrete'",
+                "3@2001-01-03 00:00:00+00", "1@2001-01-01 00:00:00+00", "2@2001-01-02 00:00:00+00"));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00], [5@2001-01-03 00:00:00+00], "
+            + "[6@2001-01-05 00:00:00+00]}",
+            appendAggregate("appendInstantAgg", "tfloatFromText", ", 'linear', 1.5, INTERVAL '1' DAY",
+                "6@2001-01-05 00:00:00+00", "1@2001-01-01 00:00:00+00", "5@2001-01-03 00:00:00+00",
+                "2@2001-01-02 00:00:00+00"));
+        assertEquals("{[t@2001-01-01 00:00:00+00, f@2001-01-02 00:00:00+00], [f@2001-01-05 00:00:00+00]}",
+            appendAggregate("appendInstantAgg", "tboolFromText", ", 'step', INTERVAL '1' DAY",
+                "f@2001-01-05 00:00:00+00", "t@2001-01-01 00:00:00+00", "f@2001-01-02 00:00:00+00"));
+        assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00], "
+            + "[2@2001-01-03 00:00:00+00, 2@2001-01-04 00:00:00+00], "
+            + "[3@2001-01-05 00:00:00+00, 4@2001-01-06 00:00:00+00]}",
+            appendAggregate("appendSequenceAgg", "tintFromText", "",
+                "[3@2001-01-05 00:00:00+00, 4@2001-01-06 00:00:00+00]",
+                "[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00]",
+                "[2@2001-01-03 00:00:00+00, 2@2001-01-04 00:00:00+00]"));
+        // Two values at one timestamp are refused, as MobilityDB refuses them in any order.
+        Exception e = assertThrows(Exception.class, () -> appendAggregate("appendInstantAgg",
+            "tintFromText", "", "1@2001-01-01 00:00:00+00", "2@2001-01-01 00:00:00+00"));
+        assertTrue(String.valueOf(rootMessage(e)).contains("different value at their common timestamp"),
+            String.valueOf(rootMessage(e)));
+    }
+
+    private static String rootMessage(Throwable e) {
+        while (e.getCause() != null) {
+            e = e.getCause();
+        }
+        return e.getMessage();
+    }
+
     @Test
     void peakCountOverMergedPieces() {
         // The pieces of one trip are merged first, so the count counts trips, not pieces: two
