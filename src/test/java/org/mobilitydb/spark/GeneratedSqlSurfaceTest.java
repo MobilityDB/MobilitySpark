@@ -407,6 +407,43 @@ class GeneratedSqlSurfaceTest {
             String.valueOf(rootMessage(e)));
     }
 
+    /** The text of an aggregate over the SQL literals given, each in a partition of its own, so
+     * the combine joins the partial states, as #aggregate reads one over typed values. */
+    private static String baseAggregate(String agg, String... values) {
+        StringBuilder rows = new StringBuilder();
+        for (String v : values) {
+            rows.append(rows.length() == 0 ? "" : ", ").append("(").append(v).append(")");
+        }
+        return (String) scalar("SELECT asText(" + agg + "(v)) FROM (SELECT /*+ REPARTITION("
+                + values.length + ") */ v FROM VALUES " + rows + " AS t(v))");
+    }
+
+    @Test
+    void baseValueAggregatesAnswerWhatMobilityDBAnswers() {
+        // What MobilityDB answers for the same aggregate over the same values with the time zone
+        // set to UTC.
+        assertEquals("{1, 2, 3}", baseAggregate("setUnionAgg", "3", "1", "2", "1"));
+        assertEquals("{10, 20, 30}", baseAggregate("setUnionAgg",
+            "CAST(30 AS BIGINT)", "CAST(10 AS BIGINT)", "CAST(20 AS BIGINT)"));
+        assertEquals("{1.5, 2.5}", baseAggregate("setUnionAgg",
+            "CAST(2.5 AS DOUBLE)", "CAST(1.5 AS DOUBLE)", "CAST(2.5 AS DOUBLE)"));
+        assertEquals("{\"a\", \"b\"}", baseAggregate("setUnionAgg", "'b'", "'a'", "'b'"));
+        assertEquals("{2001-01-01, 2001-01-03}", baseAggregate("setUnionAgg",
+            "DATE '2001-01-03'", "DATE '2001-01-01'"));
+        assertEquals("{\"2001-01-01 00:00:00+00\", \"2001-01-03 00:00:00+00\"}",
+            baseAggregate("setUnionAgg", "TIMESTAMP '2001-01-03 00:00:00'", "TIMESTAMP '2001-01-01 00:00:00'"));
+        assertEquals("[1, 4)", baseAggregate("extent", "3", "1", "2"));
+        assertEquals("[10, 31)", baseAggregate("extent", "CAST(30 AS BIGINT)", "CAST(10 AS BIGINT)"));
+        assertEquals("[1.5, 2.5]", baseAggregate("extent", "CAST(2.5 AS DOUBLE)", "CAST(1.5 AS DOUBLE)"));
+        assertEquals("[2001-01-01, 2001-01-04)", baseAggregate("extent",
+            "DATE '2001-01-03'", "DATE '2001-01-01'"));
+        assertEquals("[2001-01-01 00:00:00+00, 2001-01-03 00:00:00+00]", baseAggregate("extent",
+            "TIMESTAMP '2001-01-03 00:00:00'", "TIMESTAMP '2001-01-01 00:00:00'"));
+        assertEquals("{1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00}", baseAggregate("tCount",
+            "TIMESTAMP '2001-01-02 00:00:00'", "TIMESTAMP '2001-01-01 00:00:00'",
+            "TIMESTAMP '2001-01-02 00:00:00'"));
+    }
+
     private static String rootMessage(Throwable e) {
         while (e.getCause() != null) {
             e = e.getCause();
