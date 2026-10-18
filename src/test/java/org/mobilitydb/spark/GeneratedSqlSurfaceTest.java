@@ -356,7 +356,7 @@ class GeneratedSqlSurfaceTest {
             windowAggregate("wMax", "tintFromText", tints));
         assertEquals("Interp=Step;{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00, "
             + "2@2001-01-04 00:00:00+00], (3@2001-01-04 00:00:00+00, 3@2001-01-05 00:00:00+00]}",
-            windowAggregate("wAvg", "tintFromText", tints));
+            windowAggregate("wAvgAgg", "tintFromText", tints));
         assertEquals("{[1@2001-01-01 00:00:00+00, 1@2001-01-02 00:00:00+00], "
             + "[3@2001-01-03 00:00:00+00, 3@2001-01-04 00:00:00+00]}",
             windowAggregate("wSum", "tfloatFromText", "{1@2001-01-01 00:00:00+00, 3@2001-01-03 00:00:00+00}"));
