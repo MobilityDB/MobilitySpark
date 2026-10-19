@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The point cloud schema the point cloud values of AggregatesCatalogTest name, which the test
+  states through meos_set_pointcloud_schemas_xml(): pcid 1, three dimensions of type double, the
+  schema MobilityDuck's test/sql/tpcpatch.test registers, so the aggregates read the same points
+  as MobilityDB reads in the answers the test states. The document is in the format of the one
+  libmeos ships beside its library directory: each pc:PointCloudSchema a pgPointCloud document,
+  the enclosing element stating its pcid and srid.
+-->
+<pc:PointCloudSchemas xmlns:pc="http://pointcloud.org/schemas/PC/1.1">
+  <pc:PointCloudSchema pcid="1" srid="0">
+    <pc:dimension>
+      <pc:position>1</pc:position>
+      <pc:size>8</pc:size>
+      <pc:name>X</pc:name>
+      <pc:interpretation>double</pc:interpretation>
+    </pc:dimension>
+    <pc:dimension>
+      <pc:position>2</pc:position>
+      <pc:size>8</pc:size>
+      <pc:name>Y</pc:name>
+      <pc:interpretation>double</pc:interpretation>
+    </pc:dimension>
+    <pc:dimension>
+      <pc:position>3</pc:position>
+      <pc:size>8</pc:size>
+      <pc:name>Z</pc:name>
+      <pc:interpretation>double</pc:interpretation>
+    </pc:dimension>
+    <pc:metadata><Metadata name="compression">none</Metadata></pc:metadata>
+  </pc:PointCloudSchema>
+</pc:PointCloudSchemas>
