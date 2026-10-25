@@ -70,9 +70,14 @@ class AggregatesCatalogTest {
         }
     }
 
+    /** The query's first row. */
+    private static org.apache.spark.sql.Row row(String sql) {
+        return spark.sql(sql).collectAsList().get(0);
+    }
+
     /** The value of the query's first row. */
     private static Object value(String sql) {
-        return spark.sql(sql).collectAsList().get(0).get(0);
+        return row(sql).get(0);
     }
 
     private static String answer(String sql) {
@@ -926,23 +931,27 @@ class AggregatesCatalogTest {
 
     /** Each overload of summaryStatsAgg: its query over the two rasters of the raster cases
      * of #OVERLOADS and the six fields of the summarystats record MobilityDB answers, count,
-     * sum, mean, standard deviation, minimum and maximum, read here in the order of the
-     * record, as no SQL function of the surface reads a field of it. */
+     * sum, mean, standard deviation, minimum and maximum, each read by its accessor,
+     * summarystatsCount to summarystatsMax; and those of summaryStats over the first. */
     private static final Object[][] SUMMARIES = {
         {"summaryStatsAgg(raster, BOOLEAN)",
-            "SELECT summaryStatsAgg(v, true) FROM (SELECT /*+ REPARTITION(2) */ rasterFromHexWKB(s) AS v FROM VALUES ('0100000200000000000000F03F000000000000F0BF0000000000000000000000000000084000000000000000000000000000000000110F0000030003004A003C1CC60000803F000000400000404000008040003C1CC60000C0400000E04000000041000010410600000A0014001E00280032003C00460050005A00'), ('0100000200000000000000F03F000000000000F0BF0000000000000840000000000000084000000000000000000000000000000000110F0000030003004A003C1CC60000803F000000400000404000008040003C1CC60000C0400000E04000000041000010410600000A0014001E00280032003C00460050005A00') AS t(s))",
+            "SELECT summarystatsCount(s), summarystatsSum(s), summarystatsMean(s), summarystatsStddev(s), summarystatsMin(s), summarystatsMax(s) FROM (SELECT summaryStatsAgg(v, true) AS s FROM (SELECT /*+ REPARTITION(2) */ rasterFromHexWKB(s) AS v FROM VALUES ('0100000200000000000000F03F000000000000F0BF0000000000000000000000000000084000000000000000000000000000000000110F0000030003004A003C1CC60000803F000000400000404000008040003C1CC60000C0400000E04000000041000010410600000A0014001E00280032003C00460050005A00'), ('0100000200000000000000F03F000000000000F0BF0000000000000840000000000000084000000000000000000000000000000000110F0000030003004A003C1CC60000803F000000400000404000008040003C1CC60000C0400000E04000000041000010410600000A0014001E00280032003C00460050005A00') AS t(s)))",
             new double[] {16, 80, 5, 2.7386127875258306, 1, 9}},
         {"summaryStatsAgg(raster, INT, BOOLEAN)",
-            "SELECT summaryStatsAgg(v, 2, true) FROM (SELECT /*+ REPARTITION(2) */ rasterFromHexWKB(s) AS v FROM VALUES ('0100000200000000000000F03F000000000000F0BF0000000000000000000000000000084000000000000000000000000000000000110F0000030003004A003C1CC60000803F000000400000404000008040003C1CC60000C0400000E04000000041000010410600000A0014001E00280032003C00460050005A00'), ('0100000200000000000000F03F000000000000F0BF0000000000000840000000000000084000000000000000000000000000000000110F0000030003004A003C1CC60000803F000000400000404000008040003C1CC60000C0400000E04000000041000010410600000A0014001E00280032003C00460050005A00') AS t(s))",
-            new double[] {18, 900, 50, 25.81988897471611, 10, 90}}};
+            "SELECT summarystatsCount(s), summarystatsSum(s), summarystatsMean(s), summarystatsStddev(s), summarystatsMin(s), summarystatsMax(s) FROM (SELECT summaryStatsAgg(v, 2, true) AS s FROM (SELECT /*+ REPARTITION(2) */ rasterFromHexWKB(s) AS v FROM VALUES ('0100000200000000000000F03F000000000000F0BF0000000000000000000000000000084000000000000000000000000000000000110F0000030003004A003C1CC60000803F000000400000404000008040003C1CC60000C0400000E04000000041000010410600000A0014001E00280032003C00460050005A00'), ('0100000200000000000000F03F000000000000F0BF0000000000000840000000000000084000000000000000000000000000000000110F0000030003004A003C1CC60000803F000000400000404000008040003C1CC60000C0400000E04000000041000010410600000A0014001E00280032003C00460050005A00') AS t(s)))",
+            new double[] {18, 900, 50, 25.81988897471611, 10, 90}},
+        {"summaryStats(raster)",
+            "SELECT summarystatsCount(s), summarystatsSum(s), summarystatsMean(s), summarystatsStddev(s), summarystatsMin(s), summarystatsMax(s) FROM (SELECT summaryStats(rasterFromHexWKB('0100000200000000000000F03F000000000000F0BF0000000000000000000000000000084000000000000000000000000000000000110F0000030003004A003C1CC60000803F000000400000404000008040003C1CC60000C0400000E04000000041000010410600000A0014001E00280032003C00460050005A00')) AS s)",
+            new double[] {8, 40, 5, 2.7386127875258306, 1, 9}}};
 
     @TestFactory
     Stream<DynamicTest> theSummaryAnswersWhatMobilityDBAnswers() {
         return Stream.of(SUMMARIES)
             .map(c -> DynamicTest.dynamicTest((String) c[0], () -> {
                 double[] expected = (double[]) c[2];
+                org.apache.spark.sql.Row got = row((String) c[1]);
                 for (int i = 0; i < expected.length; i++) {
-                    assertEquals(expected[i], ((Number) ((org.apache.spark.sql.Row) value((String) c[1])).get(i)).doubleValue(), "field " + i);
+                    assertEquals(expected[i], ((Number) got.get(i)).doubleValue(), "field " + i);
                 }
             }));
     }
