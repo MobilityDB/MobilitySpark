@@ -532,4 +532,51 @@ class GeneratedSqlSurfaceTest {
         assertEquals(-9999.0, scalar("SELECT rasterBandNoDataValue(addBand(" + empty
             + ", 1, '32BF', 0.0, -9999.0), 1)"));
     }
+
+    @Test
+    void theRowsAndTheValuesOfARasterAreTheOnesMobilityDBAnswers() {
+        // The rasters of MobilityDB's raster regression test, each a 32BF band with nodata
+        // -9999 built from its pixels, row by row and little-endian, and the answers it states.
+        // Three regions and a nodata pixel: 1, 1, 2 / 1, 2, 2 / 3, 3, nodata.
+        String regions = "raster(X'0000803F0000803F000000400000803F00000040000000400000404000004040"
+            + "003C1CC6', 3, 3, 0.0, 3.0, 1.0, -1.0, 0.0, 0.0, 4326, '32BF', -9999.0)";
+        Row polygons = spark.sql("SELECT count(*), sum(val), sum(area(geom)) FROM (SELECT inline("
+            + "dumpAsPolygons(" + regions + ")))").collectAsList().get(0);
+        assertEquals(3L, polygons.get(0));
+        assertEquals(6.0, polygons.get(1));
+        assertEquals(8.0, polygons.get(2));
+        assertEquals(4, scalar("SELECT size(dumpAsPolygons(" + regions + ", 1, false))"));
+        // 1.24, 1.26, nodata / 2, 2, 2 / 3, 1.24, 2: the values 2 and 7 searched.
+        String counts = "raster(X'52B89E3FAE47A13F003C1CC60000004000000040000000400000404052B89E3F"
+            + "00000040', 3, 3, 0.0, 3.0, 1.0, -1.0, 0.0, 0.0, 4326, '32BF', -9999.0)";
+        List<Row> searched = spark.sql("SELECT value, count FROM (SELECT inline(valueCount(" + counts
+            + ", 1, true, array(CAST(2 AS DOUBLE), CAST(7 AS DOUBLE)), CAST(0 AS DOUBLE)))) "
+            + "ORDER BY value").collectAsList();
+        assertEquals(2, searched.size());
+        assertEquals(2.0, searched.get(0).get(0));
+        assertEquals(4, searched.get(0).get(1));
+        assertEquals(7.0, searched.get(1).get(0));
+        assertEquals(0, searched.get(1).get(1));
+        // A 3x2 raster over 2x1 pixels from (10, 20) in SRID 3857: 1.5, nodata, 3 / 4, 5, 6.
+        String pixels = "raster(X'0000C03F003C1CC600004040000080400000A0400000C040', 3, 2, 10.0, 20.0, "
+            + "2.0, -1.0, 0.0, 0.0, 3857, '32BF', -9999.0)";
+        List<Row> points = spark.sql("SELECT asHexEWKB(geom), val, x, y FROM (SELECT inline("
+            + "pixelAsPoints(" + pixels + "))) ORDER BY y, x").collectAsList();
+        assertEquals(5, points.size());
+        assertEquals("0101000020110F000000000000000024400000000000003440",
+            ((String) points.get(0).get(0)).toUpperCase());
+        assertEquals(1.5, points.get(0).get(1));
+        assertEquals(List.of(1, 1), List.of(points.get(0).get(2), points.get(0).get(3)));
+        assertEquals(6.0, points.get(4).get(1));
+        assertEquals(List.of(3, 2), List.of(points.get(4).get(2), points.get(4).get(3)));
+        // {{1.5,NULL,3},{4,5,6}}, and {{1.5,-9999,3},{4,5,6}} with the nodata pixels kept.
+        String values = "dumpValues(" + pixels + ", 1)";
+        assertEquals(2, scalar("SELECT size(" + values + ")"));
+        assertEquals(3, scalar("SELECT size(element_at(" + values + ", 1))"));
+        assertEquals(true, scalar("SELECT element_at(element_at(" + values + ", 1), 2) IS NULL"));
+        assertEquals(1.5, scalar("SELECT element_at(element_at(" + values + ", 1), 1)"));
+        assertEquals(6.0, scalar("SELECT element_at(element_at(" + values + ", 2), 3)"));
+        assertEquals(-9999.0, scalar("SELECT element_at(element_at(dumpValues(" + pixels
+            + ", 1, false), 1), 2)"));
+    }
 }
