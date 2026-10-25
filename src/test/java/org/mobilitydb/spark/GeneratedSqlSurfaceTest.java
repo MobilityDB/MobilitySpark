@@ -39,6 +39,7 @@ import org.mobilitydb.spark.sql.types.TFloat;
 import org.mobilitydb.spark.sql.types.TGeomPoint;
 import org.mobilitydb.spark.sql.types.TInt;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -486,5 +487,49 @@ class GeneratedSqlSurfaceTest {
             + depth + ", " + depth + "), 2.0)))"));
         assertEquals(read, scalar("SELECT asText(rasterValue(" + trip + ", rasterDiv(rasterMul("
             + depth + ", " + depth + "), " + depth + ")))"));
+    }
+
+    @Test
+    void aRasterIsBuiltFromItsPixelsAndItsGrid() {
+        // A 2x2 16BSI band in SRID 3857 holding 1, -2 / 300, -32768 with nodata -1, its pixels
+        // row by row and little-endian.
+        String grid = "raster(X'0100FEFF2C010080', 2, 2, 0.0, 2.0, 1.0, -1.0, 0.0, 0.0, 3857, "
+            + "'16BSI', -1.0)";
+        assertArrayEquals(new byte[] {1, 0, (byte) 0xFE, (byte) 0xFF, 0x2C, 1, 0, (byte) 0x80},
+            (byte[]) scalar("SELECT rasterPixels(" + grid + ", 1)"));
+        assertEquals("int16", scalar("SELECT rasterBandPixelType(" + grid + ", 1)"));
+        assertEquals(-1.0, scalar("SELECT rasterBandNoDataValue(" + grid + ", 1)"));
+        assertEquals(3857, scalar("SELECT SRID(" + grid + ")"));
+        assertEquals(scalar("SELECT rasterAsHexWKB(" + grid + ", 'NDR')"),
+            scalar("SELECT rasterAsHexWKB(raster(rasterPixels(" + grid + ", 1), 2, 2, 0.0, 2.0, "
+                + "1.0, -1.0, 0.0, 0.0, 3857, rasterBandPixelType(" + grid + ", 1), "
+                + "rasterBandNoDataValue(" + grid + ", 1)), 'NDR')"));
+        // The depth raster of aRasterDerivedByArithmeticIsReadAlongATrip, which states no nodata
+        // value, rebuilt from what its accessors read.
+        String depth = "rasterFromHexWKB('0100000100000000000000F03F000000000000F0BF0000000000000000"
+            + "000000000000084000000000000000000000000000000000E6100000030003000A000000000000204100"
+            + "00A0410000F04100002042000048420000704200008C420000A0420000B442')";
+        assertEquals(scalar("SELECT rasterAsHexWKB(" + depth + ", 'NDR')"),
+            scalar("SELECT rasterAsHexWKB(raster(rasterPixels(" + depth + ", 1), rasterWidth("
+                + depth + "), rasterHeight(" + depth + "), upperLeftX(" + depth + "), upperLeftY("
+                + depth + "), scaleX(" + depth + "), scaleY(" + depth + "), skewX(" + depth
+                + "), skewY(" + depth + "), SRID(" + depth + "), rasterBandPixelType(" + depth
+                + ", 1)), 'NDR')"));
+        // A 4BUI band stores a byte per pixel and reads as uint8, so it is rebuilt as an 8BUI
+        // band of the same bytes.
+        String nibbles = "raster(X'01020F00', 2, 2, 0.0, 2.0, 1.0, -1.0, 0.0, 0.0, 3857, '4BUI')";
+        assertEquals("uint8", scalar("SELECT rasterBandPixelType(" + nibbles + ", 1)"));
+        String rebuilt = "raster(rasterPixels(" + nibbles + ", 1), 2, 2, 0.0, 2.0, 1.0, -1.0, 0.0, "
+            + "0.0, 3857, rasterBandPixelType(" + nibbles + ", 1))";
+        assertArrayEquals(new byte[] {1, 2, 15, 0},
+            (byte[]) scalar("SELECT rasterPixels(" + rebuilt + ", 1)"));
+        // A band of an initial value added to an empty raster, and the band of another raster.
+        String empty = "makeEmptyRaster(2, 2, 0.0, 2.0, 1.0, -1.0, 0.0, 0.0, 3857)";
+        String sevens = "addBand(" + empty + ", 1, '8BUI', 7.0)";
+        assertArrayEquals(new byte[] {7, 7, 7, 7},
+            (byte[]) scalar("SELECT rasterPixels(" + sevens + ", 1)"));
+        assertEquals(2, scalar("SELECT numBands(addBand(" + sevens + ", " + sevens + "))"));
+        assertEquals(-9999.0, scalar("SELECT rasterBandNoDataValue(addBand(" + empty
+            + ", 1, '32BF', 0.0, -9999.0), 1)"));
     }
 }
