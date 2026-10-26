@@ -33,6 +33,7 @@ import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.mobilitydb.spark.sql.MobilitySparkSql;
 
@@ -943,6 +944,23 @@ class AggregatesCatalogTest {
         {"summaryStats(raster)",
             "SELECT summarystatsCount(s), summarystatsSum(s), summarystatsMean(s), summarystatsStddev(s), summarystatsMin(s), summarystatsMax(s) FROM (SELECT summaryStats(rasterFromHexWKB('0100000200000000000000F03F000000000000F0BF0000000000000000000000000000084000000000000000000000000000000000110F0000030003004A003C1CC60000803F000000400000404000008040003C1CC60000C0400000E04000000041000010410600000A0014001E00280032003C00460050005A00')) AS s)",
             new double[] {8, 40, 5, 2.7386127875258306, 1, 9}}};
+
+    /** A band whose every pixel is nodata counts nothing: MobilityDB answers (0,,,,,) for
+     * summaryStats and summaryStatsAgg, and the accessors 0 and NULL. */
+    @Test
+    void aBandOfNodataCountsNothing() {
+        String r = "rasterFromHexWKB('0100000100000000000000F03F000000000000F0BF0000000000000000000000000000084000000000000000000000000000000000E6100000030003004A003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6')";
+        for (String s : new String[] {"summaryStats(" + r + ")",
+                "(SELECT summaryStatsAgg(v, true) FROM (SELECT /*+ REPARTITION(2) */ " + r + " AS v FROM VALUES (1), (2) AS t(i)))"}) {
+            org.apache.spark.sql.Row got = row("SELECT s.count, s.sum, s.max, summarystatsCount(s), summarystatsSum(s), summarystatsMax(s) FROM (SELECT " + s + " AS s)");
+            assertEquals(0L, ((Number) got.get(0)).longValue(), s);
+            assertEquals(null, got.get(1), s);
+            assertEquals(null, got.get(2), s);
+            assertEquals(0L, ((Number) got.get(3)).longValue(), s);
+            assertEquals(null, got.get(4), s);
+            assertEquals(null, got.get(5), s);
+        }
+    }
 
     @TestFactory
     Stream<DynamicTest> theSummaryAnswersWhatMobilityDBAnswers() {
