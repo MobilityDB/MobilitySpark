@@ -56,6 +56,21 @@
             <version>5.10.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- Apache Sedona's raster, the host raster of Spark, which SedonaRasterBridgeTest
+             converts to and from MEOS's raster. Sedona's release for Spark 4.0 with the
+             GeoTools jar it is built against. -->
+        <dependency>
+            <groupId>org.apache.sedona</groupId>
+            <artifactId>sedona-spark-shaded-4.0_2.13</artifactId>
+            <version>1.9.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.datasyslab</groupId>
+            <artifactId>geotools-wrapper</artifactId>
+            <version>1.9.1-33.5</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

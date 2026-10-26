@@ -145,6 +145,32 @@ as a PostgreSQL value does. A name Spark itself answers keeps answering its own 
 `lower('ABC')` and `round(2.5)` are Spark's. `GeneratedSqlSurfaceTest` asserts the queries
 MobilityFlink's `GeneratedSqlSurfaceTest` asserts.
 
+### Apache Sedona's raster
+
+MEOS's `raster` and Apache Sedona's raster (`sedona-spark-shaded-4.0_2.13` 1.9.1, registered by
+`SedonaContext.create(spark)`) live in one session under names they never share: every Sedona
+name carries the prefix `RS_` or `ST_`, every MobilityDB name none. A Sedona raster is built from
+the georeferencing of a MEOS raster `r` and the values of its band:
+
+```sql
+SELECT RS_AddBandFromArray(
+    RS_MakeEmptyRaster(1, CASE rasterBandPixelType(r, 1) WHEN 'uint8' THEN 'B'
+        WHEN 'int16' THEN 'S' WHEN 'uint16' THEN 'US' WHEN 'int32' THEN 'I'
+        WHEN 'float32' THEN 'F' WHEN 'float64' THEN 'D' END,
+      rasterWidth(r), rasterHeight(r), upperLeftX(r), upperLeftY(r),
+      scaleX(r), scaleY(r), skewX(r), skewY(r), SRID(r)),
+    flatten(dumpValues(r, 1, false)), 1, rasterBandNoDataValue(r, 1)) AS s
+FROM t;
+```
+
+and a MEOS raster from a Sedona raster `s` by `raster(pixels, width, height, upperleftx,
+upperlefty, scalex, scaley, skewx, skewy, srid, pixeltype[, nodataval])` over its `RS_` accessors,
+the pixels being the bytes of the values of `RS_BandAsArray(s, 1)` in their order, each written as
+`rasterPixels(addBand(makeEmptyRaster(1, 1, 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, 0), 1, pixeltype, v), 1)`.
+The pixel types both carry (`8BUI`, `16BSI`, `16BUI`, `32BSI`, `32BF`, `64BF`) and the nodata
+value, or its absence, cross both ways unchanged; `SedonaRasterBridgeTest` states the two queries
+and asserts both round trips.
+
 ### The UDF surface
 
 Register the generated surface on a `SparkSession`, then call the functions from Spark SQL:
