@@ -122,6 +122,17 @@ class GeneratedSqlSurfaceTest {
     }
 
     @Test
+    void aDecimalReachesTheOverloadTakingAFloat() {
+        // PostgreSQL's tbox(numeric) is the box of the number as a float, which a decimal
+        // reaches here by widening to the overload taking a double, as the literal 1.5 does
+        Row r = spark.sql("SELECT asText(tbox(CAST(1.5 AS DOUBLE))), "
+                + "asText(tbox(CAST(1.5 AS DECIMAL(2,1)))), asText(tbox(1.5))").collectAsList().get(0);
+        assertEquals("TBOXFLOAT X([1.5, 1.5])", r.get(0));
+        assertEquals(r.get(0), r.get(1));
+        assertEquals(r.get(0), r.get(2));
+    }
+
+    @Test
     void aTemporalPointTakesAnotherSpatialReferenceSystem() {
         // geoTransform is the name of transform over the geo types in Spark, which owns
         // transform as its higher-order array function
