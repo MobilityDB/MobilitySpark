@@ -339,7 +339,7 @@ class GeneratedSurfaceTest {
         // now that the size_out is dropped and unsigned char maps to byte. Round-trips:
         // parse the hex, re-serialize (variant 4 = canonical hex), re-parse -> 3 instants.
         Object hex = scalar(
-            "SELECT temporal_as_hexwkb(tint_in('[1@2001-01-01, 2@2001-01-02, 1@2001-01-03]'), CAST(4 AS BYTE))");
+            "SELECT temporal_as_hexwkb(tintFromText('[1@2001-01-01, 2@2001-01-02, 1@2001-01-03]'), CAST(4 AS BYTE))");
         assertNotNull(hex);
         assertEquals(3, ((Number) scalar(
             "SELECT temporal_num_instants(temporal_from_hexwkb('" + hex + "'))")).intValue());
@@ -347,7 +347,7 @@ class GeneratedSurfaceTest {
 
     @Test
     void values_travel_as_wkb_and_hex_wkb_stays_readable() {
-        String tint = "tint_in('[1@2001-01-01, 2@2001-01-02, 1@2001-01-03]')";
+        String tint = "tintFromText('[1@2001-01-01, 2@2001-01-02, 1@2001-01-03]')";
         // A temporal, and the span a function derives from it, travel as their WKB bytes.
         Object t = scalar("SELECT " + tint);
         assertTrue(t instanceof byte[], "a temporal travels as WKB, got " + t.getClass());
@@ -357,7 +357,7 @@ class GeneratedSurfaceTest {
         String box = "stboxFromText('STBOX X((1,1),(2,2))')";
         Object stbox = scalar("SELECT " + box);
         assertTrue(stbox instanceof byte[], "a box travels as WKB, got " + stbox.getClass());
-        assertEquals("STBOX X((1,1),(2,2))", scalar("SELECT stbox_out(" + box + ", 15)"));
+        assertEquals("STBOX X((1,1),(2,2))", scalar("SELECT asEWKT(" + box + ")"));
         assertEquals(Boolean.FALSE, scalar("SELECT hasZ(" + box + ")"));
         // The bytes and the hex-WKB text of one value answer alike.
         assertEquals(3, ((Number) scalar("SELECT numInstants(" + tint + ")")).intValue());
@@ -390,12 +390,12 @@ class GeneratedSurfaceTest {
 
     @Test
     void parser_round_trip_entirely_on_the_generated_surface() {
-        // tint_in is the newly-generated cstring (WKT) parser: a full parse->operate
+        // tintFromText is the generated text reader: a full parse->operate
         // round-trip driven only by generated UDFs, no externally-computed hex.
         String wkt = "[1@2001-01-01, 2@2001-01-02, 1@2001-01-03]";
         assertEquals(3, ((Number) scalar(
-            "SELECT temporal_num_instants(tint_in('" + wkt + "'))")).intValue());
-        Object out = scalar("SELECT asText(tint_in('" + wkt + "'))");
+            "SELECT temporal_num_instants(tintFromText('" + wkt + "'))")).intValue());
+        Object out = scalar("SELECT asText(tintFromText('" + wkt + "'))");
         assertNotNull(out);
         assertTrue(out.toString().contains("1@") && out.toString().contains("2@"),
                    "round-trip should render the values, got: " + out);
@@ -443,9 +443,9 @@ class GeneratedSurfaceTest {
         // only between them, so the converted trip intersects the envelope when the
         // conversion keeps the linear interpolation, and the step trip with the same
         // instants does not.
-        String trip = "tgeogpoint_in('SRID=4326;[POINT(80 -30)@2001-01-01, "
+        String trip = "tgeogpointFromText('SRID=4326;[POINT(80 -30)@2001-01-01, "
                     + "POINT(179 -30)@2001-01-02]')";
-        String step = "tgeogpoint_in('SRID=4326;Interp=Step;[POINT(80 -30)@2001-01-01, "
+        String step = "tgeogpointFromText('SRID=4326;Interp=Step;[POINT(80 -30)@2001-01-01, "
                     + "POINT(179 -30)@2001-01-02]')";
         String box = "SRID=4326;POLYGON((93.41 -60.55,173.34 -60.55,173.34 -8.47,"
                    + "93.41 -8.47,93.41 -60.55))";
@@ -468,7 +468,7 @@ class GeneratedSurfaceTest {
         // (Paris) and a region geom at the SAME point share an H3 cell at resolution 7.
         String paris = "SRID=4326;POINT(2.34 48.86)";
         String nyc   = "SRID=4326;POINT(-73.98 40.75)";
-        String trip  = "tgeompoint_in('SRID=4326;[POINT(2.34 48.86)@2001-01-01, "
+        String trip  = "tgeompointFromText('SRID=4326;[POINT(2.34 48.86)@2001-01-01, "
                      + "POINT(2.34 48.86)@2001-01-02]')";
 
         // geoToH3IndexSet(geo, res): a 4326 point yields a non-null cell set (hex).
@@ -507,41 +507,41 @@ class GeneratedSurfaceTest {
         assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00, "
             + "3@2001-01-03 00:00:00+00], (2@2001-01-03 00:00:00+00, 2@2001-01-04 00:00:00+00], "
             + "(1@2001-01-04 00:00:00+00, 1@2001-01-05 00:00:00+00]}",
-            aggregate("tCount", "tint_in", "asText", tints));
+            aggregate("tCount", "tintFromText", "asText", tints));
         assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-03 00:00:00+00], "
             + "(3@2001-01-03 00:00:00+00, 4@2001-01-04 00:00:00+00], "
             + "(5@2001-01-04 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
-            aggregate("tMinAgg", "tint_in", "asText", tints));
+            aggregate("tMinAgg", "tintFromText", "asText", tints));
         assertEquals("{[1@2001-01-01 00:00:00+00, 3@2001-01-02 00:00:00+00, "
             + "5@2001-01-03 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
-            aggregate("tMaxAgg", "tint_in", "asText", tints));
+            aggregate("tMaxAgg", "tintFromText", "asText", tints));
         assertEquals("{[1@2001-01-01 00:00:00+00, 4@2001-01-02 00:00:00+00, "
             + "10@2001-01-03 00:00:00+00], (8@2001-01-03 00:00:00+00, 9@2001-01-04 00:00:00+00], "
             + "(5@2001-01-04 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
-            aggregate("tSum", "tint_in", "asText", tints));
+            aggregate("tSum", "tintFromText", "asText", tints));
         assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00], "
             + "[3@2001-01-03 00:00:00+00, 4@2001-01-04 00:00:00+00], "
             + "[5@2001-01-05 00:00:00+00, 6@2001-01-06 00:00:00+00]}",
-            aggregate("mergeAgg", "tint_in", "asText", "[1@2001-01-01, 2@2001-01-02]",
+            aggregate("mergeAgg", "tintFromText", "asText", "[1@2001-01-01, 2@2001-01-02]",
                       "[3@2001-01-03, 4@2001-01-04]", "[5@2001-01-05, 6@2001-01-06]"));
         String[] tbools = {"[true@2001-01-01, false@2001-01-03]",
                            "[true@2001-01-02, true@2001-01-04]"};
         assertEquals("{[t@2001-01-01 00:00:00+00, f@2001-01-03 00:00:00+00], "
             + "(t@2001-01-03 00:00:00+00, t@2001-01-04 00:00:00+00]}",
-            aggregate("tAndAgg", "tbool_in", "asText", tbools));
+            aggregate("tAndAgg", "tboolFromText", "asText", tbools));
         assertEquals("{[t@2001-01-01 00:00:00+00, t@2001-01-04 00:00:00+00]}",
-            aggregate("tOrAgg", "tbool_in", "asText", tbools));
+            aggregate("tOrAgg", "tboolFromText", "asText", tbools));
         // The skip list of tAvg carries the sum and the count of each instant, which the bytes
         // taggstate_serialize writes carry across the shuffle.
         assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00), "
             + "[2.5@2001-01-02 00:00:00+00, 3.5@2001-01-03 00:00:00+00], "
             + "(4@2001-01-03 00:00:00+00, 5@2001-01-04 00:00:00+00]}",
-            aggregate("tAvg", "tfloat_in", "asText", "[1@2001-01-01, 3@2001-01-03]",
+            aggregate("tAvg", "tfloatFromText", "asText", "[1@2001-01-01, 3@2001-01-03]",
                       "[3@2001-01-02, 5@2001-01-04]"));
         // A temporal integer and a temporal float in two partitions are values of two
         // types, which a typed aggregate refuses as MobilityDB's typed aggregates do.
         Exception e = assertThrows(Exception.class, () -> scalar("SELECT tSum(v) FROM (SELECT "
-            + "/*+ REPARTITION(2) */ CASE k WHEN 0 THEN tint_in(s) ELSE tfloat_in(s) END AS v "
+            + "/*+ REPARTITION(2) */ CASE k WHEN 0 THEN tintFromText(s) ELSE tfloatFromText(s) END AS v "
             + "FROM VALUES (0, '[1@2001-01-01, 2@2001-01-02]'), "
             + "(1, '[1.5@2001-01-01, 2.5@2001-01-02]') AS t(k, s))"));
         assertTrue(String.valueOf(e.getMessage()).contains("values of one temporal type"),
