@@ -116,13 +116,13 @@ class GeneratedSurfaceTest {
         // scalar accessor: start value = 1
         assertEquals(1, ((Number) scalar(
             "SELECT tint_start_value('" + TINT_HEX + "')")).intValue());
-        // I/O round-trip: tint_out is non-null and renders the int values 1,2,1
+        // I/O round-trip: asText is non-null and renders the int values 1,2,1
         // (timestamps are rendered in UTC, so don't assert on the wall-clock date).
-        Object out = scalar("SELECT tint_out('" + TINT_HEX + "')");
+        Object out = scalar("SELECT asText('" + TINT_HEX + "')");
         assertNotNull(out);
         String s = out.toString();
         assertTrue(s.startsWith("[1@") && s.contains("2@"),
-                   "tint_out should render the values, got: " + s);
+                   "asText should render the values, got: " + s);
     }
 
     @Test
@@ -368,11 +368,11 @@ class GeneratedSurfaceTest {
             + tint + ", CAST(20 AS BYTE)))")).intValue());
         // An aggregate over a column of hex-WKB text answers what it answers over the WKB
         // of the same value.
-        Object overWkb = scalar("SELECT tint_out(tCount(v)) FROM (SELECT temporal_from_hexwkb('"
+        Object overWkb = scalar("SELECT asText(tCount(v)) FROM (SELECT temporal_from_hexwkb('"
             + TINT_HEX + "') AS v)");
         assertNotNull(overWkb);
         assertEquals(overWkb,
-            scalar("SELECT tint_out(tCount(s)) FROM VALUES ('" + TINT_HEX + "') AS t(s)"));
+            scalar("SELECT asText(tCount(s)) FROM VALUES ('" + TINT_HEX + "') AS t(s)"));
     }
 
     @Test
@@ -395,7 +395,7 @@ class GeneratedSurfaceTest {
         String wkt = "[1@2001-01-01, 2@2001-01-02, 1@2001-01-03]";
         assertEquals(3, ((Number) scalar(
             "SELECT temporal_num_instants(tint_in('" + wkt + "'))")).intValue());
-        Object out = scalar("SELECT tint_out(tint_in('" + wkt + "'))");
+        Object out = scalar("SELECT asText(tint_in('" + wkt + "'))");
         assertNotNull(out);
         assertTrue(out.toString().contains("1@") && out.toString().contains("2@"),
                    "round-trip should render the values, got: " + out);
@@ -507,30 +507,30 @@ class GeneratedSurfaceTest {
         assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00, "
             + "3@2001-01-03 00:00:00+00], (2@2001-01-03 00:00:00+00, 2@2001-01-04 00:00:00+00], "
             + "(1@2001-01-04 00:00:00+00, 1@2001-01-05 00:00:00+00]}",
-            aggregate("tCount", "tint_in", "tint_out", tints));
+            aggregate("tCount", "tint_in", "asText", tints));
         assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-03 00:00:00+00], "
             + "(3@2001-01-03 00:00:00+00, 4@2001-01-04 00:00:00+00], "
             + "(5@2001-01-04 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
-            aggregate("tMinAgg", "tint_in", "tint_out", tints));
+            aggregate("tMinAgg", "tint_in", "asText", tints));
         assertEquals("{[1@2001-01-01 00:00:00+00, 3@2001-01-02 00:00:00+00, "
             + "5@2001-01-03 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
-            aggregate("tMaxAgg", "tint_in", "tint_out", tints));
+            aggregate("tMaxAgg", "tint_in", "asText", tints));
         assertEquals("{[1@2001-01-01 00:00:00+00, 4@2001-01-02 00:00:00+00, "
             + "10@2001-01-03 00:00:00+00], (8@2001-01-03 00:00:00+00, 9@2001-01-04 00:00:00+00], "
             + "(5@2001-01-04 00:00:00+00, 5@2001-01-05 00:00:00+00]}",
-            aggregate("tSum", "tint_in", "tint_out", tints));
+            aggregate("tSum", "tint_in", "asText", tints));
         assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00], "
             + "[3@2001-01-03 00:00:00+00, 4@2001-01-04 00:00:00+00], "
             + "[5@2001-01-05 00:00:00+00, 6@2001-01-06 00:00:00+00]}",
-            aggregate("mergeAgg", "tint_in", "tint_out", "[1@2001-01-01, 2@2001-01-02]",
+            aggregate("mergeAgg", "tint_in", "asText", "[1@2001-01-01, 2@2001-01-02]",
                       "[3@2001-01-03, 4@2001-01-04]", "[5@2001-01-05, 6@2001-01-06]"));
         String[] tbools = {"[true@2001-01-01, false@2001-01-03]",
                            "[true@2001-01-02, true@2001-01-04]"};
         assertEquals("{[t@2001-01-01 00:00:00+00, f@2001-01-03 00:00:00+00], "
             + "(t@2001-01-03 00:00:00+00, t@2001-01-04 00:00:00+00]}",
-            aggregate("tAndAgg", "tbool_in", "tbool_out", tbools));
+            aggregate("tAndAgg", "tbool_in", "asText", tbools));
         assertEquals("{[t@2001-01-01 00:00:00+00, t@2001-01-04 00:00:00+00]}",
-            aggregate("tOrAgg", "tbool_in", "tbool_out", tbools));
+            aggregate("tOrAgg", "tbool_in", "asText", tbools));
         // The skip list of tAvg carries the sum and the count of each instant, which the bytes
         // taggstate_serialize writes carry across the shuffle.
         assertEquals("{[1@2001-01-01 00:00:00+00, 2@2001-01-02 00:00:00+00), "
