@@ -221,7 +221,7 @@ class GeneratedSqlSurfaceTest {
 
     @Test
     void arraysCrossAsSparkArrays() {
-        assertEquals("{1, 2, 3}", scalar("SELECT intset_out(setMake(array(3, 1, 2)))"));
+        assertEquals("{1, 2, 3}", scalar("SELECT asText(setMake(array(3, 1, 2)))"));
         assertEquals(Instant.parse("2020-01-01T00:00:00Z"), scalar("SELECT startValue(setMake(array("
                 + "TIMESTAMP '2020-01-02 00:00:00', TIMESTAMP '2020-01-01 00:00:00')))"));
         String origin = tgeompoint("[Point(0 0)@2020-01-01, Point(0 0)@2020-01-02]");
@@ -231,9 +231,9 @@ class GeneratedSqlSurfaceTest {
         assertEquals(1.0, scalar("SELECT minDistance(array(" + origin + "), array(" + far + ", "
                 + near + "))"));
         assertThrows(Exception.class,
-                () -> scalar("SELECT intset_out(setMake(array(1, CAST(NULL AS INT))))"));
+                () -> scalar("SELECT asText(setMake(array(1, CAST(NULL AS INT))))"));
         // An array of fixed-size values reaches MEOS as the contiguous C array it reads
-        assertEquals("{[1, 3), [5, 7)}", scalar("SELECT intspanset_out(spanset(array("
+        assertEquals("{[1, 3), [5, 7)}", scalar("SELECT asText(spanset(array("
                 + "intspan_in('[1, 3)'), intspan_in('[5, 7)'))))"));
         assertEquals(2, scalar("SELECT numValues(setMake(array(npoint_in('NPoint(1, 0.5)'), "
                 + "npoint_in('NPoint(2, 0.3)'), npoint_in('NPoint(1, 0.5)'))))"));
