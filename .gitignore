@@ -16,7 +16,6 @@ log/
 target/
 tools/__pycache__/
 /target/
-src/main/java/org/mobilitydb/spark/generated/
 
 # Derived MEOS catalog (generated in CI via the provision-meos action)
 tools/meos-idl.json

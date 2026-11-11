@@ -75,43 +75,20 @@
 
     <build>
         <plugins>
-            <!-- Generate the whole UDF surface from the MEOS-API catalog at build
-                 time (North Star: bindings are GENERATED from MEOS, never hand
-                 written). Both the catalog and the generator are STAGED into tools/
-                 and gitignored, never committed: the catalog is derived from
-                 MobilityDB master by the provision-meos action, and codegen_jvm.py
-                 with its codegen_spark_udfs.py sibling is copied in from JMEOS, which
-                 owns them. The spark engine delegates to codegen_spark_udfs.py so the
-                 emitted surface is identical to that generator's. It reads the
-                 org.jmeos:meos jar's actual symbols so it never emits a call to an
-                 absent/mismatched JMEOS method. -->
+            <!-- Generate the SQL surface from the MEOS-API catalog at build time (North
+                 Star: bindings are GENERATED from MEOS, never hand written): one Spark type
+                 per MEOS SQL type and one registration per SQL name resolving its overloads
+                 from the argument types, generated from the overloads the Flink SQL surface
+                 uses. Both the catalog and the generator are STAGED into tools/ and
+                 gitignored, never committed: the catalog is derived from MobilityDB master
+                 by the provision-meos action, and codegen_jvm.py is copied in from JMEOS,
+                 which owns it. It reads the org.jmeos:meos jar's actual symbols so it never
+                 emits a call to an absent/mismatched JMEOS method. -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <executions>
-                    <execution>
-                        <id>generate-udfs</id>
-                        <phase>generate-sources</phase>
-                        <goals><goal>exec</goal></goals>
-                        <configuration>
-                            <executable>python3</executable>
-                            <arguments>
-                                <argument>${project.basedir}/tools/codegen_jvm.py</argument>
-                                <argument>--engine</argument>
-                                <argument>spark</argument>
-                                <argument>--catalog</argument>
-                                <argument>${project.basedir}/tools/meos-idl.json</argument>
-                                <argument>--jar</argument>
-                                <argument>${settings.localRepository}/org/jmeos/meos/1.0/meos-1.0.jar</argument>
-                                <argument>--out</argument>
-                                <argument>${project.build.directory}/generated-sources/spark/org/mobilitydb/spark/generated</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <!-- The typed SQL surface: one Spark type per MEOS SQL type and one
-                         registration per SQL name resolving its overloads from the argument
-                         types, generated from the overloads the Flink SQL surface uses. -->
                     <execution>
                         <id>generate-sql-surface</id>
                         <phase>generate-sources</phase>
@@ -144,7 +121,6 @@
                         <goals><goal>add-source</goal></goals>
                         <configuration>
                             <sources>
-                                <source>${project.build.directory}/generated-sources/spark</source>
                                 <source>${project.build.directory}/generated-sources/spark-sql/src/main/java</source>
                             </sources>
                         </configuration>
