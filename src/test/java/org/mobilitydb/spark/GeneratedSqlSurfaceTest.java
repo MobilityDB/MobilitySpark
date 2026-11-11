@@ -113,12 +113,12 @@ class GeneratedSqlSurfaceTest {
 
     @Test
     void aNameSparkOwnsStaysSparksAndMeosTakesTheClassName() {
-        assertEquals(1.0, scalar("SELECT spanLower(floatspan_in('[1, 3]'))"));
+        assertEquals(1.0, scalar("SELECT spanLower(floatspanFromText('[1, 3]'))"));
         assertEquals("abc", scalar("SELECT lower('ABC')"));
         assertEquals(new java.math.BigDecimal("3"), scalar("SELECT round(2.5)"));
         assertEquals(List.of(2, 4), spark.sql("SELECT transform(array(1, 2), x -> x * 2)")
                 .collectAsList().get(0).getList(0));
-        assertThrows(Exception.class, () -> scalar("SELECT lower(floatspan_in('[1, 3]'))"));
+        assertThrows(Exception.class, () -> scalar("SELECT lower(floatspanFromText('[1, 3]'))"));
     }
 
     @Test
@@ -176,9 +176,9 @@ class GeneratedSqlSurfaceTest {
     @Test
     void textConstructorsAndOutput() {
         String box = (String) scalar(
-                "SELECT asText(tbox_in('TBOXFLOAT XT([1, 2],[2020-01-01, 2020-01-02])'))");
+                "SELECT asText(tboxFromText('TBOXFLOAT XT([1, 2],[2020-01-01, 2020-01-02])'))");
         assertTrue(box.startsWith("TBOXFLOAT XT([1, 2]"), box);
-        assertEquals(true, scalar("SELECT spanOverlaps(floatspan_in('[1, 3]'), floatspan_in('[2, 4]'))"));
+        assertEquals(true, scalar("SELECT spanOverlaps(floatspanFromText('[1, 3]'), floatspanFromText('[2, 4]'))"));
     }
 
     @Test
@@ -234,11 +234,11 @@ class GeneratedSqlSurfaceTest {
                 () -> scalar("SELECT asText(setMake(array(1, CAST(NULL AS INT))))"));
         // An array of fixed-size values reaches MEOS as the contiguous C array it reads
         assertEquals("{[1, 3), [5, 7)}", scalar("SELECT asText(spanset(array("
-                + "intspan_in('[1, 3)'), intspan_in('[5, 7)'))))"));
-        assertEquals(2, scalar("SELECT numValues(setMake(array(npoint_in('NPoint(1, 0.5)'), "
-                + "npoint_in('NPoint(2, 0.3)'), npoint_in('NPoint(1, 0.5)'))))"));
-        assertEquals(2, scalar("SELECT numValues(setMake(array(cbuffer_in('Cbuffer(Point(1 1), 0.5)'), "
-                + "cbuffer_in('Cbuffer(Point(2 2), 1)'))))"));
+                + "intspanFromText('[1, 3)'), intspanFromText('[5, 7)'))))"));
+        assertEquals(2, scalar("SELECT numValues(setMake(array(npointFromText('NPoint(1, 0.5)'), "
+                + "npointFromText('NPoint(2, 0.3)'), npointFromText('NPoint(1, 0.5)'))))"));
+        assertEquals(2, scalar("SELECT numValues(setMake(array(cbufferFromText('Cbuffer(Point(1 1), 0.5)'), "
+                + "cbufferFromText('Cbuffer(Point(2 2), 1)'))))"));
     }
 
     @Test
