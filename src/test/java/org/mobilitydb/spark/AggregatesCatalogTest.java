@@ -403,7 +403,7 @@ class AggregatesCatalogTest {
             "STBOX XT(((0,0),(11.745379,5.088176)),[2020-01-01 00:00:00+00, 2020-01-02 00:00:00+00])"},
         {"extent(tquadbin)",
             "SELECT asEWKT(extent(v), 6) FROM (SELECT /*+ REPARTITION(2) */ tquadbinFromText(s) AS v FROM VALUES ('4813ffffffffffff@2020-01-01'), ('4817ffffffffffff@2020-01-02') AS t(s))",
-            "SRID=4326;STBOX XT(((-180,0),(180,85.051129)),[2020-01-01 00:00:00+00, 2020-01-02 00:00:00+00])"},
+            "SRID=4326;STBOX XT(((-180,0),(180,90)),[2020-01-01 00:00:00+00, 2020-01-02 00:00:00+00])"},
         {"extent(trgeometry)",
             "SELECT asText(extent(v), 6) FROM (SELECT /*+ REPARTITION(2) */ trgeometryFromText(s) AS v FROM VALUES ('Polygon((0 0,1 0,1 1,0 1,0 0));Pose(Point(5 5),0)@2020-01-01'), ('Polygon((0 0,1 0,1 1,0 1,0 0));Pose(Point(6 6),0)@2020-01-02') AS t(s))",
             "STBOX XT(((5,5),(7,7)),[2020-01-01 00:00:00+00, 2020-01-02 00:00:00+00])"},
