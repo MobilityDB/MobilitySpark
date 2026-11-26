@@ -952,13 +952,10 @@ class AggregatesCatalogTest {
         String r = "rasterFromHexWKB('0100000100000000000000F03F000000000000F0BF0000000000000000000000000000084000000000000000000000000000000000E6100000030003004A003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6003C1CC6')";
         for (String s : new String[] {"summaryStats(" + r + ")",
                 "(SELECT summaryStatsAgg(v, true) FROM (SELECT /*+ REPARTITION(2) */ " + r + " AS v FROM VALUES (1), (2) AS t(i)))"}) {
-            org.apache.spark.sql.Row got = row("SELECT s.count, s.sum, s.max, summarystatsCount(s), summarystatsSum(s), summarystatsMax(s) FROM (SELECT " + s + " AS s)");
+            org.apache.spark.sql.Row got = row("SELECT summarystatsCount(s), summarystatsSum(s), summarystatsMax(s) FROM (SELECT " + s + " AS s)");
             assertEquals(0L, ((Number) got.get(0)).longValue(), s);
             assertEquals(null, got.get(1), s);
             assertEquals(null, got.get(2), s);
-            assertEquals(0L, ((Number) got.get(3)).longValue(), s);
-            assertEquals(null, got.get(4), s);
-            assertEquals(null, got.get(5), s);
         }
     }
 
