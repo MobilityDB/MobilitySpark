@@ -242,6 +242,32 @@ class GeneratedSqlSurfaceTest {
     }
 
     @Test
+    void occurrencesOfATemplateAtItsOrigins() {
+        // The origin of a service day is noon minus twelve hours in its zone: in Europe/Zurich the
+        // day of the spring change starts at 23:00 on the clock of the day before, 22:00 UTC
+        assertEquals(1774735200L, ((Number) scalar("SELECT unix_seconds(startValue(origins("
+                + "datesetFromText('{2026-03-29}'), 'Europe/Zurich')))")).longValue());
+        String trip = "tintFromText('[1@2026-01-14 23:30:00+00, 2@2026-01-15 00:30:00+00]')";
+        String ref = "TIMESTAMP '2026-01-14 23:00:00'";
+        String origins = "tstzsetFromText('{2026-01-14 23:00:00+00, 2026-01-15 23:00:00+00, "
+                + "2026-01-16 23:00:00+00}')";
+        // The occurrence at the next origin starts at the same distance from it: 23:30 UTC
+        assertEquals(1768519800L, ((Number) scalar("SELECT unix_seconds(startTimestamp(occurrence("
+                + trip + ", " + ref + ", TIMESTAMP '2026-01-15 23:00:00')))")).longValue());
+        // A period ending at the first instant of the second occurrence meets it when closed only
+        assertEquals(1, ((Number) scalar("SELECT numValues(occurrenceOrigins(" + trip + ", " + ref
+                + ", " + origins + ", tstzspanFromText('[2026-01-15 23:00:00+00, "
+                + "2026-01-15 23:30:00+00]')))")).intValue());
+        assertEquals(null, scalar("SELECT occurrenceOrigins(" + trip + ", " + ref + ", " + origins
+                + ", tstzspanFromText('[2026-01-15 23:00:00+00, 2026-01-15 23:30:00+00)'))"));
+        // The occurrences meeting a day: those of the first two origins, with their origins
+        List<Row> occ = spark.sql("SELECT inline(occurrences(" + trip + ", " + ref + ", " + origins
+                + ", tstzspanFromText('[2026-01-15 00:00:00+00, 2026-01-16 00:00:00+00]')))")
+                .collectAsList();
+        assertEquals(2, occ.size());
+    }
+
+    @Test
     void setReturningRowsUnfoldThroughExplode() {
         // A set-returning function answers its rows as an array, which explode and inline unfold.
         List<Row> elems = spark.sql("SELECT explode(setUnnest(setMake(array(3, 1, 2))))").collectAsList();
