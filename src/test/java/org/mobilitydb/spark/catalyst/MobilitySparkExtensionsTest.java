@@ -26,6 +26,8 @@
 package org.mobilitydb.spark.catalyst;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterAll;
@@ -72,6 +74,21 @@ public class MobilitySparkExtensionsTest {
     @Test
     void theBuiltSessionHoldsTheSurface() {
         assertSurface(spark);
+    }
+
+    private static String scalar(String sql) {
+        return spark.sql("SELECT " + sql).collectAsList().get(0).getString(0);
+    }
+
+    // The binding answers its own version under its own name, and the MEOS it links under
+    // MEOS's name; laid out as #assertSurface.
+    @Test
+    void theSessionAnswersTheVersionOfMobilitySparkAndOfMeos() {
+        assertTrue(scalar("mobilitysparkVersion()").startsWith("MobilitySpark "));
+        assertFalse(scalar("mobilitysparkVersion()").contains("${"));
+        assertTrue(scalar("meosVersion()").startsWith("MEOS "));
+        assertEquals(scalar("mobilitysparkVersion()") + ", " + scalar("meosFullVersion()"),
+                scalar("mobilitysparkFullVersion()"));
     }
 
     @Test
