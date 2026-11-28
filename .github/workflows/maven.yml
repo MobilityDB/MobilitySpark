@@ -15,7 +15,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Name git's default branch
+        run: git config --global init.defaultBranch main
+
+      - uses: actions/checkout@v7
 
       - name: Refuse tracked build output, skipped suites and stale pins
         uses: MobilityDB/MEOS-API/.github/actions/check-tree-hygiene@master
@@ -26,10 +29,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Name git's default branch
+        run: git config --global init.defaultBranch main
+
+      - uses: actions/checkout@v7
 
       - name: Set up Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
@@ -62,7 +68,7 @@ jobs:
         # master-derived catalog and libmeos as above — so the jar's FFI surface can never
         # drift from the catalog the generator reads, and JMEOS tracks master in lockstep
         # with this binding.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: MobilityDB/JMEOS
           ref: main
