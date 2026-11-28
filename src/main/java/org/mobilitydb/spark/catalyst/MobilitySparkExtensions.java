@@ -30,6 +30,7 @@ import org.apache.spark.sql.SparkSessionExtensions;
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
 import org.apache.spark.sql.catalyst.rules.Rule;
 import org.mobilitydb.spark.sql.MobilitySparkSql;
+import org.mobilitydb.spark.sql.MobilitySparkVersion;
 
 import scala.Function1;
 import scala.runtime.AbstractFunction1;
@@ -71,6 +72,7 @@ public final class MobilitySparkExtensions
             @Override
             public Function1<LogicalPlan, BoxedUnit> apply(SparkSession session) {
                 MobilitySparkSql.registerAll(session);
+                MobilitySparkVersion.registerAll(session);
                 return new AbstractFunction1<LogicalPlan, BoxedUnit>() {
                     @Override
                     public BoxedUnit apply(LogicalPlan plan) {

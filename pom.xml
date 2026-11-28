@@ -74,6 +74,13 @@
     </dependencies>
 
     <build>
+        <resources>
+            <!-- The project version, read by org.mobilitydb.spark.sql.MobilitySparkVersion -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <!-- Generate the SQL surface from the MEOS-API catalog at build time (North
                  Star: bindings are GENERATED from MEOS, never hand written): one Spark type
